@@ -244,5 +244,5 @@ if (process.argv.includes("--migrate")) {
   migrate();
   process.exit(0);
 }
-
+migrate();
 module.exports = { db, migrate, queries };
