@@ -57,10 +57,6 @@ var queries = {
   getTotalStats: { get: function(since) { var s = { total_leads: 0, sold_leads: 0, total_revenue: 0, avg_rpl: 0, total_accepts: 0, total_rejects: 0 }; var db = readDB(); db.leads.forEach(function(l) { if (l.created_at < since) return; s.total_leads++; if (l.status === "sold") s.sold_leads++; s.total_revenue += l.total_revenue || 0; s.total_accepts += l.buyers_accepted || 0; s.total_rejects += l.buyers_rejected || 0; }); s.avg_rpl = s.total_leads > 0 ? s.total_revenue / s.total_leads : 0; return s; } },
 };
 
-<<<<<<< HEAD
-
-=======
 if (process.argv.includes("--migrate")) { migrate(); process.exit(0); }
 
 module.exports = { migrate: migrate, queries: queries };
->>>>>>> 4916b1f (Fix: replace SQLite with JSON storage)
