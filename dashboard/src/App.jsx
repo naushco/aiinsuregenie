@@ -3,28 +3,112 @@ import { useState, useEffect, useRef } from "react";
 var STORAGE_KEY = "aiinsuregenie-partners-v3";
 var SHARED = true; // Both dashboard and chatbot read from this
 
+// On a live site the dashboard talks to your backend. Set the address in public/config.js.
+// Inside Claude's preview it keeps using shared storage, so demos still work.
+var API_BASE = (typeof window !== "undefined" && window.AIG_CONFIG && window.AIG_CONFIG.apiBase) || "https://api.aiinsuregenie.com";
+var PREVIEW_MODE = typeof window !== "undefined" && !!window.storage;
+function getToken() { try { return sessionStorage.getItem("aig_admin") || ""; } catch (e) { return ""; } }
+function putToken(t) { try { if (t) sessionStorage.setItem("aig_admin", t); else sessionStorage.removeItem("aig_admin"); } catch (e) {} }
+
 var DEFAULT_PARTNERS = [
-  {id:"p1",name:"Super Budget Insurance",logo:"🧞",badge:"BEST VALUE",bc:"#0074D4",rating:4.5,payout:6.00,link:"https://superbudgetinsurance.com",enabled:true,leads:1247,revenue:7482,cr:6.9, priority:3,boost:0,pinned:false,featured:false,customTag:"",features:"Snapshot discount, Name Your Price, Multi-car discount",bestFor:"budget"},
-  {id:"p2",name:"QuoteWizard",logo:"🔮",badge:"TOP MATCH",bc:"#6D28D9",rating:4.4,payout:10.00,link:"https://auto.quotewizard.com",enabled:true,leads:834,revenue:8340,cr:8.2, priority:1,boost:0,pinned:false,featured:false,customTag:"",features:"Fast comparison, 10+ carriers, Best rate guarantee",bestFor:"comparison"},
-  {id:"p3",name:"LendingTree",logo:"🌳",badge:"PREMIUM",bc:"#059669",rating:4.6,payout:15.00,link:"https://lendingtree.com/auto",enabled:true,leads:621,revenue:9315,cr:12.1, priority:2,boost:0,pinned:false,featured:false,customTag:"",features:"Multiple offers, Trusted brand, Easy comparison",bestFor:"comprehensive"},
-  {id:"p4",name:"Value Seeker",logo:"🔍",badge:"SAVINGS",bc:"#D97706",rating:3.9,payout:2.50,link:"https://value-seeker.com",enabled:false,leads:156,revenue:390,cr:1.2, priority:5,boost:0,pinned:false,featured:false,customTag:"",features:"Budget options, State minimum rates",bestFor:"budget"},
-  {id:"p5",name:"Solvant Auto",logo:"🚗",badge:"FAST QUOTE",bc:"#DC2626",rating:4.1,payout:4.00,link:"https://solvantauto.com",enabled:true,leads:934,revenue:3736,cr:4.8, priority:4,boost:0,pinned:false,featured:false,customTag:"",features:"Quick quotes, Instant coverage, Affordable",bestFor:"quick"},
-  {id:"p6",name:"SmartFinancial",logo:"💡",badge:"HIGHEST PAY",bc:"#0891B2",rating:4.7,payout:12.00,link:"https://smartfinancial.com",enabled:false,leads:0,revenue:0,cr:0, priority:2,boost:0,pinned:false,featured:false,customTag:"",features:"Top rates, Premium service, Smart matching",bestFor:"service"},
+  {id:"p1",name:"Super Budget Insurance",logo:"🧞",badge:"BEST VALUE",bc:"#0074D4",rating:4.5,payout:6.00,link:"https://superbudgetinsurance.com",enabled:true,leads:1247,revenue:7482,cr:6.9, priority:3,boost:0,pinned:false,featured:false,customTag:"",features:"Snapshot discount, Name Your Price, Multi-car discount",bestFor:"budget",supportsPrefill:false},
+  {id:"p2",name:"QuoteWizard",logo:"🔮",badge:"TOP MATCH",bc:"#6D28D9",rating:4.4,payout:10.00,link:"https://auto.quotewizard.com",enabled:true,leads:834,revenue:8340,cr:8.2, priority:1,boost:0,pinned:false,featured:false,customTag:"",features:"Fast comparison, 10+ carriers, Best rate guarantee",bestFor:"comparison",supportsPrefill:false},
+  {id:"p3",name:"LendingTree",logo:"🌳",badge:"PREMIUM",bc:"#059669",rating:4.6,payout:15.00,link:"https://lendingtree.com/auto",enabled:true,leads:621,revenue:9315,cr:12.1, priority:2,boost:0,pinned:false,featured:false,customTag:"",features:"Multiple offers, Trusted brand, Easy comparison",bestFor:"comprehensive",supportsPrefill:false},
+  {id:"p4",name:"Value Seeker",logo:"🔍",badge:"SAVINGS",bc:"#D97706",rating:3.9,payout:2.50,link:"https://value-seeker.com",enabled:false,leads:156,revenue:390,cr:1.2, priority:5,boost:0,pinned:false,featured:false,customTag:"",features:"Budget options, State minimum rates",bestFor:"budget",supportsPrefill:false},
+  {id:"p5",name:"Solvant Auto",logo:"🚗",badge:"FAST QUOTE",bc:"#DC2626",rating:4.1,payout:4.00,link:"https://solvantauto.com",enabled:true,leads:934,revenue:3736,cr:4.8, priority:4,boost:0,pinned:false,featured:false,customTag:"",features:"Quick quotes, Instant coverage, Affordable",bestFor:"quick",supportsPrefill:false},
+  {id:"p6",name:"SmartFinancial",logo:"💡",badge:"HIGHEST PAY",bc:"#0891B2",rating:4.7,payout:12.00,link:"https://smartfinancial.com",enabled:false,leads:0,revenue:0,cr:0, priority:2,boost:0,pinned:false,featured:false,customTag:"",features:"Top rates, Premium service, Smart matching",bestFor:"service",supportsPrefill:false},
 ];
+
+// First-time list for a brand-new live site: everything OFF until you add real links and switch it on.
+var SEED_PARTNERS = DEFAULT_PARTNERS.map(function(p) {
+  return Object.assign({}, p, { enabled: false, leads: 0, revenue: 0, cr: 0 });
+});
+
+function Login(props) {
+  var [pw, setPw] = useState("");
+  var [err, setErr] = useState("");
+  var [busy, setBusy] = useState(false);
+  var go = async function() {
+    if (!pw) return;
+    setBusy(true); setErr("");
+    try {
+      var r = await fetch(API_BASE + "/api/partners?admin=1", { headers: { Authorization: "Bearer " + pw } });
+      var j = {};
+      try { j = await r.json(); } catch (e) {}
+      if (r.ok) { putToken(pw); props.onSignedIn(pw); }
+      else if (r.status === 401 || r.status === 429 || r.status === 503) setErr(j.error || "Couldn't sign in.");
+      else setErr("Your backend returned an error. Check that it is deployed and that storage is connected.");
+    } catch (e) { setErr("Can't reach your backend. Check the address in config.js."); }
+    setBusy(false);
+  };
+  return (
+    <div style={{minHeight:"100vh",background:"#0F172A",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'DM Sans',sans-serif",padding:20}}>
+      <div style={{width:"100%",maxWidth:360,background:"#1E293B",border:"1px solid #334155",borderRadius:16,padding:28}}>
+        <div style={{fontSize:20,fontWeight:700,color:"#F8FAFC",marginBottom:4}}>AI InsureGenie admin</div>
+        <div style={{fontSize:13,color:"#94A3B8",marginBottom:18}}>Enter your admin password to continue.</div>
+        <label htmlFor="admin-pw" style={{display:"block",fontSize:12,fontWeight:600,color:"#CBD5E1",marginBottom:6}}>Password</label>
+        <input id="admin-pw" type="password" autoFocus value={pw} onChange={function(e){setPw(e.target.value);}} onKeyDown={function(e){if(e.key==="Enter")go();}} style={{width:"100%",height:44,padding:"0 12px",borderRadius:10,border:"1px solid #475569",background:"#0F172A",color:"#F8FAFC",fontSize:16,fontFamily:"inherit",boxSizing:"border-box"}} />
+        {err ? <div role="alert" style={{fontSize:13,color:"#FCA5A5",marginTop:10}}>{err}</div> : null}
+        <button type="button" onClick={go} disabled={busy||!pw} style={{width:"100%",height:44,marginTop:16,border:"none",borderRadius:10,background:busy||!pw?"#475569":"#0EA5E9",color:"#FFF",fontSize:15,fontWeight:700,cursor:busy||!pw?"default":"pointer",fontFamily:"inherit"}}>{busy ? "Checking..." : "Sign in"}</button>
+      </div>
+    </div>
+  );
+}
+
+// Shows the partner's uploaded logo, or the fallback emoji when there isn't one.
+function LogoMark(props) {
+  var size = props.size || 36;
+  if (props.p.logoUrl) {
+    return <img src={props.p.logoUrl} alt="" style={{width:size,height:size,objectFit:"contain",background:"#fff",borderRadius:Math.round(size*0.28),border:"1px solid #E2E8F0",padding:Math.round(size*0.12),boxSizing:"border-box",display:"block"}} />;
+  }
+  return <span style={{fontSize:Math.round(size*0.6)}}>{props.p.logo}</span>;
+}
 
 function EditModal({partner, onSave, onClose}) {
   var [form, setForm] = useState(Object.assign({priority:3,boost:0,pinned:false,featured:false,customTag:"",features:"",bestFor:"budget"}, partner));
   var [tab, setTab] = useState("basic");
+  var [logoErr, setLogoErr] = useState("");
   var update = function(field, val) { setForm(function(f) { var n = Object.assign({}, f); n[field] = val; return n; }); };
   var labelSt = {fontSize:11,fontWeight:600,color:"#64748B",display:"block",marginBottom:4,textTransform:"uppercase",letterSpacing:.5};
   var inputSt = {width:"100%",padding:"10px 12px",border:"1.5px solid #E2E8F0",borderRadius:10,fontSize:14,fontFamily:"inherit",outline:"none",boxSizing:"border-box"};
+  // Reads an uploaded logo, shrinks it (so saved data stays small), and stores it on the partner.
+  var onPickLogo = function(e) {
+    var file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    setLogoErr("");
+    if (file.size > 2 * 1024 * 1024) { setLogoErr("That file is over 2 MB. Choose a smaller image."); return; }
+    var reader = new FileReader();
+    reader.onerror = function() { setLogoErr("Couldn't read that file."); };
+    reader.onload = function() {
+      var dataUrl = reader.result;
+      if (file.type === "image/svg+xml") {
+        if (dataUrl.length > 150000) { setLogoErr("That SVG is too large. Use a simpler SVG or a PNG."); return; }
+        update("logoUrl", dataUrl);
+        return;
+      }
+      var img = new Image();
+      img.onerror = function() { setLogoErr("That doesn't look like a valid image."); };
+      img.onload = function() {
+        var scale = Math.min(1, 240 / Math.max(img.width, img.height));
+        var w = Math.max(1, Math.round(img.width * scale));
+        var h = Math.max(1, Math.round(img.height * scale));
+        var c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        update("logoUrl", c.toDataURL("image/png"));
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  };
   var tabBtnSt = function(active) { return {padding:"7px 14px",borderRadius:8,border:"none",background:active?"#0F172A":"transparent",color:active?"#FFF":"#94A3B8",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",transition:"all .2s"}; };
 
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(15,23,42,.6)",backdropFilter:"blur(4px)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
       <div style={{background:"#FFF",borderRadius:16,maxWidth:520,width:"100%",boxShadow:"0 25px 60px rgba(0,0,0,.2)",overflow:"hidden",maxHeight:"90vh",display:"flex",flexDirection:"column"}}>
         <div style={{padding:"20px 24px",borderBottom:"1px solid #F1F5F9",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
-          <div style={{fontSize:17,fontWeight:700,color:"#0F172A"}}>{form.logo} Edit Partner</div>
+          <div style={{fontSize:17,fontWeight:700,color:"#0F172A",display:"flex",alignItems:"center",gap:10}}><LogoMark p={form} size={28} /> Edit Partner</div>
           <button onClick={onClose} style={{background:"#F1F5F9",border:"none",borderRadius:8,width:32,height:32,fontSize:16,cursor:"pointer",color:"#64748B"}}>✕</button>
         </div>
 
@@ -44,8 +128,28 @@ function EditModal({partner, onSave, onClose}) {
                 <div><label style={labelSt}>Partner Name</label><input value={form.name} onChange={function(e){update("name",e.target.value);}} style={inputSt} /></div>
                 <div><label style={labelSt}>Badge Text</label><input value={form.badge} onChange={function(e){update("badge",e.target.value);}} style={inputSt} /></div>
               </div>
+              <div>
+                <label style={labelSt}>Logo</label>
+                <div style={{display:"flex",alignItems:"center",gap:14}}>
+                  <div style={{width:68,height:68,borderRadius:14,border:"1.5px dashed #CBD5E1",background:"#F8FAFC",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <LogoMark p={form} size={52} />
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                      <label style={{padding:"8px 14px",borderRadius:10,background:"#0F172A",color:"#FFF",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+                        {form.logoUrl ? "Replace logo" : "Upload logo"}
+                        <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={onPickLogo} style={{display:"none"}} />
+                      </label>
+                      {form.logoUrl ? <button type="button" onClick={function(){update("logoUrl","");setLogoErr("");}} style={{padding:"8px 14px",borderRadius:10,border:"1.5px solid #E2E8F0",background:"#FFF",color:"#64748B",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Remove</button> : null}
+                    </div>
+                    <div style={{fontSize:11,color:"#94A3B8",marginTop:6,lineHeight:1.5}}>PNG, JPG, WebP or SVG. Square and wide logos both work. Use the logo file the advertiser gave you.</div>
+                    {logoErr ? <div style={{fontSize:12,color:"#DC2626",marginTop:4}}>{logoErr}</div> : null}
+                  </div>
+                </div>
+                <input value={form.logoUrl && form.logoUrl.indexOf("data:") === 0 ? "" : (form.logoUrl || "")} onChange={function(e){update("logoUrl",e.target.value.trim());}} placeholder="Or paste an image URL (https://...)" style={Object.assign({},inputSt,{marginTop:10,fontSize:13})} />
+              </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
-                <div><label style={labelSt}>Logo Emoji</label><input value={form.logo} onChange={function(e){update("logo",e.target.value);}} style={inputSt} /></div>
+                <div><label style={labelSt}>Fallback Emoji</label><input value={form.logo} onChange={function(e){update("logo",e.target.value);}} style={inputSt} /></div>
                 <div>
                   <label style={labelSt}>Brand Color</label>
                   <div style={{display:"flex",gap:8,alignItems:"center"}}>
@@ -55,6 +159,19 @@ function EditModal({partner, onSave, onClose}) {
                 </div>
               </div>
               <div><label style={labelSt}>Redirect / Quote Link</label><input value={form.link} onChange={function(e){update("link",e.target.value);}} placeholder="https://..." style={Object.assign({},inputSt,{fontSize:13})} /></div>
+
+              <div style={{background:form.supportsPrefill?"#F0FDF4":"#FFFBEB",border:"1.5px solid "+(form.supportsPrefill?"#BBF7D0":"#FDE68A"),borderRadius:12,padding:14}}>
+                <label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer"}}>
+                  <input type="checkbox" checked={form.supportsPrefill||false} onChange={function(e){update("supportsPrefill",e.target.checked);}} style={{width:18,height:18,marginTop:2,accentColor:"#059669",flexShrink:0}} />
+                  <div>
+                    <div style={{fontSize:13,fontWeight:700,color:form.supportsPrefill?"#166534":"#92400E"}}>{form.supportsPrefill ? "✅ Pre-fill Verified" : "⚠️ Pre-fill Not Verified"}</div>
+                    <div style={{fontSize:10.5,color:form.supportsPrefill?"#166534":"#92400E",opacity:.8,marginTop:3,lineHeight:1.5}}>
+                      Only check this once you've manually confirmed their form actually reads your URL params and pre-fills name/phone/zip. Test by opening their link with ?first_name=Test&zip=10001 appended. Until verified, the chatbot shows honest "opens in a new tab" copy instead of promising pre-filled details.
+                    </div>
+                  </div>
+                </label>
+              </div>
+
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
                 <div><label style={labelSt}>CPL Payout ($)</label><input type="number" step="0.50" value={form.payout} onChange={function(e){update("payout",parseFloat(e.target.value)||0);}} style={inputSt} /></div>
                 <div><label style={labelSt}>Rating (1-5)</label><input type="number" step="0.1" min="1" max="5" value={form.rating} onChange={function(e){update("rating",parseFloat(e.target.value)||4);}} style={inputSt} /></div>
@@ -163,7 +280,7 @@ function EditModal({partner, onSave, onClose}) {
                       <div style={{background:"linear-gradient(135deg,"+form.bc+"10,"+form.bc+"04)",padding:form.customTag||form.featured?"18px 12px 8px":"10px 12px 8px",borderBottom:"1px solid #F3F4F6"}}>
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
                           <div style={{display:"flex",alignItems:"center",gap:6}}>
-                            <span style={{fontSize:20}}>{form.logo}</span>
+                            <LogoMark p={form} size={30} />
                             <div>
                               <div style={{fontSize:13,fontWeight:700,color:"#111"}}>{form.name}</div>
                               <div style={{fontSize:9,color:"#6B7280"}}>{form.rating} ★</div>
@@ -209,7 +326,7 @@ function LivePreviewCard({p, idx}) {
       <div style={{background:"linear-gradient(135deg,"+p.bc+"10,"+p.bc+"04)",padding:(p.customTag||p.featured)?"16px 12px 8px":"10px 12px 8px",borderBottom:"1px solid #F3F4F6"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <span style={{fontSize:20}}>{p.logo}</span>
+            <LogoMark p={p} size={30} />
             <div>
               <div style={{fontSize:12.5,fontWeight:700,color:"#111"}}>{p.name}</div>
               <div style={{display:"flex",alignItems:"center",gap:1}}>
@@ -244,29 +361,64 @@ export default function Dashboard() {
   var [editing, setEditing] = useState(null);
   var [tab, setTab] = useState("partners");
   var [loaded, setLoaded] = useState(false);
+  var [token, setTokenState] = useState(PREVIEW_MODE ? "preview" : getToken());
+  var [saveState, setSaveState] = useState("");
+  var [loadErr, setLoadErr] = useState("");
+  var [storageOk, setStorageOk] = useState(true);
+  var firstSave = useRef(true);
 
-  // Load from persistent storage
+  // Load partners (shared storage in the preview, your backend on a live site)
   useEffect(function() {
+    if (!token) return;
     async function load() {
+      if (PREVIEW_MODE) {
+        try {
+          var result = await window.storage.get(STORAGE_KEY, SHARED);
+          if (result && result.value) setPartners(JSON.parse(result.value));
+        } catch(e) { /* first load, use defaults */ }
+        setLoaded(true);
+        return;
+      }
       try {
-        var result = await window.storage.get(STORAGE_KEY, SHARED);
-        if (result && result.value) {
-          setPartners(JSON.parse(result.value));
-        }
-      } catch(e) { /* first load, use defaults */ }
-      setLoaded(true);
+        var r = await fetch(API_BASE + "/api/partners?admin=1", { headers: { Authorization: "Bearer " + token } });
+        if (r.status === 401) { putToken(""); setTokenState(""); return; }
+        var j = await r.json();
+        if (!r.ok) throw new Error(j.error || "load failed");
+        setStorageOk(j.storage !== false);
+        setPartners(j.partners && j.partners.length ? j.partners : SEED_PARTNERS);
+        setLoadErr("");
+        setLoaded(true);
+      } catch (e) {
+        setLoadErr("Couldn't load your partners. Check your backend address in config.js and that storage is connected, then refresh. Nothing was changed.");
+      }
     }
     load();
-  }, []);
+  }, [token]);
 
-  // Save to persistent storage whenever partners change
+  // Save whenever partners change (never before a successful load, so nothing gets overwritten)
   useEffect(function() {
     if (!loaded) return;
-    async function save() {
-      try { await window.storage.set(STORAGE_KEY, JSON.stringify(partners), SHARED); } catch(e) { console.error(e); }
+    if (PREVIEW_MODE) {
+      (async function() { try { await window.storage.set(STORAGE_KEY, JSON.stringify(partners), SHARED); } catch(e) { console.error(e); } })();
+      return;
     }
-    save();
+    if (firstSave.current) { firstSave.current = false; return; }
+    setSaveState("saving");
+    var t = setTimeout(async function() {
+      try {
+        var r = await fetch(API_BASE + "/api/partners", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify({ partners: partners })
+        });
+        if (r.status === 401) { putToken(""); setTokenState(""); return; }
+        setSaveState(r.ok ? "saved" : "error");
+      } catch (e) { setSaveState("error"); }
+    }, 700);
+    return function() { clearTimeout(t); };
   }, [partners, loaded]);
+
+  var signOut = function() { putToken(""); setTokenState(""); setLoaded(false); firstSave.current = true; };
 
   var handleSave = function(updated) {
     setPartners(function(prev) {
@@ -276,7 +428,7 @@ export default function Dashboard() {
   };
 
   var addPartner = function() {
-    var newP = {id:"p"+Date.now(),name:"New Partner",logo:"🏢",badge:"NEW",bc:"#6366F1",rating:4.0,payout:5.00,link:"https://",enabled:false,leads:0,revenue:0,cr:0,priority:3,boost:0,pinned:false,featured:false,customTag:"",features:"",bestFor:"budget"};
+    var newP = {id:"p"+Date.now(),name:"New Partner",logo:"🏢",badge:"NEW",bc:"#6366F1",rating:4.0,payout:5.00,link:"https://",enabled:false,leads:0,revenue:0,cr:0,priority:3,boost:0,pinned:false,featured:false,customTag:"",features:"",bestFor:"budget",supportsPrefill:false,logoUrl:""};
     setPartners(function(prev) { return prev.concat([newP]); });
     setEditing(newP);
   };
@@ -300,6 +452,8 @@ export default function Dashboard() {
     var scoreB = (b.priority || 3) - (b.boost || 0) * 0.1;
     return scoreA - scoreB;
   });
+  if (!token) return <Login onSignedIn={function(pw){ setTokenState(pw); }} />;
+
   var totalRevenue = partners.reduce(function(s,p){return s+p.revenue;},0);
   var totalLeads = partners.reduce(function(s,p){return s+p.leads;},0);
 
@@ -313,7 +467,7 @@ export default function Dashboard() {
           <div style={{width:32,height:32,borderRadius:8,background:"linear-gradient(135deg,#0EA5E9,#06D6A0)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>🧞</div>
           <div>
             <div style={{fontSize:15,fontWeight:700,color:"#F8FAFC"}}>AI InsureGenie</div>
-            <div style={{fontSize:10,color:"#94A3B8"}}>Lead Distribution Dashboard</div>
+            <div style={{fontSize:10,color:"#94A3B8"}}>Lead Distribution Dashboard{!PREVIEW_MODE && saveState ? " - " + (saveState === "saving" ? "Saving..." : saveState === "saved" ? "All changes saved" : "Couldn't save. Check your connection.") : ""}</div>
           </div>
         </div>
         <div style={{display:"flex",gap:16,alignItems:"center"}}>
@@ -345,11 +499,14 @@ export default function Dashboard() {
               return <button key={t} onClick={function(){setTab(t);}} className={tab===t?"tab-active":""} style={{padding:"7px 16px",borderRadius:8,border:"none",background:tab===t?undefined:"transparent",color:tab===t?"#FFF":"#94A3B8",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",textTransform:"capitalize",transition:"all .2s"}}>{t}</button>;
             })}
             <div style={{flex:1}} />
+            {!PREVIEW_MODE ? <button onClick={signOut} style={{padding:"7px 14px",borderRadius:8,border:"none",background:"transparent",color:"#94A3B8",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Sign out</button> : null}
             <button onClick={addPartner} style={{padding:"7px 14px",borderRadius:8,border:"1.5px dashed #475569",background:"transparent",color:"#0EA5E9",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>+ Add Partner</button>
           </div>
 
           {/* Partner List */}
           <div style={{flex:1,overflowY:"auto",padding:16}}>
+            {loadErr ? <div role="alert" style={{background:"#7F1D1D",color:"#FECACA",borderRadius:10,padding:"10px 14px",fontSize:12,lineHeight:1.5,marginBottom:12}}>{loadErr}</div> : null}
+            {!storageOk ? <div role="alert" style={{background:"#78350F",color:"#FDE68A",borderRadius:10,padding:"10px 14px",fontSize:12,lineHeight:1.5,marginBottom:12}}>Storage isn't connected yet, so changes can't be saved. In Vercel, open your backend project, go to Storage, and add an Upstash Redis database.</div> : null}
             {tab === "partners" && (
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
                 {partners.map(function(p) {
@@ -357,7 +514,7 @@ export default function Dashboard() {
                     <div key={p.id} className="ptr" style={{background:"#1E293B",borderRadius:12,padding:14,border:"1px solid #334155",transition:"all .2s",opacity:p.enabled?1:.5}}>
                       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
                         <div style={{display:"flex",alignItems:"center",gap:10}}>
-                          <div style={{width:36,height:36,borderRadius:10,background:p.bc+"20",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,border:"1px solid "+p.bc+"30"}}>{p.logo}</div>
+                          <div style={{width:36,height:36,borderRadius:10,background:p.logoUrl?"#FFF":p.bc+"20",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,border:"1px solid "+p.bc+"30",overflow:"hidden"}}>{p.logoUrl ? <img src={p.logoUrl} alt="" style={{width:"100%",height:"100%",objectFit:"contain",padding:4,boxSizing:"border-box"}} /> : p.logo}</div>
                           <div>
                             <div style={{fontSize:14,fontWeight:700,color:"#F1F5F9"}}>{p.name}</div>
                             <div style={{fontSize:10,color:"#64748B",fontFamily:"'JetBrains Mono',monospace",marginTop:2}}>{p.link.replace("https://","").substring(0,35)}</div>
@@ -365,6 +522,7 @@ export default function Dashboard() {
                         </div>
                         <div style={{display:"flex",alignItems:"center",gap:6}}>
                           <span style={{background:p.enabled?"#059669":"#475569",color:"#FFF",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:12}}>{p.enabled?"LIVE":"OFF"}</span>
+                          <span title="Pre-fill support status" style={{background:p.supportsPrefill?"#059669":"#78350F",color:"#FFF",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:12}}>{p.supportsPrefill?"✅ Prefill":"⚠️ No Prefill"}</span>
                           {p.pinned && <span style={{background:"#0EA5E9",color:"#FFF",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:12}}>📌 #1</span>}
                           {p.featured && <span style={{background:"#F59E0B",color:"#FFF",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:12}}>⭐</span>}
                           {(p.boost||0) > 0 && <span style={{background:"#7C3AED",color:"#FFF",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:12}}>+{p.boost}</span>}

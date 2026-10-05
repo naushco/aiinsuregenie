@@ -1,130 +1,103 @@
-// api/leads.js — Vercel Serverless Function for lead submission
-const { v4: uuidv4 } = require("uuid");
+// api/leads.js: receives a finished lead from the chatbot and stores it.
+//
+// Where a lead goes (use either or both):
+//   - Storage (Upstash Redis from Vercel's Storage tab): kept so you can see it in the dashboard
+//   - LEAD_WEBHOOK_URL (Zapier, Make, Slack, Google Sheets...): sent to wherever you work
+// If NEITHER is set up this endpoint refuses leads, so a lead is never silently lost.
+const crypto = require("crypto");
+const { kv, kvConfigured } = require("../lib/kv");
+const { cors, ip } = require("../lib/http");
 
-// Simple in-memory + file storage for leads
-const fs = require("fs");
-const path = require("path");
-
-function getDB() {
-  try {
-    var f = path.join("/tmp", "leads.json");
-    if (fs.existsSync(f)) return JSON.parse(fs.readFileSync(f, "utf8"));
-  } catch(e) {}
-  return { leads: [], consent_log: [], buyer_responses: [] };
+var hits = {};
+function rateLimited(who) {
+  var now = Date.now();
+  hits[who] = (hits[who] || []).filter(function (t) { return now - t < 60000; });
+  if (hits[who].length >= 20) return true;
+  hits[who].push(now);
+  return false;
 }
-
-function saveDB(db) {
-  try { fs.writeFileSync(path.join("/tmp", "leads.json"), JSON.stringify(db)); } catch(e) {}
-}
+function text(v, n) { return v == null ? null : String(v).trim().slice(0, n); }
 
 module.exports = async function handler(req, res) {
-  // CORS
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  cors(req, res, "POST, OPTIONS");
   if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "POST") return res.status(405).json({ success: false, error: "Method not allowed" });
 
-  if (req.method === "POST") {
-    try {
-      var data = req.body;
-      var errors = [];
-      if (!data.first_name || data.first_name.trim().length < 2) errors.push("first_name required");
-      if (!data.phone) errors.push("phone required");
-      if (!data.email) errors.push("email required");
-      if (!data.consent_text) errors.push("consent_text required");
-      if (errors.length > 0) return res.status(400).json({ success: false, errors: errors });
-
-      // Normalize phone
-      var phone = (data.phone || "").replace(/\D/g, "");
-      if (phone.length === 11 && phone[0] === "1") phone = phone.slice(1);
-
-      // Check duplicates
-      var db = getDB();
-      var cutoff = new Date(Date.now() - 72 * 3600000).toISOString();
-      var dup = db.leads.find(function(l) { return (l.phone === phone || l.email === data.email) && l.created_at > cutoff; });
-      if (dup) return res.status(409).json({ success: false, error: "duplicate", message: "Duplicate lead within 72hrs" });
-
-      // Create lead
-      var leadId = uuidv4();
-      var lead = {
-        id: leadId,
-        created_at: new Date().toISOString(),
-        status: "new",
-        first_name: data.first_name,
-        phone: phone,
-        email: (data.email || "").trim().toLowerCase(),
-        zip: data.zip || null,
-        state: data.state || null,
-        age: data.age || null,
-        vehicle_year: data.vehicle_year || null,
-        vehicle_make: data.vehicle_make || null,
-        coverage: data.coverage || null,
-        driving_record: data.driving_record || null,
-        currently_insured: data.currently_insured || null,
-        current_insurer: data.current_insurer || null,
-        homeowner: data.homeowner || null,
-        military: data.military || null,
-        multi_car: data.multi_car || null,
-        priority: data.priority || null,
-        publisher_id: data.publisher_id || "direct",
-        sub_id: data.sub_id || null,
-        utm_source: data.utm_source || "aiinsuregenie",
-        utm_medium: data.utm_medium || "chatbot",
-        utm_campaign: data.utm_campaign || null,
-        ip_address: req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || "unknown",
-        total_revenue: 0,
-        buyers_accepted: 0,
-        buyers_rejected: 0,
-      };
-
-      db.leads.push(lead);
-
-      // Log consent
-      db.consent_log.push({
-        lead_id: leadId,
-        consent_text: data.consent_text,
-        consent_timestamp: data.consent_timestamp,
-        ip_address: lead.ip_address,
-        disclosed_buyers: data.disclosed_buyers || "Insurance partners",
-        created_at: new Date().toISOString(),
-      });
-
-      saveDB(db);
-
-      // TODO: Add buyer API posting here when you have real buyer endpoints
-      // For now, log the lead and return success
-      console.log("NEW LEAD:", leadId, lead.first_name, lead.phone, lead.zip, lead.state);
-
-      return res.status(200).json({
-        success: true,
-        lead_id: leadId,
-        distribution: {
-          mode: "hybrid",
-          total_revenue: 0,
-          accepted_buyers: [],
-          rejected_count: 0,
-        },
-        message: "Lead received successfully",
-      });
-    } catch (err) {
-      console.error("Lead error:", err);
-      return res.status(500).json({ success: false, error: "Internal error" });
-    }
+  var webhook = process.env.LEAD_WEBHOOK_URL;
+  if (!kvConfigured() && !webhook) {
+    return res.status(503).json({ success: false, error: "Lead storage is not set up yet." });
   }
+  var who = ip(req);
+  if (rateLimited(who)) return res.status(429).json({ success: false, error: "Too many requests." });
 
-  if (req.method === "GET") {
-    // Get lead by ID (query param)
-    var id = req.query.id;
-    if (id) {
-      var db2 = getDB();
-      var lead2 = db2.leads.find(function(l) { return l.id === id; });
-      if (!lead2) return res.status(404).json({ error: "Lead not found" });
-      return res.json({ lead: lead2 });
+  var d = req.body || {};
+  var errors = [];
+  var first = text(d.first_name, 40) || "";
+  var phone = String(d.phone || "").replace(/\D/g, "");
+  if (phone.length === 11 && phone[0] === "1") phone = phone.slice(1);
+  var email = (text(d.email, 120) || "").toLowerCase();
+  if (first.length < 2) errors.push("first_name is required");
+  if (phone.length !== 10 || "01".indexOf(phone[0]) !== -1) errors.push("a valid US phone is required");
+  if (!/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(email)) errors.push("a valid email is required");
+  if (!d.consent_text || !d.consent_timestamp) errors.push("consent is required");
+  if (errors.length) return res.status(400).json({ success: false, errors: errors });
+
+  var id = crypto.randomUUID();
+  var lead = {
+    id: id,
+    created_at: new Date().toISOString(),
+    first_name: first, phone: phone, email: email,
+    zip: text(d.zip, 5), state: text(d.state, 2), age: d.age || null,
+    vehicle_year: text(d.vehicle_year, 10), vehicle_make: text(d.vehicle_make, 40),
+    coverage: text(d.coverage, 20), driving_record: text(d.driving_record, 20),
+    currently_insured: text(d.currently_insured, 5), current_insurer: text(d.current_insurer, 60),
+    homeowner: text(d.homeowner, 5), military: text(d.military, 5), multi_car: text(d.multi_car, 5), priority: text(d.priority, 20),
+    publisher_id: text(d.publisher_id, 60) || "direct", sub_id: text(d.sub_id, 80),
+    utm_source: text(d.utm_source, 60), utm_medium: text(d.utm_medium, 60), utm_campaign: text(d.utm_campaign, 80),
+    landing_page: text(d.landing_page, 300),
+    // Consent record: the exact wording the person saw, when, and from where
+    consent_text: text(d.consent_text, 1200), consent_timestamp: text(d.consent_timestamp, 40),
+    disclosed_partners: text(d.disclosed_buyers, 600),
+    ip_address: who, user_agent: text(req.headers["user-agent"], 200)
+  };
+
+  try {
+    // Duplicate check (same phone or email within 72 hours)
+    if (kvConfigured()) {
+      var ttl = String(72 * 3600);
+      var p = await kv(["SET", "dup:p:" + phone, id, "NX", "EX", ttl]);
+      var e = await kv(["SET", "dup:e:" + email, id, "NX", "EX", ttl]);
+      if (p === null || e === null) return res.status(409).json({ success: false, error: "duplicate" });
     }
-    // Return recent leads count
-    var db3 = getDB();
-    return res.json({ total_leads: db3.leads.length, message: "AI InsureGenie Lead API" });
-  }
 
-  return res.status(405).json({ error: "Method not allowed" });
+    var stored = false, forwarded = false;
+    if (kvConfigured()) {
+      try {
+        await kv(["SET", "lead:" + id, JSON.stringify(lead)]);
+        await kv(["LPUSH", "leads", id]);
+        await kv(["LTRIM", "leads", "0", "4999"]);
+        stored = true;
+      } catch (err) { console.error("store failed:", err && err.message); }
+    }
+    if (webhook) {
+      try {
+        var controller = new AbortController();
+        var timer = setTimeout(function () { controller.abort(); }, 8000);
+        var r = await fetch(webhook, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(Object.assign({ text: "New lead: " + first + ", " + phone + ", " + (lead.state || "") + " " + (lead.zip || "") }, lead)),
+          signal: controller.signal
+        });
+        clearTimeout(timer);
+        forwarded = r.ok;
+        if (!r.ok) console.error("lead webhook responded", r.status);
+      } catch (err) { console.error("lead webhook failed:", err && err.message); }
+    }
+
+    if (!stored && !forwarded) return res.status(502).json({ success: false, error: "Could not save the lead." });
+    return res.status(200).json({ success: true, lead_id: id });
+  } catch (err) {
+    console.error("lead error:", err && err.message);
+    return res.status(500).json({ success: false, error: "Something went wrong." });
+  }
 };
