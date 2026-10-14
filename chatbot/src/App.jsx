@@ -73,6 +73,9 @@ var INSURERS = IS_PREVIEW ? DEFAULT_INSURERS : [];
 
 const ZIP_STATES = {"AL":[35000,36999],"AK":[99500,99999],"AZ":[85000,86599],"AR":[71600,72999],"CA":[90000,96699],"CO":[80000,81699],"CT":[6000,6999],"DE":[19700,19999],"FL":[32000,34999],"GA":[30000,31999],"HI":[96700,96899],"ID":[83200,83899],"IL":[60000,62999],"IN":[46000,47999],"IA":[50000,52899],"KS":[66000,67999],"KY":[40000,42799],"LA":[70000,71499],"ME":[3900,4999],"MD":[20600,21999],"MA":[1000,2799],"MI":[48000,49999],"MN":[55000,56799],"MS":[38600,39799],"MO":[63000,65899],"MT":[59000,59999],"NE":[68000,69399],"NV":[88900,89899],"NH":[3000,3899],"NJ":[7000,8999],"NM":[87000,88499],"NY":[10000,14999],"NC":[27000,28999],"ND":[58000,58899],"OH":[43000,45999],"OK":[73000,74999],"OR":[97000,97999],"PA":[15000,19699],"RI":[2800,2999],"SC":[29000,29999],"SD":[57000,57799],"TN":[37000,38599],"TX":[75000,79999],"UT":[84000,84799],"VT":[5000,5999],"VA":[22000,24699],"WA":[98000,99499],"WV":[24700,26899],"WI":[53000,54999],"WY":[82000,83199],"DC":[20000,20599]};
 
+var STATE_ABBR = {"alabama":"AL","alaska":"AK","arizona":"AZ","arkansas":"AR","california":"CA","colorado":"CO","connecticut":"CT","delaware":"DE","district of columbia":"DC","florida":"FL","georgia":"GA","hawaii":"HI","idaho":"ID","illinois":"IL","indiana":"IN","iowa":"IA","kansas":"KS","kentucky":"KY","louisiana":"LA","maine":"ME","maryland":"MD","massachusetts":"MA","michigan":"MI","minnesota":"MN","mississippi":"MS","missouri":"MO","montana":"MT","nebraska":"NE","nevada":"NV","new hampshire":"NH","new jersey":"NJ","new mexico":"NM","new york":"NY","north carolina":"NC","north dakota":"ND","ohio":"OH","oklahoma":"OK","oregon":"OR","pennsylvania":"PA","rhode island":"RI","south carolina":"SC","south dakota":"SD","tennessee":"TN","texas":"TX","utah":"UT","vermont":"VT","virginia":"VA","washington":"WA","west virginia":"WV","wisconsin":"WI","wyoming":"WY"};
+var CAR_AGE_YEAR = { "2020 or newer": "2022", "2015 to 2019": "2017", "2014 or older": "2012" };
+
 function vZip(z) {
   var m = String(z).match(/\b\d{5}\b/);
   var c = m ? m[0] : String(z).replace(/\D/g, "");
@@ -263,8 +266,8 @@ function buildUrl(ins, p) {
 
 var STEPS = [
   {id:"pri",f:"priority",q:"What matters most to you?",t:"qr",opts:["Lowest price","Best coverage","Best service"],cond:function(p){return !p.priority;},ps:function(v){var l=v.toLowerCase();if(l.includes("price")||l.includes("low")||l.includes("cheap"))return "price";if(l.includes("cover"))return "coverage";return "service";}},
-  {id:"zip",f:"zip",q:"What's your ZIP code?",t:"text",ph:"5-digit US ZIP",vl:vZip,cond:function(p){return !p.zip;}},
-  {id:"vyear",f:"vehicleYear",q:"What year is your car?",t:"qr",opts:["2024-2025","2020-2023","2015-2019","2010-2014","Before 2010"],ps:function(v){var y=v.match(/\b(19|20)\d{2}\b/);if(y&&v.indexOf("-")<0)return y[0];if(v.includes("2024"))return "2024";if(v.includes("2020"))return "2022";if(v.includes("2015"))return "2017";if(v.includes("2010"))return "2012";if(v.includes("Before"))return "2008";return v;}},
+  {id:"zip",f:"zip",q:"What's your ZIP code?",t:"text",ph:"5-digit US ZIP",vl:vZip,cond:function(p){return !p.zip && !p.state;}},
+  {id:"vyear",f:"vehicleYear",q:"What year is your car?",t:"qr",cond:function(p){return !p.vehicleYear;},opts:["2024-2025","2020-2023","2015-2019","2010-2014","Before 2010"],ps:function(v){var y=v.match(/\b(19|20)\d{2}\b/);if(y&&v.indexOf("-")<0)return y[0];if(v.includes("2024"))return "2024";if(v.includes("2020"))return "2022";if(v.includes("2015"))return "2017";if(v.includes("2010"))return "2012";if(v.includes("Before"))return "2008";return v;}},
   {id:"vmake",f:"vehicleMake",q:"And what make is it?",t:"qr",opts:["Toyota","Honda","Ford","Chevrolet","Nissan","Other"]},
   {id:"vmake2",f:"vehicleMake",q:"What brand is your car?",t:"text",ph:"e.g. Hyundai, Kia, Subaru...",cond:function(p){return p.vehicleMake==="Other";}},
   {id:"drv",f:"driving",q:"Last one: how's your driving record over the past 3 years?",t:"qr",opts:["Clean, no issues","1-2 tickets","An accident","DUI / SR-22"],ps:function(v){var l=v.toLowerCase();if(l.includes("clean"))return "clean";if(l.includes("ticket"))return "minor";if(l.includes("accident"))return "major";return "dui";}},
@@ -673,7 +676,15 @@ export default function AIInsureGenie() {
     var start = Object.assign({}, pro, extra || {});
     if (extra) setPro(start);
     setPhase("qualifying"); setTyp(true);
-    setTimeout(function(){bot("Great! A few quick questions and I'll point you to the partner that fits you best. Ask me anything along the way.");setTyp(false);setTimeout(function(){advQ(0,start);},500);},500);
+    var got = [];
+    if (extra && extra.priority) got.push("your goal");
+    if (extra && extra.state) got.push("your state");
+    if (extra && extra.vehicleYear) got.push("your car's age");
+    if (got.length) setCs(got.length);
+    var intro = got.length
+      ? "Thanks! I've got " + (got.length > 1 ? got.slice(0, -1).join(", ") + " and " + got[got.length - 1] : got[0]) + " from the website, so I won't ask again. Just a few more quick questions."
+      : "Great! A few quick questions and I'll point you to the partner that fits you best. Ask me anything along the way.";
+    setTimeout(function(){bot(intro);setTyp(false);setTimeout(function(){advQ(0,start);},500);},500);
   };
   var startChat = function() {
     setPhase("chat"); setTyp(true);
@@ -882,9 +893,14 @@ export default function AIInsureGenie() {
     try { window.history.replaceState(null, "", window.location.pathname + window.location.search); } catch (e) {}
     var t = setTimeout(function() {
       var goal = p.get("goal");
-      var extra = (goal === "price" || goal === "coverage") ? { priority: goal } : null;
+      var stName = (p.get("state") || "").trim(), st = STATE_ABBR[stName.toLowerCase()];
+      var car = (p.get("car") || "").trim(), yr = CAR_AGE_YEAR[car];
+      var extra = {}, said = [];
+      if (goal === "price" || goal === "coverage") { extra.priority = goal; said.push(goal === "price" ? "Lowest price" : "Best coverage"); }
+      if (st) { extra.state = st; said.push(stName); }
+      if (yr) { extra.vehicleYear = yr; said.push("car " + car); }
       if (q) { setPhase("chat"); handleChat(q); }
-      else if (start === "quote") { usr("Get instant quote"); startQ(extra); }
+      else if (start === "quote") { usr(said.length ? said.join(", ") : "Get instant quote"); startQ(said.length ? extra : null); }
       else if (start === "ask") { usr("I have a question"); startChat(); }
       else if (start === "agent") { setShowCall(true); }
     }, 350);
