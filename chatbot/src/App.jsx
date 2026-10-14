@@ -428,19 +428,13 @@ var CSS_TEXT = [
   ".hd .hd-sub{color:var(--hero-mute)}.hd .dot{background:var(--hero-acc)}",
   ".hd .hd-btn{background:transparent;color:var(--hero-ink);border-color:rgba(238,246,242,.34)}.hd .hd-btn:hover{background:transparent;border-color:var(--hero-acc);color:var(--hero-acc)}",
   ".prog{background:var(--hero-line)}",
-  ".welcome{position:relative;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-top:16px;padding:20px;border:1px solid var(--line);border-radius:16px;background:var(--surface);overflow:hidden}",
-  ".welcome .art{display:block;width:100%;height:auto;max-height:180px;border-radius:12px;background:var(--scene)}",
-  ".welcome h1{margin:0;font-size:24px;line-height:1.2;font-weight:600;letter-spacing:-.02em}",
-  ".welcome h1 em{font-style:normal;background:linear-gradient(transparent 70%,var(--pop-t) 70%)}",
-  ".welcome p{margin:0;font-size:16px;line-height:1.5;color:var(--ink2)}",
-  ".w-ticks{display:flex;flex-wrap:wrap;gap:4px 16px;margin:0;padding:0;list-style:none;font-size:14px;color:var(--ink2)}",
-  ".w-ticks li{display:inline-flex;align-items:center;gap:6px}.w-ticks svg{color:var(--brand)}",
+  ".art-bub{width:min(320px,86%);border:1px solid var(--line);border-radius:12px;border-bottom-left-radius:4px;overflow:hidden;background:var(--scene)}",
+  ".art-bub .art{display:block;width:100%;height:auto}",
+  "@media (prefers-reduced-motion:no-preference){.art-bub .car{animation:drive .7s cubic-bezier(.16,1,.3,1) .15s both}}",
   ".top-pick{display:inline-flex;align-items:center;gap:4px;margin-bottom:12px;padding:2px 8px;border-radius:4px;background:var(--pop-t);color:var(--pop-ink);font-size:12px;font-weight:500;line-height:1.4}",
   ".top-pick svg{color:var(--pop-shade)}",
   ".quote.is-top{border-color:var(--brand)}",
-  "@media (prefers-reduced-motion:no-preference){.welcome .car{animation:drive .7s cubic-bezier(.16,1,.3,1) .15s both}}",
   "@keyframes drive{from{transform:translateX(-32px);opacity:0}to{transform:none;opacity:1}}",
-  "@media (min-width:768px){.welcome{grid-template-columns:minmax(0,1fr) minmax(0,.9fr);align-items:center;gap:24px;padding:24px}.welcome .art{grid-column:2;grid-row:1 / span 3;max-height:220px}.welcome h1{font-size:28px}}",
   "@media (min-width:768px){.ig{--card:var(--bg);--bot:var(--surface);padding:0;align-items:stretch}.ig-card{max-width:none;height:100vh;height:100dvh;border:0;border-radius:0;box-shadow:none;overflow:visible}.hd{padding:12px 24px}.log{padding:24px max(24px,calc((100% - 880px)/2))}.foot{padding:16px max(24px,calc((100% - 880px)/2)) calc(16px + env(safe-area-inset-bottom))}.bub{max-width:72%}.user .bub{max-width:66%}.quotes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}}",
   "@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}",
   "@keyframes blink{0%,60%,100%{opacity:.35}30%{opacity:1}}",
@@ -867,7 +861,8 @@ export default function AIInsureGenie() {
 
   var send = function(val) {
     var v = val || inp; if (!v.trim() || typ) return;
-    if (phase==="chat") handleChat(v);
+    if (phase==="welcome") { setPhase("chat"); handleChat(v); }
+    else if (phase==="chat") handleChat(v);
     else if (phase==="qualifying") handleQ(v);
     else if (phase==="pii") handlePII(v);
     else if (phase==="follow"||phase==="consent") handleFollow(v);
@@ -931,15 +926,12 @@ export default function AIInsureGenie() {
         </div>
 
         <div className="log" ref={logRef} role="log" aria-live="polite" aria-label="Conversation">
-          <section className="welcome" aria-label="Welcome">
-            <WelcomeArt />
-            <h1>Get the best auto insurance quote <em>for your needs</em></h1>
-            <p>Tell me what matters most, or just ask me anything in plain words.</p>
-            <ul className="w-ticks">
-              <li><Icon n="check" size={14} />Free, no obligation</li>
-              <li><Icon n="check" size={14} />Details shared only if you agree</li>
-            </ul>
-          </section>
+          <div className="row bot first">
+            <div className="who">AI InsureGenie</div>
+            <div className="art-bub" aria-hidden="true"><WelcomeArt /></div>
+            <div className="bub" style={{ marginTop: 4 }}>Hi! I help drivers get the best quote for their needs.</div>
+            <div className="bub" style={{ marginTop: 4 }}>What would you like to do? Tap an option below, or just tell me what's going on. It's free, and your details are only shared if you agree.</div>
+          </div>
           {(msgs.length === 0 || msgs[0].role === "user") ? <div className="time" style={{ alignSelf: "flex-start" }}>{startTime}</div> : null}
 
           {msgs.map(function(m, i) {
@@ -987,49 +979,47 @@ export default function AIInsureGenie() {
               <button type="button" className="chip" onClick={function(){ usr("I have a question"); startChat(); }}>Ask a question</button>
               <button type="button" className="chip" onClick={function(){ setShowCall(true); }}>Talk to an agent</button>
             </div>
-          ) : (
-            <div>
-              {qr && !typ ? (
-                <div className="chips" role="group" aria-label="Quick replies">
-                  {qr.map(function(o, i) { return <button type="button" key={i} className="chip" onClick={function(){ send(o); }}>{o}</button>; })}
-                </div>
-              ) : null}
+          ) : null}
 
-              {phase === "chat" && !typ ? (
-                <div className="chips">
-                  <button type="button" className="chip pri" onClick={function(){ usr("Get instant quote"); startQ(); }}>Get instant quote</button>
-                  {chatChips.map(function(s, i) { return <button type="button" key={i} className="chip" onClick={function(){ handleChat(s); }}>{s}</button>; })}
-                </div>
-              ) : null}
-
-              {phase === "follow" && !typ ? (
-                <div className="chips">
-                  {followChips.map(function(s, i) { return <button type="button" key={i} className="chip" onClick={function(){ handleFollow(s); }}>{s}</button>; })}
-                </div>
-              ) : null}
-
-              <div className="comp">
-                <input
-                  ref={inRef}
-                  value={inp}
-                  onChange={onType}
-                  onKeyDown={function(e){ if (e.key === "Enter") { e.preventDefault(); send(); } }}
-                  placeholder={composerPh}
-                  aria-label="Type your message"
-                  inputMode={kb.inputMode}
-                  autoComplete={kb.autoComplete}
-                  autoCapitalize={kb.autoCapitalize}
-                  enterKeyHint="send"
-                />
-                <button type="button" className="send" aria-label="Send message" onClick={function(){ send(); }} disabled={!inp.trim() || typ}>
-                  <Icon n="send" size={18} />
-                </button>
-              </div>
-              {(cur === "zip" || cur === "phone") && !fullKb ? (
-                <button type="button" className="linkbtn" onClick={openFullKeyboard}>Have a question instead? Show the full keyboard</button>
-              ) : null}
+          {phase !== "welcome" && qr && !typ ? (
+            <div className="chips" role="group" aria-label="Quick replies">
+              {qr.map(function(o, i) { return <button type="button" key={i} className="chip" onClick={function(){ send(o); }}>{o}</button>; })}
             </div>
-          )}
+          ) : null}
+
+          {phase === "chat" && !typ ? (
+            <div className="chips">
+              <button type="button" className="chip pri" onClick={function(){ usr("Get instant quote"); startQ(); }}>Get instant quote</button>
+              {chatChips.map(function(s, i) { return <button type="button" key={i} className="chip" onClick={function(){ handleChat(s); }}>{s}</button>; })}
+            </div>
+          ) : null}
+
+          {phase === "follow" && !typ ? (
+            <div className="chips">
+              {followChips.map(function(s, i) { return <button type="button" key={i} className="chip" onClick={function(){ handleFollow(s); }}>{s}</button>; })}
+            </div>
+          ) : null}
+
+          <div className="comp">
+            <input
+              ref={inRef}
+              value={inp}
+              onChange={onType}
+              onKeyDown={function(e){ if (e.key === "Enter") { e.preventDefault(); send(); } }}
+              placeholder={phase === "welcome" ? "Type a message..." : composerPh}
+              aria-label="Type your message"
+              inputMode={kb.inputMode}
+              autoComplete={kb.autoComplete}
+              autoCapitalize={kb.autoCapitalize}
+              enterKeyHint="send"
+            />
+            <button type="button" className="send" aria-label="Send message" onClick={function(){ send(); }} disabled={!inp.trim() || typ}>
+              <Icon n="send" size={18} />
+            </button>
+          </div>
+          {(cur === "zip" || cur === "phone") && !fullKb ? (
+            <button type="button" className="linkbtn" onClick={openFullKeyboard}>Have a question instead? Show the full keyboard</button>
+          ) : null}
           <div className="disc">
             <span>AI assistant, not a licensed agent. Prices are estimates.</span>{" "}
             <button type="button" className="disc-btn" aria-expanded={showDisc} aria-controls="disc-full" onClick={function(){ setShowDisc(!showDisc); }}>{showDisc ? "Hide details" : "Details"}</button>
