@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 var STORAGE_KEY = "aiinsuregenie-partners-v3";
 var SHARED = true; // Both dashboard and chatbot read from this
@@ -397,6 +397,113 @@ function LivePreviewCard({p, idx}) {
   );
 }
 
+
+// ---------------------------------------------------------------
+// Live chat preview: shows which partner the chat would recommend to a
+// sample driver, using the same rules as the live chat (goal, state,
+// pinned first, otherwise top picks rotate by share).
+// ---------------------------------------------------------------
+var PV_GOALS = { price: "Lowest price", coverage: "Best coverage", service: "Best service" };
+function previewChoice(partners, goal, state) {
+  var live = partners.filter(function (p) { return p.enabled && (p.placement || "top") !== "hidden" && p.link && /^https?:\/\//.test(p.link); });
+  var st = function (p) { return String(p.states || "").toUpperCase().split(/[^A-Z]+/).filter(function (x) { return x.length === 2; }); };
+  var pool = live.filter(function (p) {
+    var g = p.goals || [], ss = st(p);
+    return (!g.length || g.indexOf(goal) >= 0) && (!ss.length || ss.indexOf(state) >= 0);
+  });
+  var score = function (p) { return (p.pinned ? 1000 : 0) + (6 - (p.priority || 3)) * 5 + (p.boost || 0); };
+  pool.sort(function (a, b) { return score(b) - score(a); });
+  if (!pool.length) return { tops: [], others: [] };
+  var pinned = pool.filter(function (p) { return p.pinned; })[0];
+  var tops;
+  if (pinned) tops = [{ p: pinned, pct: 100 }];
+  else {
+    var cand = pool.filter(function (p) { return (p.placement || "top") === "top" && (p.weight == null ? 50 : p.weight) > 0; });
+    var total = cand.reduce(function (a, p) { return a + (p.weight == null ? 50 : p.weight); }, 0);
+    tops = total ? cand.map(function (p) { return { p: p, pct: Math.round((p.weight == null ? 50 : p.weight) / total * 100) }; }).sort(function (a, b) { return b.pct - a.pct; }) : [{ p: pool[0], pct: 100 }];
+  }
+  var lead = tops[0].p;
+  return { tops: tops, others: pool.filter(function (p) { return p.id !== lead.id; }) };
+}
+
+function ChatPreview({ partners }) {
+  var [goal, setGoal] = useState("price");
+  var [state, setState] = useState("VA");
+  var [shown, setShown] = useState(0);
+  var c = previewChoice(partners, goal, state);
+  var idx = Math.min(shown, Math.max(0, c.tops.length - 1));
+  var top = c.tops[idx];
+  var bub = { background: "#FFF", border: "1px solid rgba(16,38,31,.12)", padding: "8px 12px", borderRadius: "12px 12px 12px 4px", fontSize: 12, lineHeight: 1.5, color: "#10261f", maxWidth: "88%" };
+  var me = { alignSelf: "flex-end", background: "#0a6b50", color: "#FFF", padding: "8px 12px", borderRadius: "12px 12px 4px 12px", fontSize: 12, lineHeight: 1.5, maxWidth: "80%" };
+  var sel = { padding: "4px 6px", borderRadius: 6, border: "1px solid #CBD5E1", fontSize: 11, fontFamily: "inherit", background: "#FFF", color: "#0F172A" };
+  var feats = top ? String(top.p.features || "").split(",").map(function (f) { return f.trim(); }).filter(Boolean).slice(0, 3) : [];
+  return (
+    <div style={{ width: 380, display: "flex", flexDirection: "column", background: "#f6f8f7", overflow: "hidden" }}>
+      <div style={{ padding: "10px 14px", background: "#FFF", borderBottom: "1px solid #E5E7EB", flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#06D6A0", animation: "pulse 2s ease infinite" }} />
+            <span style={{ fontSize: 12, fontWeight: 700, color: "#0F172A" }}>LIVE PREVIEW</span>
+          </div>
+          <span style={{ fontSize: 10, color: "#94A3B8" }}>Same rules as the live chat</span>
+        </div>
+        <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 8, fontSize: 11, color: "#64748B" }}>
+          <span>Sample driver:</span>
+          <select aria-label="Sample goal" value={goal} onChange={function (e) { setGoal(e.target.value); setShown(0); }} style={sel}>
+            {Object.keys(PV_GOALS).map(function (k) { return <option key={k} value={k}>{PV_GOALS[k]}</option>; })}
+          </select>
+          <input aria-label="Sample state" value={state} maxLength={2} onChange={function (e) { setState(e.target.value.toUpperCase().replace(/[^A-Z]/g, "")); setShown(0); }} style={Object.assign({}, sel, { width: 40, textAlign: "center" })} />
+        </div>
+      </div>
+
+      <div style={{ background: "#0a231c", color: "#eef6f2", padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+        <div style={{ width: 28, height: 28, borderRadius: 8, background: "#3fcf9f", color: "#0a231c", display: "grid", placeItems: "center", fontSize: 12, fontWeight: 800 }}>G</div>
+        <div><div style={{ fontSize: 13, fontWeight: 600 }}>AI Insure<span style={{ color: "#3fcf9f" }}>Genie</span></div><div style={{ fontSize: 10, color: "#a9c2b8" }}>AI insurance assistant</div></div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={bub}>What matters most to you?</div>
+        <div style={me}>{PV_GOALS[goal]}. I'm in {state || "??"}, 2021 Toyota, clean record.</div>
+        {top ? (
+          <React.Fragment>
+            <div style={bub}>Thanks! This partner is my top pick:</div>
+            <div style={{ marginLeft: 0, background: "#FFF", border: "1.5px solid #0a6b50", borderRadius: 12, padding: 12 }}>
+              <span style={{ display: "inline-block", fontSize: 10, fontWeight: 600, color: "#6b4200", background: "#fff3d6", borderRadius: 4, padding: "2px 6px", marginBottom: 8 }}>★ Top pick for you</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: top.p.logoUrl ? "#FFF" : (top.p.bc || "#0a6b50") + "26", display: "grid", placeItems: "center", overflow: "hidden", border: "1px solid rgba(16,38,31,.12)", fontSize: 16, fontWeight: 700, color: "#10261f" }}>{top.p.logoUrl ? <img src={top.p.logoUrl} alt="" style={{ maxWidth: 28, maxHeight: 28 }} /> : (top.p.logo || String(top.p.name || "?").charAt(0))}</div>
+                <div style={{ minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: "#10261f" }}>{top.p.name}</div><div style={{ fontSize: 10, color: "#4d625a" }}>★ {top.p.rating}{top.p.pinned || top.p.featured ? " · Sponsored" : ""}</div></div>
+              </div>
+              {feats.length ? <ul style={{ margin: "8px 0 0", padding: 0, listStyle: "none", fontSize: 11, color: "#4d625a" }}>{feats.map(function (f, i) { return <li key={i}>✓ {f}</li>; })}</ul> : null}
+              <div style={{ marginTop: 10, background: "#0a6b50", color: "#FFF", borderRadius: 8, textAlign: "center", padding: "9px 8px", fontSize: 12, fontWeight: 600 }}>Get my quote from {top.p.name}</div>
+              <div style={{ marginTop: 6, fontSize: 9.5, color: "#4d625a", textAlign: "center" }}>Opens {top.p.name}'s site in a new tab.</div>
+            </div>
+            {c.tops.length > 1 ? (
+              <div style={{ fontSize: 11, color: "#4d625a", background: "#FFF", border: "1px dashed #CBD5E1", borderRadius: 8, padding: "8px 10px", lineHeight: 1.5 }}>
+                <b style={{ color: "#10261f" }}>Rotation for this driver:</b>{" "}
+                {c.tops.map(function (t, i) { return <button key={t.p.id} type="button" onClick={function () { setShown(i); }} style={{ border: 0, background: "none", padding: "0 2px", fontSize: 11, fontFamily: "inherit", cursor: "pointer", color: i === idx ? "#0a6b50" : "#4d625a", fontWeight: i === idx ? 700 : 400, textDecoration: "underline" }}>{t.p.name} {t.pct}%</button>; })}
+              </div>
+            ) : null}
+            {c.others.length ? <div style={{ fontSize: 11, color: "#4d625a" }}>"See other options" shows: {c.others.map(function (p) { return p.name; }).join(", ")}</div> : null}
+            <div style={bub}>Anything else I can help with?</div>
+          </React.Fragment>
+        ) : (
+          <div style={Object.assign({}, bub, { background: "#fdecea", borderColor: "transparent", color: "#7a1a12" })}>No live partner fits this driver ({PV_GOALS[goal]}, {state || "no state"}). The chat will offer "Talk to an agent" instead.</div>
+        )}
+      </div>
+
+      <div style={{ padding: "10px 14px", background: "#FFF", borderTop: "1px solid #E5E7EB", flexShrink: 0 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
+          {["See other options", "How do deductibles work?", "Talk to an agent"].map(function (t, i) { return <span key={i} style={{ padding: "5px 9px", border: "1px solid rgba(16,38,31,.3)", borderRadius: 6, fontSize: 10, fontWeight: 600, color: "#10261f" }}>{t}</span>; })}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, border: "1px solid rgba(16,38,31,.3)", borderRadius: 10, padding: "3px 3px 3px 12px" }}>
+          <input disabled placeholder="Type a message..." style={{ flex: 1, border: "none", background: "none", outline: "none", fontSize: 12, color: "#999", fontFamily: "inherit" }} />
+          <div style={{ width: 28, height: 28, borderRadius: 6, background: "#0a6b50", color: "#FFF", display: "grid", placeItems: "center", fontSize: 12 }}>→</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   var [partners, setPartners] = useState(DEFAULT_PARTNERS);
   var [editing, setEditing] = useState(null);
@@ -640,75 +747,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Right: Live Chatbot Preview */}
-        <div style={{width:380,display:"flex",flexDirection:"column",background:"#F8FAFC",overflow:"hidden"}}>
-          <div style={{padding:"12px 16px",background:"#FFF",borderBottom:"1px solid #E5E7EB",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
-            <div style={{display:"flex",alignItems:"center",gap:8}}>
-              <div style={{width:6,height:6,borderRadius:"50%",background:"#06D6A0",animation:"pulse 2s ease infinite"}} />
-              <span style={{fontSize:12,fontWeight:700,color:"#0F172A"}}>LIVE PREVIEW</span>
-            </div>
-            <span style={{fontSize:10,color:"#94A3B8"}}>Updates in real-time</span>
-          </div>
-
-          {/* Simulated Chat */}
-          <div style={{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:10}}>
-            {/* Bot greeting */}
-            <div style={{display:"flex",gap:6,alignItems:"flex-start"}}>
-              <div style={{width:24,height:24,borderRadius:"50%",background:"linear-gradient(135deg,#0EA5E9,#06D6A0)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#FFF",fontWeight:800,flexShrink:0}}>AI</div>
-              <div style={{background:"#FFF",border:"1px solid #E5E7EB",padding:"9px 12px",borderRadius:"4px 12px 12px 12px",fontSize:12,lineHeight:1.5,color:"#333"}}>
-                Great news! I found <strong>{activePartners.length} insurers</strong> competing for your business in <strong>75001, TX</strong>!
-              </div>
-            </div>
-
-            {/* User message */}
-            <div style={{display:"flex",justifyContent:"flex-end"}}>
-              <div style={{background:"linear-gradient(135deg,#0EA5E9,#0284C7)",color:"#FFF",padding:"9px 12px",borderRadius:"12px 12px 4px 12px",fontSize:12}}>Show me my quotes</div>
-            </div>
-
-            {/* Bot with cards */}
-            <div style={{display:"flex",gap:6,alignItems:"flex-start"}}>
-              <div style={{width:24,height:24,borderRadius:"50%",background:"linear-gradient(135deg,#0EA5E9,#06D6A0)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#FFF",fontWeight:800,flexShrink:0}}>AI</div>
-              <div style={{background:"#FFF",border:"1px solid #E5E7EB",padding:"9px 12px",borderRadius:"4px 12px 12px 12px",fontSize:12,lineHeight:1.5,color:"#333"}}>
-                Here are your personalized quotes:
-              </div>
-            </div>
-
-            {/* Partner Cards — reflects admin changes in real-time */}
-            <div className="s-row" style={{display:"flex",gap:8,overflowX:"auto",paddingLeft:30,paddingBottom:6}}>
-              {activePartners.length === 0 ? (
-                <div style={{padding:20,textAlign:"center",color:"#94A3B8",fontSize:12,width:"100%"}}>No active partners. Enable partners in the admin panel.</div>
-              ) : (
-                activePartners.map(function(p, i) {
-                  return <LivePreviewCard key={p.id} p={p} idx={i} />;
-                })
-              )}
-            </div>
-
-            {/* Follow-up */}
-            <div style={{display:"flex",gap:6,alignItems:"flex-start"}}>
-              <div style={{width:24,height:24,borderRadius:"50%",background:"linear-gradient(135deg,#0EA5E9,#06D6A0)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#FFF",fontWeight:800,flexShrink:0}}>AI</div>
-              <div style={{background:"#FFF",border:"1px solid #E5E7EB",padding:"9px 12px",borderRadius:"4px 12px 12px 12px",fontSize:12,lineHeight:1.5,color:"#333"}}>
-                Click any quote to get your exact rate. Have questions? Ask me anything!
-              </div>
-            </div>
-          </div>
-
-          {/* Preview footer */}
-          <div style={{padding:"10px 14px",background:"#FFF",borderTop:"1px solid #E5E7EB",flexShrink:0}}>
-            <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:8}}>
-              {["Lower rate?","Compare options","Talk to agent"].map(function(s,i){
-                return <span key={i} style={{padding:"5px 10px",background:"#F0F9FF",border:"1px solid #BAE6FD",borderRadius:14,fontSize:10,fontWeight:600,color:"#0369A1"}}>{s}</span>;
-              })}
-            </div>
-            <div style={{display:"flex",alignItems:"center",gap:6,background:"#F3F4F6",borderRadius:20,padding:"3px 3px 3px 12px"}}>
-              <input disabled placeholder="Ask me anything..." style={{flex:1,border:"none",background:"none",outline:"none",fontSize:12,color:"#999",fontFamily:"inherit"}} />
-              <div style={{width:30,height:30,borderRadius:"50%",background:"#D1D5DB",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFF" strokeWidth="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-              </div>
-            </div>
-            <div style={{textAlign:"center",marginTop:4,fontSize:8,color:"#C0C0C0"}}>Powered by AI · {activePartners.length} active insurers</div>
-          </div>
-        </div>
+        {/* Right: Live Chatbot Preview (mirrors the live chat's partner choice) */}
+        <ChatPreview partners={partners} />
       </div>
 
       {/* Edit Modal */}
