@@ -74,7 +74,8 @@ var INSURERS = IS_PREVIEW ? DEFAULT_INSURERS : [];
 const ZIP_STATES = {"AL":[35000,36999],"AK":[99500,99999],"AZ":[85000,86599],"AR":[71600,72999],"CA":[90000,96699],"CO":[80000,81699],"CT":[6000,6999],"DE":[19700,19999],"FL":[32000,34999],"GA":[30000,31999],"HI":[96700,96899],"ID":[83200,83899],"IL":[60000,62999],"IN":[46000,47999],"IA":[50000,52899],"KS":[66000,67999],"KY":[40000,42799],"LA":[70000,71499],"ME":[3900,4999],"MD":[20600,21999],"MA":[1000,2799],"MI":[48000,49999],"MN":[55000,56799],"MS":[38600,39799],"MO":[63000,65899],"MT":[59000,59999],"NE":[68000,69399],"NV":[88900,89899],"NH":[3000,3899],"NJ":[7000,8999],"NM":[87000,88499],"NY":[10000,14999],"NC":[27000,28999],"ND":[58000,58899],"OH":[43000,45999],"OK":[73000,74999],"OR":[97000,97999],"PA":[15000,19699],"RI":[2800,2999],"SC":[29000,29999],"SD":[57000,57799],"TN":[37000,38599],"TX":[75000,79999],"UT":[84000,84799],"VT":[5000,5999],"VA":[22000,24699],"WA":[98000,99499],"WV":[24700,26899],"WI":[53000,54999],"WY":[82000,83199],"DC":[20000,20599]};
 
 function vZip(z) {
-  var c = z.replace(/\D/g, "");
+  var m = String(z).match(/\b\d{5}\b/);
+  var c = m ? m[0] : String(z).replace(/\D/g, "");
   if (c.length !== 5) return { ok: false, e: "Enter a valid 5-digit US ZIP code." };
   var n = parseInt(c);
   for (var st of Object.keys(ZIP_STATES)) {
@@ -261,21 +262,14 @@ function buildUrl(ins, p) {
 }
 
 var STEPS = [
-  {id:"zip",f:"zip",q:"What's your ZIP code?",t:"text",ph:"5-digit US ZIP",vl:vZip},
-  {id:"age",f:"age",q:"How old are you?",t:"qr",opts:["18-24","25-34","35-44","45-54","55-64","65+"],vl:function(v){var m={"18-24":21,"25-34":30,"35-44":40,"45-54":50,"55-64":60,"65+":68};if(m[v])return{ok:true,v:m[v]};var n=parseInt(v);return n>=16&&n<=99?{ok:true,v:n}:{ok:false,e:"Enter age 16-99."};}},
-  {id:"vyear",f:"vehicleYear",q:"What year is your vehicle?",t:"qr",opts:["2024-2025","2020-2023","2015-2019","2010-2014","Before 2010"],ps:function(v){if(v.includes("2024"))return "2024";if(v.includes("2020"))return "2022";if(v.includes("2015"))return "2017";if(v.includes("2010"))return "2012";if(v.includes("Before"))return "2008";return v;}},
-  {id:"vmake",f:"vehicleMake",q:"What make is your car?",t:"qr",opts:["Toyota","Honda","Ford","Chevrolet","BMW","Tesla","Other"]},
-  {id:"vmake2",f:"vehicleMake",q:"What brand is your vehicle?",t:"text",ph:"e.g. Hyundai, Kia, Subaru...",cond:function(p){return p.vehicleMake==="Other";}},
-  {id:"ins",f:"insured",q:"Are you currently insured?",t:"qr",opts:["Yes, I'm insured","No, not right now"],ps:function(v){return v.toLowerCase().includes("yes")?"yes":"no";}},
-  {id:"curins",f:"currentInsurer",q:"Who's your current insurer?",t:"qr",opts:["GEICO","State Farm","Progressive","Allstate","Liberty Mutual","Other"],cond:function(p){return p.insured==="yes";}},
-  {id:"curins2",f:"currentInsurer",q:"What's the name of your current insurer?",t:"text",ph:"e.g. Farmers, Travelers, Erie...",cond:function(p){return p.insured==="yes"&&p.currentInsurer==="Other";}},
-  {id:"drv",f:"driving",q:"Driving record in the past 3 years?",t:"qr",opts:["Clean — no issues","Minor (1-2 tickets)","Major (accident)","DUI / SR-22"],ps:function(v){var l=v.toLowerCase();if(l.includes("clean"))return "clean";if(l.includes("minor"))return "minor";if(l.includes("major"))return "major";return "dui";}},
-  {id:"cov",f:"coverage",q:"What coverage level?",t:"qr",opts:["Minimum (state required)","Standard (liability + collision)","Full (comprehensive)"],ps:function(v){var l=v.toLowerCase();if(l.includes("min"))return "minimum";if(l.includes("full")||l.includes("comp"))return "full";return "standard";}},
-  {id:"mil",f:"military",q:"Active military or veteran?",t:"qr",opts:["Yes","No"],ps:function(v){return v.toLowerCase().includes("yes")?"yes":"no";}},
-  {id:"home",f:"homeowner",q:"Do you own your home? Some insurers discount for bundling home and auto.",t:"qr",opts:["Yes, homeowner","No, renting"],ps:function(v){return v.toLowerCase().includes("yes")||v.toLowerCase().includes("own")?"yes":"no";}},
-  {id:"cars",f:"multiCar",q:"Insuring more than one vehicle?",t:"qr",opts:["Yes, multiple","Just one"],ps:function(v){return v.toLowerCase().includes("yes")||v.toLowerCase().includes("multi")?"yes":"no";}},
-  {id:"pri",f:"priority",q:"What matters most to you?",t:"qr",opts:["Lowest price","Best coverage","Best service"],ps:function(v){var l=v.toLowerCase();if(l.includes("price")||l.includes("low"))return "price";if(l.includes("coverage"))return "coverage";return "service";}},
+  {id:"pri",f:"priority",q:"What matters most to you?",t:"qr",opts:["Lowest price","Best coverage","Best service"],cond:function(p){return !p.priority;},ps:function(v){var l=v.toLowerCase();if(l.includes("price")||l.includes("low")||l.includes("cheap"))return "price";if(l.includes("cover"))return "coverage";return "service";}},
+  {id:"zip",f:"zip",q:"What's your ZIP code?",t:"text",ph:"5-digit US ZIP",vl:vZip,cond:function(p){return !p.zip;}},
+  {id:"vyear",f:"vehicleYear",q:"What year is your car?",t:"qr",opts:["2024-2025","2020-2023","2015-2019","2010-2014","Before 2010"],ps:function(v){var y=v.match(/\b(19|20)\d{2}\b/);if(y&&v.indexOf("-")<0)return y[0];if(v.includes("2024"))return "2024";if(v.includes("2020"))return "2022";if(v.includes("2015"))return "2017";if(v.includes("2010"))return "2012";if(v.includes("Before"))return "2008";return v;}},
+  {id:"vmake",f:"vehicleMake",q:"And what make is it?",t:"qr",opts:["Toyota","Honda","Ford","Chevrolet","Nissan","Other"]},
+  {id:"vmake2",f:"vehicleMake",q:"What brand is your car?",t:"text",ph:"e.g. Hyundai, Kia, Subaru...",cond:function(p){return p.vehicleMake==="Other";}},
+  {id:"drv",f:"driving",q:"Last one: how's your driving record over the past 3 years?",t:"qr",opts:["Clean, no issues","1-2 tickets","An accident","DUI / SR-22"],ps:function(v){var l=v.toLowerCase();if(l.includes("clean"))return "clean";if(l.includes("ticket"))return "minor";if(l.includes("accident"))return "major";return "dui";}},
 ];
+var MAIN_STEPS = 5;
 
 var PII_STEPS = [
   {id:"firstName",f:"firstName",q:"What's your first name?",ph:"First name",vl:vName},
@@ -428,6 +422,14 @@ var CSS_TEXT = [
   ".hd .hd-sub{color:var(--hero-mute)}.hd .dot{background:var(--hero-acc)}",
   ".hd .hd-btn{background:transparent;color:var(--hero-ink);border-color:rgba(238,246,242,.34)}.hd .hd-btn:hover{background:transparent;border-color:var(--hero-acc);color:var(--hero-acc)}",
   ".prog{background:var(--hero-line)}",
+  "@media (max-width:767.98px){.foot .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-left:-16px;margin-right:-16px;padding:0 16px}.foot .chips::-webkit-scrollbar{display:none}.foot .chip{flex:none;white-space:nowrap}}",
+  ".offer{width:min(100%,460px);margin-top:8px;border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--surface);box-shadow:var(--shadow)}",
+  ".offer.is-top{border-color:var(--brand)}",
+  ".offers{display:flex;flex-direction:column;gap:12px;width:100%}",
+  ".o-feat{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:4px;font-size:14px;color:var(--ink2)}",
+  ".o-feat li{display:flex;align-items:center;gap:8px}.o-feat svg{color:var(--brand);flex:none}",
+  ".o-tip{margin-top:12px;padding:8px 12px;border-radius:8px;background:var(--pop-t);color:var(--pop-ink);font-size:14px;line-height:1.4}",
+  ".hd-sub b{font-weight:500;color:var(--hero-ink)}",
   ".top-pick{display:inline-flex;align-items:center;gap:4px;margin-bottom:12px;padding:2px 8px;border-radius:4px;background:var(--pop-t);color:var(--pop-ink);font-size:12px;font-weight:500;line-height:1.4}",
   ".top-pick svg{color:var(--pop-shade)}",
   ".quote.is-top{border-color:var(--brand)}",
@@ -498,6 +500,33 @@ function QuoteCard({ ins, locked, top }) {
           </p>
         </div>
       ) : null}
+    </article>
+  );
+}
+
+// ---------------------------------------------------------------
+// Partner offer: one recommended quoting partner, opened on their own site
+// ---------------------------------------------------------------
+function OfferCard({ ins, top, tip }) {
+  var [logoBroken, setLogoBroken] = useState(false);
+  var showLogo = !!ins.logoUrl && !logoBroken;
+  var feats = (ins.ft || []).slice(0, 3);
+  return (
+    <article className={"offer" + (top ? " is-top" : "")} aria-label={ins.n}>
+      {top ? <span className="top-pick"><Icon n="star" fill size={12} />Top pick for you</span> : null}
+      <div className="q-top">
+        <div className={"q-logo" + (showLogo ? " img" : "")} style={showLogo ? undefined : { background: (ins.bc || "#0a6b50") + "26" }} aria-hidden="true">
+          {showLogo ? <img src={ins.logoUrl} alt="" onError={function () { setLogoBroken(true); }} /> : (ins.n || "?").charAt(0)}
+        </div>
+        <div className="q-id">
+          <div className="q-name">{ins.n}</div>
+          <div className="q-meta"><span className="q-rate"><Icon n="star" fill size={13} />{ins.r}</span>{ins.pinned || ins.featured ? <span className="q-tag">Sponsored</span> : null}</div>
+        </div>
+      </div>
+      {feats.length ? <ul className="o-feat">{feats.map(function (f, i) { return <li key={i}><Icon n="check" size={14} />{f}</li>; })}</ul> : null}
+      {tip ? <p className="o-tip">{tip}</p> : null}
+      <a className="btn btn-p" href={ins.rUrl || "#"} target="_blank" rel="noopener noreferrer sponsored">Get my quote from {ins.n}</a>
+      <p className="q-note">Opens {ins.n}'s site in a new tab. Fill in their short form to see your quotes.</p>
     </article>
   );
 }
@@ -617,7 +646,7 @@ export default function AIInsureGenie() {
   var [insurerList, setInsurerList] = useState(IS_PREVIEW ? DEFAULT_INSURERS : []);
   var partnerNames = insurerList.map(function(x){ return x.n; });
   var consentMain = buildConsent(partnerNames);
-  var tot = STEPS.filter(function(s){return !s.cond||s.cond(pro);}).length + PII_STEPS.length;
+  var tot = MAIN_STEPS;
 
   // Load partners from shared storage (set by admin dashboard)
   useEffect(function() {
@@ -640,9 +669,11 @@ export default function AIInsureGenie() {
   var bot = function(text, x) { setMsgs(function(p){return p.concat([Object.assign({role:"bot",text:text,time:nowTime()},x||{})]);}); };
   var usr = function(text) { setMsgs(function(p){return p.concat([{role:"user",text:text,time:nowTime()}]);}); };
 
-  var startQ = function() {
+  var startQ = function(extra) {
+    var start = Object.assign({}, pro, extra || {});
+    if (extra) setPro(start);
     setPhase("qualifying"); setTyp(true);
-    setTimeout(function(){bot("Great, let's find your best rate. It takes about a minute, and you can ask me a question at any point.");setTyp(false);setTimeout(function(){advQ(0,{});},500);},500);
+    setTimeout(function(){bot("Great! A few quick questions and I'll point you to the partner that fits you best. Ask me anything along the way.");setTyp(false);setTimeout(function(){advQ(0,start);},500);},500);
   };
   var startChat = function() {
     setPhase("chat"); setTyp(true);
@@ -652,15 +683,12 @@ export default function AIInsureGenie() {
   var advQ = function(idx, prof) {
     var i = idx;
     while (i < STEPS.length) { if (STEPS[i].cond && !STEPS[i].cond(prof)) { i++; continue; } break; }
-    if (i >= STEPS.length) { showLocked(prof); return; }
+    if (i >= STEPS.length) { showMatch(prof); return; }
     setSi(i); setTyp(true);
     var s = STEPS[i];
     setTimeout(function(){
       var px = "";
-      if (s.id === "drv") px = "Now about your history — ";
-      else if (s.id === "cov") px = "Almost there! ";
-      else if (s.id === "pri") px = "Last question: ";
-      else if (s.id === "vmake2" || s.id === "curins2") px = "No problem! ";
+      if (s.id === "vmake2") px = "No problem! ";
       bot(px + s.q); setTyp(false);
       setQr(s.t === "qr" ? s.opts : null); setIph(s.ph || "Type...");
       if (s.t === "text") setTimeout(function(){inRef.current&&inRef.current.focus();},100);
@@ -680,7 +708,7 @@ export default function AIInsureGenie() {
       if (!r.ok) { setTyp(true);setTimeout(function(){bot(r.e,{err:true});setTyp(false);setQr(s.t==="qr"?s.opts:null);setIph(s.ph||"Type...");},300);return; }
       var v = r.v !== undefined ? r.v : (s.ps ? s.ps(val) : val.trim());
       var u = Object.assign({}, pro); u[s.f] = v; if (r.st) u.state = r.st; setPro(u); setCs(function(c){return c+1;});
-      if (s.id === "zip" && r.st) { setTyp(true);setTimeout(function(){bot("Got it: **"+v+"** in **"+r.st+"**.");setTyp(false);setTimeout(function(){advQ(si+1,u);},300);},400);return; }
+      if (s.id === "zip" && r.st) { setTyp(true);setTimeout(function(){bot("Got it: **"+v+"**, **"+r.st+"**.");setTyp(false);setTimeout(function(){advQ(si+1,u);},300);},400);return; }
       advQ(si+1, u);
     } else {
       var v2 = s.ps ? s.ps(val) : val.trim();
@@ -688,19 +716,40 @@ export default function AIInsureGenie() {
     }
   };
 
-  var showLocked = function(prof) {
-    setPhase("locked"); setQr(null); setTyp(true);
+  // After the questions: recommend one quoting partner and send the user to their own form.
+  var GOAL = { price: "the lowest price", coverage: "strong coverage", service: "great service" };
+  var REC = { clean: "a clean record", minor: "a couple of tickets", major: "a recent accident", dui: "a DUI or SR-22" };
+  var TIPS = {
+    price: "Tip: ask about safe-driver and paid-in-full discounts.",
+    coverage: "Tip: compare the same limits and deductible on every quote.",
+    service: "Tip: ask how claims are handled and how to reach support."
+  };
+  var showMatch = function(prof) {
+    var p = Object.assign({}, prof, { coverage: prof.priority === "coverage" ? "full" : (prof.coverage || "standard") });
+    setPro(p); setPhase("locked"); setQr(null); setTyp(true);
     setTimeout(function(){
-      var r = matchInsurers(prof); setResults(r);
+      var r = matchInsurers(p).map(function(ins){ return Object.assign({}, ins, { rUrl: buildUrl(ins, p) }); });
+      setResults(r);
       if (!r.length) {
-        bot("I couldn't load insurer options just now. You can talk to a licensed agent, or try again in a minute.");
+        bot("I couldn't load partner options just now. You can talk to a licensed agent, or try again in a minute.");
         setTyp(false); setPhase("follow");
         return;
       }
-      bot("I found **"+r.length+(r.length===1?" insurer":" insurers")+"** that fit your answers in **"+prof.zip+(prof.state?", "+prof.state:"")+"**. The prices below are estimates, not final quotes.",{ins:r,locked:true,tags:true});
+      bot("Thanks! For " + (REC[p.driving] || "your record") + " and " + (GOAL[p.priority] || "a good fit") + " in " + (p.state || "your state") + ", this partner is my top pick:", { offer: r[0], tip: TIPS[p.priority] });
       setTyp(false);
-      setTimeout(function(){setTyp(true);setTimeout(function(){bot("To see each insurer's real price, I can connect you with them. I just need three details, and nothing is shared without your consent.");setTyp(false);setPhase("pii");setPiiIdx(0);setTimeout(function(){advPII(0,prof);},500);},700);},1800);
-    },1500);
+      setTimeout(function(){ setTyp(true); setTimeout(function(){ bot("Anything else I can help with?"); setTyp(false); setPhase("follow"); }, 700); }, 1200);
+    }, 1200);
+  };
+
+  var showMore = function() {
+    var more = results.slice(1, 3);
+    usr("See other options");
+    setTyp(true);
+    setTimeout(function(){
+      if (!more.length) bot("That's the best fit I have for you right now. You can also talk to a licensed agent.");
+      else bot("Here " + (more.length === 1 ? "is another option" : "are other options") + " that fit your answers:", { offers: more });
+      setTyp(false);
+    }, 600);
   };
 
   var advPII = function(idx, prof) {
@@ -804,6 +853,14 @@ export default function AIInsureGenie() {
   var handleChat = function(val) {
     if (!val.trim()) return; usr(val); setInp("");
     var t = val.toLowerCase();
+    var zm = val.match(/\b\d{5}\b/), zr = zm ? vZip(zm[0]) : null;
+    if (zr && zr.ok) {
+      var pz = Object.assign({}, pro, { zip: zr.v, state: zr.st }); setPro(pz); setCs(function(c){return c+1;});
+      var sad = /(went up|increase|higher|too (much|high|expensive)|renewal)/.test(t);
+      setTyp(true);
+      setTimeout(function(){ bot((sad ? "Sorry to hear that. " : "") + "Got it: **" + zr.v + "**, **" + zr.st + "**. Let's find you a better fit."); setTyp(false); setPhase("qualifying"); setTimeout(function(){ advQ(0, pz); }, 400); }, 500);
+      return;
+    }
     if (["get my quote","get quote","start quote","compare rate","get started","find rate","i want a quote"].some(function(w){return t.includes(w);})) {
       setTyp(true);setTimeout(function(){bot("Great, let's get your quotes.");setTyp(false);setPhase("qualifying");setTimeout(function(){advQ(0,pro);},400);},400);return;
     }
@@ -824,8 +881,10 @@ export default function AIInsureGenie() {
     var start = p.get("start"), q = (p.get("q") || "").trim().slice(0, 200);
     try { window.history.replaceState(null, "", window.location.pathname + window.location.search); } catch (e) {}
     var t = setTimeout(function() {
+      var goal = p.get("goal");
+      var extra = (goal === "price" || goal === "coverage") ? { priority: goal } : null;
       if (q) { setPhase("chat"); handleChat(q); }
-      else if (start === "quote") { usr("Get instant quote"); startQ(); }
+      else if (start === "quote") { usr("Get instant quote"); startQ(extra); }
       else if (start === "ask") { usr("I have a question"); startChat(); }
       else if (start === "agent") { setShowCall(true); }
     }, 350);
@@ -877,7 +936,7 @@ export default function AIInsureGenie() {
 
   var chatChips = ["Cheapest way to insure a car", "Coverage types explained", "What is SR-22?", "How deductibles work"];
   var composerPh = (phase === "locked" || phase === "unlock" || phase === "consent" || phase === "follow") ? "Ask a question" : iph;
-  var followChips = ["Lower my rate", "Compare these insurers", "What full coverage includes"];
+  var followChips = ["See other options", "How do deductibles work?", "Talk to an agent"];
 
   return (
     <div className="ig">
@@ -888,7 +947,7 @@ export default function AIInsureGenie() {
           <div className="av"><Icon n="shield" size={22} /></div>
           <div className="hd-txt">
             <div className="hd-name">AI Insure<em>Genie</em></div>
-            <div className="hd-sub"><span className="dot" />AI assistant</div>
+            <div className="hd-sub"><span className="dot" />{phase === "qualifying" ? <span>Getting your quote <b>· {Math.min(cs + 1, tot)} of {tot}</b></span> : "AI insurance assistant"}</div>
           </div>
           <button type="button" className="hd-btn" aria-label="Talk to an agent" onClick={function(){ setShowCall(true); }}>
             <Icon n="phone" size={16} /><span className="lbl-l">Talk to an agent</span><span className="lbl-s">Agent</span>
@@ -902,7 +961,8 @@ export default function AIInsureGenie() {
           <div className="row bot first">
             <div className="who">AI InsureGenie</div>
             <div className="bub">Hi! I help drivers get the best quote for their needs.</div>
-            <div className="bub" style={{ marginTop: 4 }}>What would you like to do? Tap an option below, or just tell me what's going on. It's free, and your details are only shared if you agree.</div>
+            <div className="bub" style={{ marginTop: 4 }}>Tell me a bit about you and your car, and I'll point you to the quoting partner that fits you best. I can also answer questions or set up a call.</div>
+            <div className="bub" style={{ marginTop: 4 }}>Or just tell me what's going on, for example "my renewal went up $40".</div>
           </div>
           {(msgs.length === 0 || msgs[0].role === "user") ? <div className="time" style={{ alignSelf: "flex-start" }}>{startTime}</div> : null}
 
@@ -917,6 +977,8 @@ export default function AIInsureGenie() {
                 {m.role === "bot" && first ? <div className="who">AI InsureGenie</div> : null}
                 <div className={"bub" + (m.err ? " err" : "")}>{m.role === "bot" ? renderBold(m.text) : m.text}</div>
                 {basis ? <p className="basis">{basis}</p> : null}
+                {m.offer ? <OfferCard ins={m.offer} top={true} tip={m.tip} /> : null}
+                {m.offers ? <div className="offers">{m.offers.map(function(x, j){ return <OfferCard key={x.id || j} ins={x} top={false} />; })}</div> : null}
                 {m.ins ? (
                   <div className="quotes">
                     {m.ins.map(function(x, j) { return <QuoteCard key={x.id || j} ins={x} locked={!!m.locked} top={j === 0} />; })}
@@ -968,7 +1030,7 @@ export default function AIInsureGenie() {
 
           {phase === "follow" && !typ ? (
             <div className="chips">
-              {followChips.map(function(s, i) { return <button type="button" key={i} className="chip" onClick={function(){ handleFollow(s); }}>{s}</button>; })}
+              {followChips.map(function(s, i) { return <button type="button" key={i} className="chip" onClick={function(){ if (i === 0) showMore(); else if (i === 2) setShowCall(true); else handleFollow(s); }}>{s}</button>; })}
             </div>
           ) : null}
 
@@ -993,9 +1055,9 @@ export default function AIInsureGenie() {
             <button type="button" className="linkbtn" onClick={openFullKeyboard}>Have a question instead? Show the full keyboard</button>
           ) : null}
           <div className="disc">
-            <span>AI assistant, not a licensed agent. Prices are estimates.</span>{" "}
+            <span>AI assistant, not a licensed agent.</span>{" "}
             <button type="button" className="disc-btn" aria-expanded={showDisc} aria-controls="disc-full" onClick={function(){ setShowDisc(!showDisc); }}>{showDisc ? "Hide details" : "Details"}</button>
-            {showDisc ? <p id="disc-full" className="disc-full">AI InsureGenie is an AI assistant, not an insurance company or licensed agent. Prices shown are estimates, and your final rate comes from the insurer.</p> : null}
+            {showDisc ? <p id="disc-full" className="disc-full">AI InsureGenie is an AI assistant, not an insurance company or licensed agent. We recommend quoting partners, who may pay us a fee. Your quotes and final rate come from the partner or insurer.</p> : null}
           </div>
         </footer>
 
