@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://aiinsuregenie.com/sitemap.xml
