@@ -1,1 +1,7 @@
-{ "cleanUrls": true }
+{
+  "cleanUrls": true,
+  "redirects": [
+    { "source": "/privacy", "destination": "https://aiinsuregenie.com/privacy/", "permanent": false },
+    { "source": "/terms", "destination": "https://aiinsuregenie.com/terms/", "permanent": false }
+  ]
+}

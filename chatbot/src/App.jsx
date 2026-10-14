@@ -304,7 +304,7 @@ function buildConsent(names) {
   var list = names.length ? " (" + shown + ")" : "";
   return "I agree that AI InsureGenie and its insurance partners" + list + " may contact me by phone, text message, and email about insurance quotes, including with automated technology. Consent is not required to buy anything, and I can withdraw it at any time.";
 }
-var CONSENT_LINKS = " I have read the Privacy Policy and Terms of Service.";
+var CONSENT_LINKS = " I have read the Privacy Policy and Terms of Use.";
 var CALL_CONSENT = "I agree that a licensed insurance agent may call me at this number about insurance quotes. Consent is not required to buy anything.";
 
 function basisLine(p) {
@@ -396,7 +396,7 @@ var CSS_TEXT = [
   ".disc{font-size:12px;line-height:1.4;color:var(--mute);text-align:center;margin-top:8px}",
   ".disc-btn{position:relative;padding:0;border:0;background:none;color:var(--brand);font-size:12px;line-height:1.4;text-decoration:underline;cursor:pointer}",
   ".disc-btn::before{content:'';position:absolute;inset:-14px -12px}",
-  ".disc-full{margin-top:4px}",
+  ".disc-full{margin-top:4px}.disc-full a{color:var(--brand);text-decoration:underline}",
   ".ov{position:fixed;inset:0;background:rgba(8,16,13,.55);z-index:50;display:flex;align-items:flex-end;justify-content:center}",
   ".dlg{background:var(--surface);color:var(--ink);border:1px solid var(--line);width:100%;max-width:440px;max-height:92vh;max-height:92dvh;overflow:auto;border-radius:12px 12px 0 0;padding:24px}",
   "@media (min-width:640px){.ov{align-items:center}.dlg{border-radius:12px}}",
@@ -994,7 +994,7 @@ export default function AIInsureGenie() {
               <label>
                 <input type="checkbox" checked={ck} onChange={function(e){ setCk(e.target.checked); }} />
                 <span>
-                  {consentMain} I have read the <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a> and <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>.
+                  {consentMain} I have read the <a href="https://aiinsuregenie.com/privacy/" target="_blank" rel="noopener noreferrer">Privacy Policy</a> and <a href="https://aiinsuregenie.com/terms/" target="_blank" rel="noopener noreferrer">Terms of Use</a>.
                 </span>
               </label>
               <button type="button" className="btn btn-p" disabled={!ck} onClick={handleConsent}>Agree and see my matches</button>
@@ -1057,7 +1057,7 @@ export default function AIInsureGenie() {
           <div className="disc">
             <span>AI assistant, not a licensed agent.</span>{" "}
             <button type="button" className="disc-btn" aria-expanded={showDisc} aria-controls="disc-full" onClick={function(){ setShowDisc(!showDisc); }}>{showDisc ? "Hide details" : "Details"}</button>
-            {showDisc ? <p id="disc-full" className="disc-full">AI InsureGenie is an AI assistant, not an insurance company or licensed agent. We recommend quoting partners, who may pay us a fee. Your quotes and final rate come from the partner or insurer.</p> : null}
+            {showDisc ? <p id="disc-full" className="disc-full">AI InsureGenie is an AI assistant, not an insurance company or licensed agent. We recommend quoting partners, who may pay us a fee. Your quotes and final rate come from the partner or insurer. <a href="https://aiinsuregenie.com/privacy/" target="_blank" rel="noopener noreferrer">Privacy policy</a> · <a href="https://aiinsuregenie.com/terms/" target="_blank" rel="noopener noreferrer">Terms of use</a></p> : null}
           </div>
         </footer>
 
