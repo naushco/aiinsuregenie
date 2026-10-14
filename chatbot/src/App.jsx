@@ -133,21 +133,14 @@ function isQuestion(text, phase, stepId) {
   return false;
 }
 
+// Used only when the AI can't be reached. General, number-free answers;
+// the AI handles everything else, including questions about partners.
 function staticAnswer(text) {
   var t = text.toLowerCase();
-  for (var i = 0; i < INSURERS.length; i++) {
-    var ins = INSURERS[i];
-    if (t.includes(ins.n.toLowerCase()) || t.includes(ins.id)) {
-      return "Here's what I know about **" + ins.n + "** (" + ins.r + "/5 stars):\n\n" + ins.info + "\n\n**Key features:** " + ins.ft.join(", ") + "\n\n" + ins.hl + ". Anything else?";
-    }
-  }
-  if (t.includes("deductible")) return "A **deductible** is what you pay before insurance kicks in.\n\n$250 = higher premium, less out-of-pocket per claim\n$500 = most popular balanced option\n$1,000 = lowest premium, saves $200-400/yr\n\nSafe drivers with savings benefit from higher deductibles.";
-  if (t.includes("coverage") && (t.includes("type") || t.includes("what") || t.includes("include"))) return "**Minimum** — Liability only (state required). Covers others.\n**Standard** — Adds collision + uninsured motorist.\n**Full/Comprehensive** — Everything + theft, weather, rental, roadside.\n\nWant me to adjust your coverage level?";
-  if (t.includes("sr-22") || t.includes("sr22")) return "**SR-22** is a certificate required after DUI or serious violations. The General, Progressive, and some State Farm offices handle SR-22. Adds ~$20-50/month for 3 years.";
-  if (t.includes("cheap") || t.includes("save") || t.includes("discount") || t.includes("lower")) return "Best ways to lower your rate:\n\nRaise deductible to $1,000+ (saves 15-25%)\nBundle home + auto (saves up to 25%)\nLow-mileage discount if you drive under 10k mi/yr\nDefensive driving course (5-10% off)\nGood student discount (10-25% off)\n\nReady for personalized quotes? Say **get my quotes**!";
-  if (t.includes("bundle") || t.includes("home and auto")) return "**Bundling** home/renters + auto saves **15-25%**. Best for bundling: State Farm (up to 25% off), Allstate (multi-policy + Drivewise), Nationwide (vanishing deductible), Liberty Mutual (flexible bundles).";
-  if (t.includes("gap")) return "**Gap insurance** covers the difference between what you owe and your car's value if totaled. Important if you owe more than the car is worth. Progressive, Liberty Mutual, and Allstate offer it.";
-  if (t.includes("new driver") || t.includes("teen") || t.includes("first time")) return "Young/new drivers pay more, but can save with:\n\nGood student discount (3.0+ GPA saves 10-25%)\nDefensive driving course (5-10% off)\nUsage-based programs (Root, Progressive)\nBeing on a parent's policy\n\nGEICO, Progressive, and Lemonade usually have the best young driver rates.";
+  if (t.includes("deductible")) return "A **deductible** is the amount you pay yourself on a claim before insurance pays the rest. A higher deductible usually lowers your premium, but you pay more if something happens, so pick one you could comfortably cover.";
+  if (t.includes("sr-22") || t.includes("sr22")) return "An **SR-22** is a form your insurer files with your state to show you carry the required insurance, often after a DUI or driving without insurance. Not every insurer files them, so it's worth asking before you buy.";
+  if (t.includes("coverage") && (t.includes("type") || t.includes("what") || t.includes("include") || t.includes("full"))) return "**Liability** pays for damage or injuries you cause to others. **Collision** repairs your car after an accident, and **comprehensive** covers theft, weather, and other damage. \"Full coverage\" usually means all three, and lenders often require it on financed cars.";
+  if (t.includes("cheap") || t.includes("save") || t.includes("discount") || t.includes("lower")) return "Common ways to lower your rate: compare quotes with the same coverage, raise your deductible if you can afford it, bundle home and auto, and ask about safe-driver or paid-in-full discounts. Discounts vary by insurer and state.";
   return null;
 }
 
@@ -210,10 +203,9 @@ async function aiAnswer(msg, profile, results) {
 }
 
 async function getAnswer(text, profile, results) {
-  var s = staticAnswer(text);
-  var answer = s || await aiAnswer(text, profile, results);
+  var answer = await aiAnswer(text, profile, results) || staticAnswer(text);
   if (!answer) {
-    return "I can help with coverage types, insurer comparisons, discounts, SR-22, deductibles, and more. Could you rephrase? Or say **get my quotes** for personalized rates!";
+    return "Sorry, I couldn't answer that just now. Try asking another way, tap **Get instant quote** to find your match, or talk to a licensed agent.";
   }
   // Remember this exchange so follow-up questions make sense
   convoHistory.push({ role: "user", content: text });
@@ -905,7 +897,7 @@ export default function AIInsureGenie() {
     if (["get my quote","get quote","start quote","compare rate","get started","find rate","i want a quote"].some(function(w){return t.includes(w);})) {
       setTyp(true);setTimeout(function(){bot("Great, let's get your quotes.");setTyp(false);setPhase("qualifying");setTimeout(function(){advQ(0,pro);},400);},400);return;
     }
-    setTyp(true);getAnswer(val,pro,results).then(function(a){bot(a);setTyp(false);setIph("Ask more or say 'get my quotes'...");});
+    setTyp(true);getAnswer(val,pro,results).then(function(a){bot(a);setTyp(false);setIph("Ask another question...");});
   };
 
   var handleFollow = function(val) {
