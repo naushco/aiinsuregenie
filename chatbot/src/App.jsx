@@ -327,8 +327,8 @@ function basisLine(p) {
 // ---------------------------------------------------------------
 var CSS_TEXT = [
   "html,body{margin:0}",
-  ".ig{--bg:#f6f8f7;--surface:#ffffff;--ink:#10261f;--ink2:#4d625a;--mute:#4d625a;--line:rgba(16,38,31,.12);--edge:rgba(16,38,31,.3);--edge-strong:rgba(16,38,31,.5);--brand:#0a6b50;--brand-d:#085540;--brand-t:#e4f0eb;--brand-ink:#ffffff;--ring:rgba(10,107,80,.22);--warn:#b42318;--warn-t:#fdecea;--warn-ink:#7a1a12;--star:#b45309;--shadow:0 1px 3px rgba(0,0,0,.06);--card:var(--surface);--bot:var(--bg);color-scheme:light dark}",
-  "@media (prefers-color-scheme:dark){.ig{--bg:#0c1613;--surface:#131f1b;--ink:#e8f2ee;--ink2:#9fb5ac;--mute:#9fb5ac;--line:rgba(232,242,238,.14);--edge:rgba(232,242,238,.3);--edge-strong:rgba(232,242,238,.5);--brand:#3fcf9f;--brand-d:#6fe0b9;--brand-t:rgba(63,207,159,.14);--brand-ink:#062018;--ring:rgba(63,207,159,.28);--warn:#ff8f85;--warn-t:rgba(255,143,133,.14);--warn-ink:#ffc9c4;--star:#f0b429;--shadow:inset 0 1px 0 rgba(255,255,255,.06)}}",
+  ".ig{--bg:#f6f8f7;--surface:#ffffff;--ink:#10261f;--ink2:#4d625a;--mute:#4d625a;--line:rgba(16,38,31,.12);--edge:rgba(16,38,31,.3);--edge-strong:rgba(16,38,31,.5);--brand:#0a6b50;--brand-d:#085540;--brand-t:#e4f0eb;--brand-ink:#ffffff;--ring:rgba(10,107,80,.22);--warn:#b42318;--warn-t:#fdecea;--warn-ink:#7a1a12;--star:#b45309;--shadow:0 1px 3px rgba(0,0,0,.06);--card:var(--surface);--bot:var(--bg);--pop:#ffb020;--pop-shade:#d98a00;--pop-t:#fff3d6;--pop-ink:#6b4200;--scene:#e4f0eb;--road:#d3e0da;--glass:#cfe6ee;--tire:#17302a;--hub:#c7d3ce;--hero:#0a231c;--hero-ink:#eef6f2;--hero-mute:#a9c2b8;--hero-line:rgba(238,246,242,.16);--hero-acc:#3fcf9f;color-scheme:light dark}",
+  "@media (prefers-color-scheme:dark){.ig{--bg:#0c1613;--surface:#131f1b;--ink:#e8f2ee;--ink2:#9fb5ac;--mute:#9fb5ac;--line:rgba(232,242,238,.14);--edge:rgba(232,242,238,.3);--edge-strong:rgba(232,242,238,.5);--brand:#3fcf9f;--brand-d:#6fe0b9;--brand-t:rgba(63,207,159,.14);--brand-ink:#062018;--ring:rgba(63,207,159,.28);--warn:#ff8f85;--warn-t:rgba(255,143,133,.14);--warn-ink:#ffc9c4;--star:#f0b429;--shadow:inset 0 1px 0 rgba(255,255,255,.06);--pop:#ffc247;--pop-shade:#e0a020;--pop-t:rgba(255,194,71,.14);--pop-ink:#ffe2a3;--scene:#16302a;--road:#1b2c27;--glass:#2b4d57;--tire:#0a1411;--hub:#6f8a82;--hero:#081c16}}",
   ".ig,.ig *{box-sizing:border-box}",
   ".ig p,.ig h2{margin:0}",
   ".ig{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:16px;display:flex;justify-content:center;-webkit-font-smoothing:antialiased}",
@@ -370,7 +370,7 @@ var CSS_TEXT = [
   ".q-id{min-width:0;flex:1}",
   ".q-name{font-weight:600;font-size:16px;line-height:1.25;overflow-wrap:anywhere}",
   ".q-meta{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;font-size:14px;color:var(--ink2);margin-top:4px}",
-  ".q-rate{display:inline-flex;align-items:center;gap:4px}.q-rate svg{color:var(--star)}",
+  ".q-rate{display:inline-flex;align-items:center;gap:4px}.q-rate svg{color:var(--pop-shade)}",
   ".q-tag{font-size:12px;font-weight:500;line-height:1.4;padding:0 8px;border:1px solid var(--line);border-radius:4px;color:var(--ink2)}",
   ".q-price{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;margin-top:12px}",
   ".amt{display:inline-block;font-size:28px;line-height:1.1;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em}",
@@ -422,6 +422,25 @@ var CSS_TEXT = [
   ".errmsg{font-size:14px;line-height:1.4;color:var(--warn);margin-bottom:12px}",
   ".done{text-align:center;padding:8px 0}",
   ".tick{width:48px;height:48px;border-radius:50%;background:var(--brand-t);color:var(--brand-d);display:grid;place-items:center;margin:0 auto 12px}",
+  ".hd{background:var(--hero);color:var(--hero-ink);border-bottom:1px solid var(--hero-line)}",
+  ".hd .av{background:var(--hero-acc);color:var(--hero)}",
+  ".hd .hd-name em{font-style:normal;color:var(--hero-acc)}",
+  ".hd .hd-sub{color:var(--hero-mute)}.hd .dot{background:var(--hero-acc)}",
+  ".hd .hd-btn{background:transparent;color:var(--hero-ink);border-color:rgba(238,246,242,.34)}.hd .hd-btn:hover{background:transparent;border-color:var(--hero-acc);color:var(--hero-acc)}",
+  ".prog{background:var(--hero-line)}",
+  ".welcome{position:relative;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-top:16px;padding:20px;border:1px solid var(--line);border-radius:16px;background:var(--surface);overflow:hidden}",
+  ".welcome .art{display:block;width:100%;height:auto;max-height:180px;border-radius:12px;background:var(--scene)}",
+  ".welcome h1{margin:0;font-size:24px;line-height:1.2;font-weight:600;letter-spacing:-.02em}",
+  ".welcome h1 em{font-style:normal;background:linear-gradient(transparent 70%,var(--pop-t) 70%)}",
+  ".welcome p{margin:0;font-size:16px;line-height:1.5;color:var(--ink2)}",
+  ".w-ticks{display:flex;flex-wrap:wrap;gap:4px 16px;margin:0;padding:0;list-style:none;font-size:14px;color:var(--ink2)}",
+  ".w-ticks li{display:inline-flex;align-items:center;gap:6px}.w-ticks svg{color:var(--brand)}",
+  ".top-pick{display:inline-flex;align-items:center;gap:4px;margin-bottom:12px;padding:2px 8px;border-radius:4px;background:var(--pop-t);color:var(--pop-ink);font-size:12px;font-weight:500;line-height:1.4}",
+  ".top-pick svg{color:var(--pop-shade)}",
+  ".quote.is-top{border-color:var(--brand)}",
+  "@media (prefers-reduced-motion:no-preference){.welcome .car{animation:drive .7s cubic-bezier(.16,1,.3,1) .15s both}}",
+  "@keyframes drive{from{transform:translateX(-32px);opacity:0}to{transform:none;opacity:1}}",
+  "@media (min-width:768px){.welcome{grid-template-columns:minmax(0,1fr) minmax(0,.9fr);align-items:center;gap:24px;padding:24px}.welcome .art{grid-column:2;grid-row:1 / span 3;max-height:220px}.welcome h1{font-size:28px}}",
   "@media (min-width:768px){.ig{--card:var(--bg);--bot:var(--surface);padding:0;align-items:stretch}.ig-card{max-width:none;height:100vh;height:100dvh;border:0;border-radius:0;box-shadow:none;overflow:visible}.hd{padding:12px 24px}.log{padding:24px max(24px,calc((100% - 880px)/2))}.foot{padding:16px max(24px,calc((100% - 880px)/2)) calc(16px + env(safe-area-inset-bottom))}.bub{max-width:72%}.user .bub{max-width:66%}.quotes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}}",
   "@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}",
   "@keyframes blink{0%,60%,100%{opacity:.35}30%{opacity:1}}",
@@ -448,17 +467,43 @@ function Icon(props) {
   );
 }
 
+
+// Welcome illustration: road, marigold car, sun. Colours come from CSS tokens.
+function WelcomeArt() {
+  return (
+    <svg className="art" viewBox="0 0 320 168" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+      <circle cx="262" cy="44" r="18" fill="var(--pop)" />
+      <path d="M-10 150 C 90 120, 200 160, 330 118" fill="none" stroke="var(--road)" strokeWidth="36" strokeLinecap="round" />
+      <path d="M-10 150 C 90 120, 200 160, 330 118" fill="none" stroke="var(--pop)" strokeWidth="2" strokeDasharray="10 12" />
+      <g className="car" transform="translate(84 64) scale(.625)">
+        <ellipse cx="122" cy="102" rx="104" ry="6" fill="rgba(0,0,0,.18)" />
+        <path d="M18 80c0-12 8-20 20-22l34-6c14-16 30-25 52-25h22c20 0 35 9 47 23l18 4c12 3 20 11 20 23v6c0 4-3 6-6 6H24c-4 0-6-2-6-6z" fill="var(--pop)" />
+        <path d="M18 84h208v4c0 4-3 6-6 6H24c-4 0-6-2-6-6z" fill="var(--pop-shade)" />
+        <path d="M84 52c10-12 23-18 38-18h6v18z" fill="var(--glass)" />
+        <path d="M136 34h8c15 0 25 6 33 18h-41z" fill="var(--glass)" />
+        <path d="M132 56v24" stroke="var(--pop-shade)" strokeWidth="2" />
+        <rect x="212" y="66" width="12" height="7" rx="3.5" fill="#fff7d6" />
+        <rect x="18" y="66" width="6" height="8" rx="2" fill="#e5484d" />
+        <circle cx="68" cy="88" r="18" fill="var(--tire)" /><circle cx="68" cy="88" r="8" fill="var(--hub)" />
+        <circle cx="184" cy="88" r="18" fill="var(--tire)" /><circle cx="184" cy="88" r="8" fill="var(--hub)" />
+      </g>
+      <g transform="translate(36 34)"><path d="M12 22s-7-6.3-7-12a7 7 0 0 1 14 0c0 5.7-7 12-7 12z" fill="var(--brand)" /><circle cx="12" cy="10" r="2.6" fill="var(--surface)" /></g>
+    </svg>
+  );
+}
+
 // ---------------------------------------------------------------
 // One insurer quote row
 // ---------------------------------------------------------------
-function QuoteCard({ ins, locked }) {
+function QuoteCard({ ins, locked, top }) {
   var [logoBroken, setLogoBroken] = useState(false);
   var showLogo = !!ins.logoUrl && !logoBroken;
   var feats = (ins.ft || []).slice(0, 3).join(", ");
   var sponsored = !!(ins.pinned || ins.featured);
   var tag = sponsored ? "Sponsored" : (ins.tag || "");
   return (
-    <article className="quote" aria-label={ins.n + " estimate"}>
+    <article className={"quote" + (top ? " is-top" : "")} aria-label={ins.n + " estimate"}>
+      {top ? <span className="top-pick"><Icon n="star" fill size={12} />Top pick for you</span> : null}
       <div className="q-top">
         <div className={"q-logo" + (showLogo ? " img" : "")} style={showLogo ? undefined : { background: ins.bc + "26" }} aria-hidden="true">
           {showLogo ? <img src={ins.logoUrl} alt="" onError={function () { setLogoBroken(true); }} /> : (ins.n || "?").charAt(0)}
@@ -634,7 +679,7 @@ export default function AIInsureGenie() {
   };
   var startChat = function() {
     setPhase("chat"); setTyp(true);
-    setTimeout(function(){bot("Sure, ask me anything about auto insurance: coverage types, claims, discounts, SR-22, deductibles, or how to compare insurers. When you're ready for personalized options, tap Get free quotes.");setTyp(false);setIph("Ask me anything...");setTimeout(function(){inRef.current&&inRef.current.focus();},100);},500);
+    setTimeout(function(){bot("Sure, ask me anything about auto insurance: coverage types, claims, discounts, SR-22, deductibles, or how to compare insurers. When you're ready for personalized options, tap Get instant quote.");setTyp(false);setIph("Ask me anything...");setTimeout(function(){inRef.current&&inRef.current.focus();},100);},500);
   };
 
   var advQ = function(idx, prof) {
@@ -803,6 +848,23 @@ export default function AIInsureGenie() {
     getAnswer(val,pro,results).then(function(a){bot(a);setTyp(false);});
   };
 
+
+  // Open the right flow when arriving from the website (values live in the URL fragment).
+  useEffect(function() {
+    var h = (window.location.hash || "").replace(/^#/, "");
+    if (!h) return;
+    var p = new URLSearchParams(h);
+    var start = p.get("start"), q = (p.get("q") || "").trim().slice(0, 200);
+    try { window.history.replaceState(null, "", window.location.pathname + window.location.search); } catch (e) {}
+    var t = setTimeout(function() {
+      if (q) { setPhase("chat"); handleChat(q); }
+      else if (start === "quote") { usr("Get instant quote"); startQ(); }
+      else if (start === "ask") { usr("I have a question"); startChat(); }
+      else if (start === "agent") { setShowCall(true); }
+    }, 350);
+    return function() { clearTimeout(t); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   var send = function(val) {
     var v = val || inp; if (!v.trim() || typ) return;
     if (phase==="chat") handleChat(v);
@@ -857,7 +919,7 @@ export default function AIInsureGenie() {
         <header className="hd">
           <div className="av"><Icon n="shield" size={22} /></div>
           <div className="hd-txt">
-            <div className="hd-name">AI InsureGenie</div>
+            <div className="hd-name">AI Insure<em>Genie</em></div>
             <div className="hd-sub"><span className="dot" />AI assistant</div>
           </div>
           <button type="button" className="hd-btn" aria-label="Talk to an agent" onClick={function(){ setShowCall(true); }}>
@@ -869,12 +931,16 @@ export default function AIInsureGenie() {
         </div>
 
         <div className="log" ref={logRef} role="log" aria-live="polite" aria-label="Conversation">
-          <div className="row bot first">
-            <div className="who">AI InsureGenie</div>
-            <div className="bub">Hi, I'm the AI InsureGenie assistant. I can compare auto insurance options from {insurerList.length > 0 ? insurerList.length + (insurerList.length === 1 ? " insurer" : " insurers") : "several insurers"} in about a minute, or answer your questions about coverage and claims.</div>
-            <div className="bub" style={{ marginTop: 4 }}>It's free, and your details are only shared if you agree to it.</div>
-            {(msgs.length === 0 || msgs[0].role === "user") ? <div className="time">{startTime}</div> : null}
-          </div>
+          <section className="welcome" aria-label="Welcome">
+            <WelcomeArt />
+            <h1>Get the best auto insurance quote <em>for your needs</em></h1>
+            <p>Tell me what matters most, or just ask me anything in plain words.</p>
+            <ul className="w-ticks">
+              <li><Icon n="check" size={14} />Free, no obligation</li>
+              <li><Icon n="check" size={14} />Details shared only if you agree</li>
+            </ul>
+          </section>
+          {(msgs.length === 0 || msgs[0].role === "user") ? <div className="time" style={{ alignSelf: "flex-start" }}>{startTime}</div> : null}
 
           {msgs.map(function(m, i) {
             var prev = i === 0 ? { role: "bot" } : msgs[i - 1];
@@ -889,7 +955,7 @@ export default function AIInsureGenie() {
                 {basis ? <p className="basis">{basis}</p> : null}
                 {m.ins ? (
                   <div className="quotes">
-                    {m.ins.map(function(x, j) { return <QuoteCard key={x.id || j} ins={x} locked={!!m.locked} />; })}
+                    {m.ins.map(function(x, j) { return <QuoteCard key={x.id || j} ins={x} locked={!!m.locked} top={j === 0} />; })}
                   </div>
                 ) : null}
                 {last && m.time ? <div className="time">{m.time}</div> : null}
@@ -917,7 +983,7 @@ export default function AIInsureGenie() {
         <footer className="foot">
           {phase === "welcome" ? (
             <div className="chips">
-              <button type="button" className="chip pri" onClick={function(){ usr("Get free quotes"); startQ(); }}>Get free quotes</button>
+              <button type="button" className="chip pri" onClick={function(){ usr("Get instant quote"); startQ(); }}>Get instant quote</button>
               <button type="button" className="chip" onClick={function(){ usr("I have a question"); startChat(); }}>Ask a question</button>
               <button type="button" className="chip" onClick={function(){ setShowCall(true); }}>Talk to an agent</button>
             </div>
@@ -931,7 +997,7 @@ export default function AIInsureGenie() {
 
               {phase === "chat" && !typ ? (
                 <div className="chips">
-                  <button type="button" className="chip pri" onClick={function(){ usr("Get free quotes"); startQ(); }}>Get free quotes</button>
+                  <button type="button" className="chip pri" onClick={function(){ usr("Get instant quote"); startQ(); }}>Get instant quote</button>
                   {chatChips.map(function(s, i) { return <button type="button" key={i} className="chip" onClick={function(){ handleChat(s); }}>{s}</button>; })}
                 </div>
               ) : null}
