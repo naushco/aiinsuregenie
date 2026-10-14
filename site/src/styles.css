@@ -592,3 +592,15 @@ section.tight { padding-top: 0; }
 .hero-car { left: -10%; bottom: 0; width: 40%; max-width: 190px; }
 @media (max-width: 1199.98px) { .float.f1 { left: -2%; } .float.f2 { right: -2%; } }
 @media (max-width: 599.98px) { .phone-wrap { padding-block: 32px 76px; } .float.f1 { top: 0; left: 0; } .float.f2 { top: auto; bottom: 8px; right: 0; } .hero-car { left: 0; bottom: 4px; width: 42%; } }
+
+/* Contact + legal pages */
+.ways { list-style: none; margin: 0 0 var(--s16); padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s4); }
+@media (max-width: 959.98px) { .ways { grid-template-columns: minmax(0, 1fr); } }
+.ways li { display: flex; flex-direction: column; gap: var(--s3); padding: var(--s6); background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--edge); }
+.ways .ico { width: 40px; height: 40px; border-radius: var(--radius-sm); background: var(--accent-tint); color: var(--accent); display: grid; place-items: center; }
+.ways h2 { font-size: var(--text-h3); }
+.ways p { color: var(--muted); font-size: var(--text-secondary); }
+.ways .btn { margin-top: auto; align-self: flex-start; }
+.ways .mail { font-weight: var(--w-medium); overflow-wrap: anywhere; }
+.legal-page .byline { margin-bottom: var(--s8); }
+.legal-page .note { margin: 0 0 var(--s8); padding: var(--s3) var(--s4); background: var(--pop-tint); color: var(--pop-ink); border-radius: var(--radius-sm); font-size: var(--text-secondary); }

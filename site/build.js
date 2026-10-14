@@ -71,7 +71,7 @@ function parse(file) {
     const k = ln.match(/^(\w+):\s*(.*)$/);
     if (k) meta[k[1]] = k[2].replace(/^["']|["']$/g, '');
   });
-  for (const req of ['title', 'description', 'date']) if (!meta[req]) throw new Error(`${file}: missing "${req}"`);
+  for (const req of ['title', 'description']) if (!meta[req]) throw new Error(`${file}: missing "${req}"`);
   meta.slug = path.basename(file, '.md');
   meta.body = m[2];
   return meta;
@@ -119,6 +119,7 @@ ${menuScript}
 const postsDir = path.join(root, 'content/posts');
 const posts = fs.readdirSync(postsDir).filter((f) => f.endsWith('.md') && !f.startsWith('_'))
   .map((f) => parse(path.join(postsDir, f)))
+  .map((p) => { if (!p.date) throw new Error(`${p.slug}: missing "date"`); return p; })
   .filter((p) => p.draft !== 'true')
   .sort((a, b) => b.date.localeCompare(a.date));
 
@@ -213,6 +214,29 @@ fs.writeFileSync(path.join(dist, 'partners', 'index.html'), head({
   url: `${SITE}/partners/`,
 }) + read('src/partners.template.html') + tail);
 
+
+// ---------- simple pages (privacy, terms) + contact ----------
+const CONTACT_EMAIL = ''; // set to a monitored address, e.g. 'hello@aiinsuregenie.com'
+const pagesDir = path.join(root, 'content/pages');
+const simplePages = fs.existsSync(pagesDir) ? fs.readdirSync(pagesDir).filter((f) => f.endsWith('.md')).map((f) => parse(path.join(pagesDir, f))) : [];
+for (const pg of simplePages) {
+  const url = `${SITE}/${pg.slug}/`;
+  const html = head({ title: `${pg.title} | ${NAME}`, description: pg.description, url }) + `<main class="page">
+<article class="article legal-page">
+  <h1>${esc(pg.title)}</h1>
+  <p class="byline">Last updated <time datetime="${pg.updated || pg.date}">${fmtDate(pg.updated || pg.date)}</time></p>
+${md(pg.body)}
+</article>
+</main>` + tail;
+  fs.mkdirSync(path.join(dist, pg.slug), { recursive: true });
+  fs.writeFileSync(path.join(dist, pg.slug, 'index.html'), html);
+}
+const emailCard = CONTACT_EMAIL ? `<li><span class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span><h2>Email us</h2><p>For privacy requests and anything else.</p><p class="mail">${esc(CONTACT_EMAIL)}</p><a class="btn btn-2" href="mailto:${esc(CONTACT_EMAIL)}">Send an email</a></li>` : '';
+fs.mkdirSync(path.join(dist, 'contact'), { recursive: true });
+fs.writeFileSync(path.join(dist, 'contact', 'index.html'), head({
+  title: `Contact us | ${NAME}`, description: 'Ask a question, request a call with a licensed agent, or partner with AI InsureGenie.', url: `${SITE}/contact/`,
+}) + read('src/contact.template.html').replace('{{EMAIL_CARD}}', emailCard) + tail);
+
 // ---------- static assets ----------
 fs.copyFileSync(path.join(root, 'src/styles.css'), path.join(dist, 'styles.css'));
 for (const f of fs.readdirSync(path.join(root, 'public'))) fs.copyFileSync(path.join(root, 'public', f), path.join(dist, f));
@@ -221,6 +245,9 @@ for (const f of fs.readdirSync(path.join(root, 'public'))) fs.copyFileSync(path.
 const urls = [
   { loc: SITE + '/', lastmod: posts[0] ? (posts[0].updated || posts[0].date) : undefined },
   { loc: SITE + '/partners/' },
+  { loc: SITE + '/contact/' },
+  { loc: SITE + '/privacy/' },
+  { loc: SITE + '/terms/' },
   { loc: SITE + '/blog/', lastmod: posts[0] ? (posts[0].updated || posts[0].date) : undefined },
   ...posts.map((p) => ({ loc: `${SITE}/blog/${p.slug}/`, lastmod: p.updated || p.date })),
 ];
