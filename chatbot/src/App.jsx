@@ -400,6 +400,9 @@ var CSS_TEXT = [
   ".send:disabled{background:var(--line);color:var(--mute);cursor:default}",
   ".linkbtn{display:flex;align-items:center;justify-content:center;min-height:44px;margin:4px auto 0;padding:0 8px;border:0;background:none;color:var(--brand);font-size:14px;text-decoration:underline;cursor:pointer}",
   ".disc{font-size:12px;line-height:1.4;color:var(--mute);text-align:center;margin-top:8px}",
+  ".disc-btn{position:relative;padding:0;border:0;background:none;color:var(--brand);font-size:12px;line-height:1.4;text-decoration:underline;cursor:pointer}",
+  ".disc-btn::before{content:'';position:absolute;inset:-14px -12px}",
+  ".disc-full{margin-top:4px}",
   ".ov{position:fixed;inset:0;background:rgba(8,16,13,.55);z-index:50;display:flex;align-items:flex-end;justify-content:center}",
   ".dlg{background:var(--surface);color:var(--ink);border:1px solid var(--line);width:100%;max-width:440px;max-height:92vh;max-height:92dvh;overflow:auto;border-radius:12px 12px 0 0;padding:24px}",
   "@media (min-width:640px){.ov{align-items:center}.dlg{border-radius:12px}}",
@@ -593,6 +596,7 @@ export default function AIInsureGenie() {
   var [ck, setCk] = useState(false);
   var [showCon, setShowCon] = useState(false);
   var [showCall, setShowCall] = useState(false);
+  var [showDisc, setShowDisc] = useState(false);
   var [fullKb, setFullKb] = useState(false);
   var [startTime] = useState(function(){ return nowTime(); });
   var logRef = useRef(null);
@@ -960,7 +964,11 @@ export default function AIInsureGenie() {
               ) : null}
             </div>
           )}
-          <p className="disc">AI InsureGenie is an AI assistant, not an insurance company or licensed agent. Prices shown are estimates, and your final rate comes from the insurer.</p>
+          <div className="disc">
+            <span>AI assistant, not a licensed agent. Prices are estimates.</span>{" "}
+            <button type="button" className="disc-btn" aria-expanded={showDisc} aria-controls="disc-full" onClick={function(){ setShowDisc(!showDisc); }}>{showDisc ? "Hide details" : "Details"}</button>
+            {showDisc ? <p id="disc-full" className="disc-full">AI InsureGenie is an AI assistant, not an insurance company or licensed agent. Prices shown are estimates, and your final rate comes from the insurer.</p> : null}
+          </div>
         </footer>
 
         {showCall ? (
