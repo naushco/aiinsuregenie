@@ -428,13 +428,9 @@ var CSS_TEXT = [
   ".hd .hd-sub{color:var(--hero-mute)}.hd .dot{background:var(--hero-acc)}",
   ".hd .hd-btn{background:transparent;color:var(--hero-ink);border-color:rgba(238,246,242,.34)}.hd .hd-btn:hover{background:transparent;border-color:var(--hero-acc);color:var(--hero-acc)}",
   ".prog{background:var(--hero-line)}",
-  ".art-bub{width:min(320px,86%);border:1px solid var(--line);border-radius:12px;border-bottom-left-radius:4px;overflow:hidden;background:var(--scene)}",
-  ".art-bub .art{display:block;width:100%;height:auto}",
-  "@media (prefers-reduced-motion:no-preference){.art-bub .car{animation:drive .7s cubic-bezier(.16,1,.3,1) .15s both}}",
   ".top-pick{display:inline-flex;align-items:center;gap:4px;margin-bottom:12px;padding:2px 8px;border-radius:4px;background:var(--pop-t);color:var(--pop-ink);font-size:12px;font-weight:500;line-height:1.4}",
   ".top-pick svg{color:var(--pop-shade)}",
   ".quote.is-top{border-color:var(--brand)}",
-  "@keyframes drive{from{transform:translateX(-32px);opacity:0}to{transform:none;opacity:1}}",
   "@media (min-width:768px){.ig{--card:var(--bg);--bot:var(--surface);padding:0;align-items:stretch}.ig-card{max-width:none;height:100vh;height:100dvh;border:0;border-radius:0;box-shadow:none;overflow:visible}.hd{padding:12px 24px}.log{padding:24px max(24px,calc((100% - 880px)/2))}.foot{padding:16px max(24px,calc((100% - 880px)/2)) calc(16px + env(safe-area-inset-bottom))}.bub{max-width:72%}.user .bub{max-width:66%}.quotes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}}",
   "@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}",
   "@keyframes blink{0%,60%,100%{opacity:.35}30%{opacity:1}}",
@@ -462,29 +458,6 @@ function Icon(props) {
 }
 
 
-// Welcome illustration: road, marigold car, sun. Colours come from CSS tokens.
-function WelcomeArt() {
-  return (
-    <svg className="art" viewBox="0 0 320 168" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
-      <circle cx="262" cy="44" r="18" fill="var(--pop)" />
-      <path d="M-10 150 C 90 120, 200 160, 330 118" fill="none" stroke="var(--road)" strokeWidth="36" strokeLinecap="round" />
-      <path d="M-10 150 C 90 120, 200 160, 330 118" fill="none" stroke="var(--pop)" strokeWidth="2" strokeDasharray="10 12" />
-      <g className="car" transform="translate(84 64) scale(.625)">
-        <ellipse cx="122" cy="102" rx="104" ry="6" fill="rgba(0,0,0,.18)" />
-        <path d="M18 80c0-12 8-20 20-22l34-6c14-16 30-25 52-25h22c20 0 35 9 47 23l18 4c12 3 20 11 20 23v6c0 4-3 6-6 6H24c-4 0-6-2-6-6z" fill="var(--pop)" />
-        <path d="M18 84h208v4c0 4-3 6-6 6H24c-4 0-6-2-6-6z" fill="var(--pop-shade)" />
-        <path d="M84 52c10-12 23-18 38-18h6v18z" fill="var(--glass)" />
-        <path d="M136 34h8c15 0 25 6 33 18h-41z" fill="var(--glass)" />
-        <path d="M132 56v24" stroke="var(--pop-shade)" strokeWidth="2" />
-        <rect x="212" y="66" width="12" height="7" rx="3.5" fill="#fff7d6" />
-        <rect x="18" y="66" width="6" height="8" rx="2" fill="#e5484d" />
-        <circle cx="68" cy="88" r="18" fill="var(--tire)" /><circle cx="68" cy="88" r="8" fill="var(--hub)" />
-        <circle cx="184" cy="88" r="18" fill="var(--tire)" /><circle cx="184" cy="88" r="8" fill="var(--hub)" />
-      </g>
-      <g transform="translate(36 34)"><path d="M12 22s-7-6.3-7-12a7 7 0 0 1 14 0c0 5.7-7 12-7 12z" fill="var(--brand)" /><circle cx="12" cy="10" r="2.6" fill="var(--surface)" /></g>
-    </svg>
-  );
-}
 
 // ---------------------------------------------------------------
 // One insurer quote row
@@ -928,8 +901,7 @@ export default function AIInsureGenie() {
         <div className="log" ref={logRef} role="log" aria-live="polite" aria-label="Conversation">
           <div className="row bot first">
             <div className="who">AI InsureGenie</div>
-            <div className="art-bub" aria-hidden="true"><WelcomeArt /></div>
-            <div className="bub" style={{ marginTop: 4 }}>Hi! I help drivers get the best quote for their needs.</div>
+            <div className="bub">Hi! I help drivers get the best quote for their needs.</div>
             <div className="bub" style={{ marginTop: 4 }}>What would you like to do? Tap an option below, or just tell me what's going on. It's free, and your details are only shared if you agree.</div>
           </div>
           {(msgs.length === 0 || msgs[0].role === "user") ? <div className="time" style={{ alignSelf: "flex-start" }}>{startTime}</div> : null}
