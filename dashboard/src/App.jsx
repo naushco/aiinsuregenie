@@ -65,7 +65,7 @@ function LogoMark(props) {
 }
 
 function EditModal({partner, onSave, onClose}) {
-  var [form, setForm] = useState(Object.assign({priority:3,boost:0,pinned:false,featured:false,customTag:"",features:"",bestFor:"budget"}, partner));
+  var [form, setForm] = useState(Object.assign({priority:3,boost:0,pinned:false,featured:false,customTag:"",features:"",bestFor:"budget",placement:"top",weight:50,goals:[],states:""}, partner));
   var [tab, setTab] = useState("basic");
   var [logoErr, setLogoErr] = useState("");
   var update = function(field, val) { setForm(function(f) { var n = Object.assign({}, f); n[field] = val; return n; }); };
@@ -114,7 +114,7 @@ function EditModal({partner, onSave, onClose}) {
 
         {/* Tabs */}
         <div style={{padding:"10px 24px",display:"flex",gap:4,borderBottom:"1px solid #F1F5F9",background:"#F8FAFC",flexShrink:0}}>
-          {[["basic","Basic Info"],["promote","Promote & Boost"],["display","Display & Features"]].map(function(t) {
+          {[["basic","Basic Info"],["placement","Chat placement"],["promote","Promote & Boost"],["display","Display & Features"]].map(function(t) {
             return <button key={t[0]} onClick={function(){setTab(t[0]);}} style={tabBtnSt(tab===t[0])}>{t[1]}</button>;
           })}
         </div>
@@ -180,6 +180,47 @@ function EditModal({partner, onSave, onClose}) {
                 <input type="checkbox" checked={form.enabled} onChange={function(e){update("enabled",e.target.checked);}} style={{width:18,height:18,accentColor:"#0EA5E9"}} />
                 <span style={{fontSize:14,fontWeight:600,color:form.enabled?"#059669":"#94A3B8"}}>{form.enabled ? "Enabled — Receiving Leads" : "Disabled — Paused"}</span>
               </label>
+            </div>
+          )}
+
+          {/* CHAT PLACEMENT TAB */}
+          {tab === "placement" && (
+            <div style={{display:"flex",flexDirection:"column",gap:16}}>
+              <div>
+                <label style={labelSt}>How this partner appears in the chat</label>
+                <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:6}}>
+                  {[["top","Top pick","Can be shown as the one main recommendation."],["other","Other options only","Only shown when the user taps \"See other options\"."],["hidden","Hidden from chat","Kept in the dashboard but never shown."]].map(function(o) {
+                    var on = (form.placement || "top") === o[0];
+                    return <label key={o[0]} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 12px",borderRadius:10,border:on?"2px solid #0EA5E9":"1.5px solid #E2E8F0",background:on?"#EFF6FF":"#FFF",cursor:"pointer"}}>
+                      <input type="radio" name="placement" checked={on} onChange={function(){update("placement",o[0]);}} style={{marginTop:3,accentColor:"#0EA5E9"}} />
+                      <span><span style={{display:"block",fontSize:13,fontWeight:700,color:"#0F172A"}}>{o[1]}</span><span style={{display:"block",fontSize:11,color:"#64748B",marginTop:2}}>{o[2]}</span></span>
+                    </label>;
+                  })}
+                </div>
+              </div>
+              {(form.placement || "top") === "top" ? (
+                <div>
+                  <label style={labelSt}>Share of top-pick traffic</label>
+                  <input type="range" min="0" max="100" step="5" value={form.weight == null ? 50 : form.weight} onChange={function(e){update("weight",parseInt(e.target.value));}} style={{width:"100%",accentColor:"#0EA5E9"}} />
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#94A3B8"}}><span>Never</span><span style={{fontSize:14,fontWeight:700,color:"#0EA5E9"}}>{form.weight == null ? 50 : form.weight}</span><span>Most</span></div>
+                  <div style={{fontSize:11,color:"#94A3B8",marginTop:4,lineHeight:1.5}}>When several top-pick partners fit the same driver, the chat rotates between them by these numbers. Example: 70 and 30 means about 70% and 30% of drivers. A pinned partner always wins.</div>
+                </div>
+              ) : null}
+              <div>
+                <label style={labelSt}>Show for these goals</label>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:4}}>
+                  {[["price","Lowest price"],["coverage","Best coverage"],["service","Best service"]].map(function(g) {
+                    var list = form.goals || []; var on = list.indexOf(g[0]) >= 0;
+                    return <button key={g[0]} type="button" aria-pressed={on} onClick={function(){ update("goals", on ? list.filter(function(x){return x!==g[0];}) : list.concat([g[0]])); }} style={{padding:"8px 12px",borderRadius:10,border:on?"2px solid #0EA5E9":"1.5px solid #E2E8F0",background:on?"#EFF6FF":"#FFF",color:on?"#0EA5E9":"#64748B",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>{g[1]}</button>;
+                  })}
+                </div>
+                <div style={{fontSize:11,color:"#94A3B8",marginTop:4}}>{(form.goals||[]).length ? "Only shown to drivers who pick these goals." : "None selected = shown for every goal."}</div>
+              </div>
+              <div>
+                <label style={labelSt}>States served</label>
+                <input value={form.states||""} onChange={function(e){update("states",e.target.value.toUpperCase());}} placeholder="Leave empty for all states, or e.g. VA, NC, TX" style={inputSt} />
+                <div style={{fontSize:11,color:"#94A3B8",marginTop:4}}>Use 2-letter state codes, separated by commas.</div>
+              </div>
             </div>
           )}
 
@@ -428,7 +469,7 @@ export default function Dashboard() {
   };
 
   var addPartner = function() {
-    var newP = {id:"p"+Date.now(),name:"New Partner",logo:"🏢",badge:"NEW",bc:"#6366F1",rating:4.0,payout:5.00,link:"https://",enabled:false,leads:0,revenue:0,cr:0,priority:3,boost:0,pinned:false,featured:false,customTag:"",features:"",bestFor:"budget",supportsPrefill:false,logoUrl:""};
+    var newP = {id:"p"+Date.now(),name:"New Partner",logo:"🏢",badge:"NEW",bc:"#6366F1",rating:4.0,payout:5.00,link:"https://",enabled:false,leads:0,revenue:0,cr:0,priority:3,boost:0,pinned:false,featured:false,customTag:"",features:"",bestFor:"budget",supportsPrefill:false,logoUrl:"",placement:"top",weight:50,goals:[],states:""};
     setPartners(function(prev) { return prev.concat([newP]); });
     setEditing(newP);
   };
@@ -509,6 +550,15 @@ export default function Dashboard() {
             {!storageOk ? <div role="alert" style={{background:"#78350F",color:"#FDE68A",borderRadius:10,padding:"10px 14px",fontSize:12,lineHeight:1.5,marginBottom:12}}>Storage isn't connected yet, so changes can't be saved. In Vercel, open your backend project, go to Storage, and add an Upstash Redis database.</div> : null}
             {tab === "partners" && (
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                {(function(){
+                  var tops = partners.filter(function(p){ return p.enabled && (p.placement||"top") === "top" && !p.pinned; });
+                  var pinned = partners.filter(function(p){ return p.enabled && p.pinned && p.placement !== "hidden"; });
+                  var total = tops.reduce(function(a,p){ return a + (p.weight == null ? 50 : p.weight); }, 0);
+                  var line = pinned.length ? ("Pinned: " + pinned[0].name + " is always the top pick.")
+                    : (!tops.length ? "No live partner is set as a top pick. The chat will use the best-scoring live partner."
+                    : tops.map(function(p){ var w = p.weight == null ? 50 : p.weight; return p.name + " " + (total ? Math.round(w / total * 100) : 0) + "%"; }).join("  ·  "));
+                  return <div style={{background:"#0B3B4A",border:"1px solid #155E75",borderRadius:10,padding:"10px 14px",fontSize:12,color:"#CFFAFE",lineHeight:1.5}}><b style={{color:"#FFF"}}>Top-pick rotation</b> (drivers who fit every partner's goals and states): {line}</div>;
+                })()}
                 {partners.map(function(p) {
                   return (
                     <div key={p.id} className="ptr" style={{background:"#1E293B",borderRadius:12,padding:14,border:"1px solid #334155",transition:"all .2s",opacity:p.enabled?1:.5}}>
@@ -523,6 +573,7 @@ export default function Dashboard() {
                         <div style={{display:"flex",alignItems:"center",gap:6}}>
                           <span style={{background:p.enabled?"#059669":"#475569",color:"#FFF",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:12}}>{p.enabled?"LIVE":"OFF"}</span>
                           <span title="Pre-fill support status" style={{background:p.supportsPrefill?"#059669":"#78350F",color:"#FFF",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:12}}>{p.supportsPrefill?"✅ Prefill":"⚠️ No Prefill"}</span>
+                          <span title="Chat placement" style={{background:(p.placement||"top")==="top"?"#0E7490":(p.placement==="hidden"?"#475569":"#334155"),color:"#FFF",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:12}}>{(p.placement||"top")==="top" ? "TOP PICK " + (p.weight == null ? 50 : p.weight) : (p.placement==="hidden" ? "HIDDEN" : "OTHER OPTIONS")}</span>
                           {p.pinned && <span style={{background:"#0EA5E9",color:"#FFF",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:12}}>📌 #1</span>}
                           {p.featured && <span style={{background:"#F59E0B",color:"#FFF",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:12}}>⭐</span>}
                           {(p.boost||0) > 0 && <span style={{background:"#7C3AED",color:"#FFF",fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:12}}>+{p.boost}</span>}

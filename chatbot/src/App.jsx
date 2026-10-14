@@ -41,6 +41,10 @@ function dashboardToInsurer(dp) {
     pinned: dp.pinned === true,
     priority: dp.priority || 3,
     boost: dp.boost || 0,
+    placement: dp.placement === "other" ? "other" : "top",
+    weight: dp.weight == null ? 50 : Number(dp.weight) || 0,
+    goals: Array.isArray(dp.goals) ? dp.goals : [],
+    states: Array.isArray(dp.states) ? dp.states : [],
   };
 }
 
@@ -230,8 +234,8 @@ function calcPremium(ins, p) {
   return Math.round(b);
 }
 
-function matchInsurers(p) {
-  return INSURERS.map(function(ins) {
+function matchInsurers(p, pool) {
+  return (pool || INSURERS).map(function(ins) {
     var s = 0;
     if (p.driving === "dui" || p.driving === "major") s += ins.rk === "high" ? 50 : ins.rk === "mod" ? 20 : -5;
     if (p.military === "yes") { s += ins.bf.includes("military") ? 45 : 0; } else { if (ins.id === "usaa") s -= 100; }
@@ -248,6 +252,32 @@ function matchInsurers(p) {
     var savings = Math.max(Math.round((220 - premium) * 12), Math.round(80 + Math.random() * 200));
     return Object.assign({}, ins, { s: s, premium: premium, savings: savings });
   }).sort(function(a, b) { return b.s - a.s; }).filter(function(x) { return x.s > -50; }).slice(0, 4);
+}
+
+// Chooses who to show, following the dashboard's chat placement settings:
+// goals and states narrow the list; a pinned partner always wins; otherwise
+// top-pick partners rotate by their traffic share; the rest become "other options".
+function fits(ins, p) {
+  var g = ins.goals || [], st = ins.states || [];
+  return (!g.length || !p.priority || g.indexOf(p.priority) >= 0) && (!st.length || !p.state || st.indexOf(p.state) >= 0);
+}
+function pickPartners(p) {
+  var pool = INSURERS.filter(function (ins) { return fits(ins, p); });
+  if (!pool.length) return [];
+  var scored = matchInsurers(p, pool);
+  if (!scored.length) return [];
+  var top = scored.filter(function (x) { return x.pinned; })[0];
+  if (!top) {
+    var tops = scored.filter(function (x) { return x.placement !== "other" && x.weight > 0; });
+    var total = tops.reduce(function (a, x) { return a + x.weight; }, 0);
+    if (total > 0) {
+      var r = Math.random() * total;
+      for (var i = 0; i < tops.length; i++) { r -= tops[i].weight; if (r < 0) { top = tops[i]; break; } }
+      if (!top) top = tops[tops.length - 1];
+    }
+  }
+  if (!top) top = scored[0];
+  return [top].concat(scored.filter(function (x) { return x.id !== top.id; }));
 }
 
 // Builds the button link. Anything already in the partner's link (like ?aid=123) is kept.
@@ -739,10 +769,10 @@ export default function AIInsureGenie() {
     var p = Object.assign({}, prof, { coverage: prof.priority === "coverage" ? "full" : (prof.coverage || "standard") });
     setPro(p); setPhase("locked"); setQr(null); setTyp(true);
     setTimeout(function(){
-      var r = matchInsurers(p).map(function(ins){ return Object.assign({}, ins, { rUrl: buildUrl(ins, p) }); });
+      var r = pickPartners(p).map(function(ins){ return Object.assign({}, ins, { rUrl: buildUrl(ins, p) }); });
       setResults(r);
       if (!r.length) {
-        bot("I couldn't load partner options just now. You can talk to a licensed agent, or try again in a minute.");
+        bot(INSURERS.length ? "I don't have a partner for " + (p.state || "your area") + " that fits just yet. A licensed agent can help you instead: tap **Talk to an agent**." : "I couldn't load partner options just now. You can talk to a licensed agent, or try again in a minute.");
         setTyp(false); setPhase("follow");
         return;
       }
