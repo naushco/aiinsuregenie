@@ -41,6 +41,10 @@ function dashboardToInsurer(dp) {
     pinned: dp.pinned === true,
     priority: dp.priority || 3,
     boost: dp.boost || 0,
+    placement: dp.placement === "other" ? "other" : "top",
+    weight: dp.weight == null ? 50 : Number(dp.weight) || 0,
+    goals: Array.isArray(dp.goals) ? dp.goals : [],
+    states: Array.isArray(dp.states) ? dp.states : [],
   };
 }
 
@@ -73,8 +77,12 @@ var INSURERS = IS_PREVIEW ? DEFAULT_INSURERS : [];
 
 const ZIP_STATES = {"AL":[35000,36999],"AK":[99500,99999],"AZ":[85000,86599],"AR":[71600,72999],"CA":[90000,96699],"CO":[80000,81699],"CT":[6000,6999],"DE":[19700,19999],"FL":[32000,34999],"GA":[30000,31999],"HI":[96700,96899],"ID":[83200,83899],"IL":[60000,62999],"IN":[46000,47999],"IA":[50000,52899],"KS":[66000,67999],"KY":[40000,42799],"LA":[70000,71499],"ME":[3900,4999],"MD":[20600,21999],"MA":[1000,2799],"MI":[48000,49999],"MN":[55000,56799],"MS":[38600,39799],"MO":[63000,65899],"MT":[59000,59999],"NE":[68000,69399],"NV":[88900,89899],"NH":[3000,3899],"NJ":[7000,8999],"NM":[87000,88499],"NY":[10000,14999],"NC":[27000,28999],"ND":[58000,58899],"OH":[43000,45999],"OK":[73000,74999],"OR":[97000,97999],"PA":[15000,19699],"RI":[2800,2999],"SC":[29000,29999],"SD":[57000,57799],"TN":[37000,38599],"TX":[75000,79999],"UT":[84000,84799],"VT":[5000,5999],"VA":[22000,24699],"WA":[98000,99499],"WV":[24700,26899],"WI":[53000,54999],"WY":[82000,83199],"DC":[20000,20599]};
 
+var STATE_ABBR = {"alabama":"AL","alaska":"AK","arizona":"AZ","arkansas":"AR","california":"CA","colorado":"CO","connecticut":"CT","delaware":"DE","district of columbia":"DC","florida":"FL","georgia":"GA","hawaii":"HI","idaho":"ID","illinois":"IL","indiana":"IN","iowa":"IA","kansas":"KS","kentucky":"KY","louisiana":"LA","maine":"ME","maryland":"MD","massachusetts":"MA","michigan":"MI","minnesota":"MN","mississippi":"MS","missouri":"MO","montana":"MT","nebraska":"NE","nevada":"NV","new hampshire":"NH","new jersey":"NJ","new mexico":"NM","new york":"NY","north carolina":"NC","north dakota":"ND","ohio":"OH","oklahoma":"OK","oregon":"OR","pennsylvania":"PA","rhode island":"RI","south carolina":"SC","south dakota":"SD","tennessee":"TN","texas":"TX","utah":"UT","vermont":"VT","virginia":"VA","washington":"WA","west virginia":"WV","wisconsin":"WI","wyoming":"WY"};
+var CAR_AGE_YEAR = { "2020 or newer": "2022", "2015 to 2019": "2017", "2014 or older": "2012" };
+
 function vZip(z) {
-  var c = z.replace(/\D/g, "");
+  var m = String(z).match(/\b\d{5}\b/);
+  var c = m ? m[0] : String(z).replace(/\D/g, "");
   if (c.length !== 5) return { ok: false, e: "Enter a valid 5-digit US ZIP code." };
   var n = parseInt(c);
   for (var st of Object.keys(ZIP_STATES)) {
@@ -125,21 +133,14 @@ function isQuestion(text, phase, stepId) {
   return false;
 }
 
+// Used only when the AI can't be reached. General, number-free answers;
+// the AI handles everything else, including questions about partners.
 function staticAnswer(text) {
   var t = text.toLowerCase();
-  for (var i = 0; i < INSURERS.length; i++) {
-    var ins = INSURERS[i];
-    if (t.includes(ins.n.toLowerCase()) || t.includes(ins.id)) {
-      return "Here's what I know about **" + ins.n + "** (" + ins.r + "/5 stars):\n\n" + ins.info + "\n\n**Key features:** " + ins.ft.join(", ") + "\n\n" + ins.hl + ". Anything else?";
-    }
-  }
-  if (t.includes("deductible")) return "A **deductible** is what you pay before insurance kicks in.\n\n$250 = higher premium, less out-of-pocket per claim\n$500 = most popular balanced option\n$1,000 = lowest premium, saves $200-400/yr\n\nSafe drivers with savings benefit from higher deductibles.";
-  if (t.includes("coverage") && (t.includes("type") || t.includes("what") || t.includes("include"))) return "**Minimum** — Liability only (state required). Covers others.\n**Standard** — Adds collision + uninsured motorist.\n**Full/Comprehensive** — Everything + theft, weather, rental, roadside.\n\nWant me to adjust your coverage level?";
-  if (t.includes("sr-22") || t.includes("sr22")) return "**SR-22** is a certificate required after DUI or serious violations. The General, Progressive, and some State Farm offices handle SR-22. Adds ~$20-50/month for 3 years.";
-  if (t.includes("cheap") || t.includes("save") || t.includes("discount") || t.includes("lower")) return "Best ways to lower your rate:\n\nRaise deductible to $1,000+ (saves 15-25%)\nBundle home + auto (saves up to 25%)\nLow-mileage discount if you drive under 10k mi/yr\nDefensive driving course (5-10% off)\nGood student discount (10-25% off)\n\nReady for personalized quotes? Say **get my quotes**!";
-  if (t.includes("bundle") || t.includes("home and auto")) return "**Bundling** home/renters + auto saves **15-25%**. Best for bundling: State Farm (up to 25% off), Allstate (multi-policy + Drivewise), Nationwide (vanishing deductible), Liberty Mutual (flexible bundles).";
-  if (t.includes("gap")) return "**Gap insurance** covers the difference between what you owe and your car's value if totaled. Important if you owe more than the car is worth. Progressive, Liberty Mutual, and Allstate offer it.";
-  if (t.includes("new driver") || t.includes("teen") || t.includes("first time")) return "Young/new drivers pay more, but can save with:\n\nGood student discount (3.0+ GPA saves 10-25%)\nDefensive driving course (5-10% off)\nUsage-based programs (Root, Progressive)\nBeing on a parent's policy\n\nGEICO, Progressive, and Lemonade usually have the best young driver rates.";
+  if (t.includes("deductible")) return "A **deductible** is the amount you pay yourself on a claim before insurance pays the rest. A higher deductible usually lowers your premium, but you pay more if something happens, so pick one you could comfortably cover.";
+  if (t.includes("sr-22") || t.includes("sr22")) return "An **SR-22** is a form your insurer files with your state to show you carry the required insurance, often after a DUI or driving without insurance. Not every insurer files them, so it's worth asking before you buy.";
+  if (t.includes("coverage") && (t.includes("type") || t.includes("what") || t.includes("include") || t.includes("full"))) return "**Liability** pays for damage or injuries you cause to others. **Collision** repairs your car after an accident, and **comprehensive** covers theft, weather, and other damage. \"Full coverage\" usually means all three, and lenders often require it on financed cars.";
+  if (t.includes("cheap") || t.includes("save") || t.includes("discount") || t.includes("lower")) return "Common ways to lower your rate: compare quotes with the same coverage, raise your deductible if you can afford it, bundle home and auto, and ask about safe-driver or paid-in-full discounts. Discounts vary by insurer and state.";
   return null;
 }
 
@@ -202,10 +203,9 @@ async function aiAnswer(msg, profile, results) {
 }
 
 async function getAnswer(text, profile, results) {
-  var s = staticAnswer(text);
-  var answer = s || await aiAnswer(text, profile, results);
+  var answer = await aiAnswer(text, profile, results) || staticAnswer(text);
   if (!answer) {
-    return "I can help with coverage types, insurer comparisons, discounts, SR-22, deductibles, and more. Could you rephrase? Or say **get my quotes** for personalized rates!";
+    return "Sorry, I couldn't answer that just now. Try asking another way, tap **Get instant quote** to find your match, or talk to a licensed agent.";
   }
   // Remember this exchange so follow-up questions make sense
   convoHistory.push({ role: "user", content: text });
@@ -226,8 +226,8 @@ function calcPremium(ins, p) {
   return Math.round(b);
 }
 
-function matchInsurers(p) {
-  return INSURERS.map(function(ins) {
+function matchInsurers(p, pool) {
+  return (pool || INSURERS).map(function(ins) {
     var s = 0;
     if (p.driving === "dui" || p.driving === "major") s += ins.rk === "high" ? 50 : ins.rk === "mod" ? 20 : -5;
     if (p.military === "yes") { s += ins.bf.includes("military") ? 45 : 0; } else { if (ins.id === "usaa") s -= 100; }
@@ -246,6 +246,32 @@ function matchInsurers(p) {
   }).sort(function(a, b) { return b.s - a.s; }).filter(function(x) { return x.s > -50; }).slice(0, 4);
 }
 
+// Chooses who to show, following the dashboard's chat placement settings:
+// goals and states narrow the list; a pinned partner always wins; otherwise
+// top-pick partners rotate by their traffic share; the rest become "other options".
+function fits(ins, p) {
+  var g = ins.goals || [], st = ins.states || [];
+  return (!g.length || !p.priority || g.indexOf(p.priority) >= 0) && (!st.length || !p.state || st.indexOf(p.state) >= 0);
+}
+function pickPartners(p) {
+  var pool = INSURERS.filter(function (ins) { return fits(ins, p); });
+  if (!pool.length) return [];
+  var scored = matchInsurers(p, pool);
+  if (!scored.length) return [];
+  var top = scored.filter(function (x) { return x.pinned; })[0];
+  if (!top) {
+    var tops = scored.filter(function (x) { return x.placement !== "other" && x.weight > 0; });
+    var total = tops.reduce(function (a, x) { return a + x.weight; }, 0);
+    if (total > 0) {
+      var r = Math.random() * total;
+      for (var i = 0; i < tops.length; i++) { r -= tops[i].weight; if (r < 0) { top = tops[i]; break; } }
+      if (!top) top = tops[tops.length - 1];
+    }
+  }
+  if (!top) top = scored[0];
+  return [top].concat(scored.filter(function (x) { return x.id !== top.id; }));
+}
+
 // Builds the button link. Anything already in the partner's link (like ?aid=123) is kept.
 // Personal details are added ONLY for partners marked "pre-fill verified". Everyone else gets tracking tags only.
 function buildUrl(ins, p) {
@@ -261,21 +287,14 @@ function buildUrl(ins, p) {
 }
 
 var STEPS = [
-  {id:"zip",f:"zip",q:"What's your ZIP code?",t:"text",ph:"5-digit US ZIP",vl:vZip},
-  {id:"age",f:"age",q:"How old are you?",t:"qr",opts:["18-24","25-34","35-44","45-54","55-64","65+"],vl:function(v){var m={"18-24":21,"25-34":30,"35-44":40,"45-54":50,"55-64":60,"65+":68};if(m[v])return{ok:true,v:m[v]};var n=parseInt(v);return n>=16&&n<=99?{ok:true,v:n}:{ok:false,e:"Enter age 16-99."};}},
-  {id:"vyear",f:"vehicleYear",q:"What year is your vehicle?",t:"qr",opts:["2024-2025","2020-2023","2015-2019","2010-2014","Before 2010"],ps:function(v){if(v.includes("2024"))return "2024";if(v.includes("2020"))return "2022";if(v.includes("2015"))return "2017";if(v.includes("2010"))return "2012";if(v.includes("Before"))return "2008";return v;}},
-  {id:"vmake",f:"vehicleMake",q:"What make is your car?",t:"qr",opts:["Toyota","Honda","Ford","Chevrolet","BMW","Tesla","Other"]},
-  {id:"vmake2",f:"vehicleMake",q:"What brand is your vehicle?",t:"text",ph:"e.g. Hyundai, Kia, Subaru...",cond:function(p){return p.vehicleMake==="Other";}},
-  {id:"ins",f:"insured",q:"Are you currently insured?",t:"qr",opts:["Yes, I'm insured","No, not right now"],ps:function(v){return v.toLowerCase().includes("yes")?"yes":"no";}},
-  {id:"curins",f:"currentInsurer",q:"Who's your current insurer?",t:"qr",opts:["GEICO","State Farm","Progressive","Allstate","Liberty Mutual","Other"],cond:function(p){return p.insured==="yes";}},
-  {id:"curins2",f:"currentInsurer",q:"What's the name of your current insurer?",t:"text",ph:"e.g. Farmers, Travelers, Erie...",cond:function(p){return p.insured==="yes"&&p.currentInsurer==="Other";}},
-  {id:"drv",f:"driving",q:"Driving record in the past 3 years?",t:"qr",opts:["Clean — no issues","Minor (1-2 tickets)","Major (accident)","DUI / SR-22"],ps:function(v){var l=v.toLowerCase();if(l.includes("clean"))return "clean";if(l.includes("minor"))return "minor";if(l.includes("major"))return "major";return "dui";}},
-  {id:"cov",f:"coverage",q:"What coverage level?",t:"qr",opts:["Minimum (state required)","Standard (liability + collision)","Full (comprehensive)"],ps:function(v){var l=v.toLowerCase();if(l.includes("min"))return "minimum";if(l.includes("full")||l.includes("comp"))return "full";return "standard";}},
-  {id:"mil",f:"military",q:"Active military or veteran?",t:"qr",opts:["Yes","No"],ps:function(v){return v.toLowerCase().includes("yes")?"yes":"no";}},
-  {id:"home",f:"homeowner",q:"Do you own your home? Some insurers discount for bundling home and auto.",t:"qr",opts:["Yes, homeowner","No, renting"],ps:function(v){return v.toLowerCase().includes("yes")||v.toLowerCase().includes("own")?"yes":"no";}},
-  {id:"cars",f:"multiCar",q:"Insuring more than one vehicle?",t:"qr",opts:["Yes, multiple","Just one"],ps:function(v){return v.toLowerCase().includes("yes")||v.toLowerCase().includes("multi")?"yes":"no";}},
-  {id:"pri",f:"priority",q:"What matters most to you?",t:"qr",opts:["Lowest price","Best coverage","Best service"],ps:function(v){var l=v.toLowerCase();if(l.includes("price")||l.includes("low"))return "price";if(l.includes("coverage"))return "coverage";return "service";}},
+  {id:"pri",f:"priority",q:"What matters most to you?",t:"qr",opts:["Lowest price","Best coverage","Best service"],cond:function(p){return !p.priority;},ps:function(v){var l=v.toLowerCase();if(l.includes("price")||l.includes("low")||l.includes("cheap"))return "price";if(l.includes("cover"))return "coverage";return "service";}},
+  {id:"zip",f:"zip",q:"What's your ZIP code?",t:"text",ph:"5-digit US ZIP",vl:vZip,cond:function(p){return !p.zip && !p.state;}},
+  {id:"vyear",f:"vehicleYear",q:"What year is your car?",t:"qr",cond:function(p){return !p.vehicleYear;},opts:["2024-2025","2020-2023","2015-2019","2010-2014","Before 2010"],ps:function(v){var y=v.match(/\b(19|20)\d{2}\b/);if(y&&v.indexOf("-")<0)return y[0];if(v.includes("2024"))return "2024";if(v.includes("2020"))return "2022";if(v.includes("2015"))return "2017";if(v.includes("2010"))return "2012";if(v.includes("Before"))return "2008";return v;}},
+  {id:"vmake",f:"vehicleMake",q:"And what make is it?",t:"qr",opts:["Toyota","Honda","Ford","Chevrolet","Nissan","Other"]},
+  {id:"vmake2",f:"vehicleMake",q:"What brand is your car?",t:"text",ph:"e.g. Hyundai, Kia, Subaru...",cond:function(p){return p.vehicleMake==="Other";}},
+  {id:"drv",f:"driving",q:"Last one: how's your driving record over the past 3 years?",t:"qr",opts:["Clean, no issues","1-2 tickets","An accident","DUI / SR-22"],ps:function(v){var l=v.toLowerCase();if(l.includes("clean"))return "clean";if(l.includes("ticket"))return "minor";if(l.includes("accident"))return "major";return "dui";}},
 ];
+var MAIN_STEPS = 5;
 
 var PII_STEPS = [
   {id:"firstName",f:"firstName",q:"What's your first name?",ph:"First name",vl:vName},
@@ -310,7 +329,7 @@ function buildConsent(names) {
   var list = names.length ? " (" + shown + ")" : "";
   return "I agree that AI InsureGenie and its insurance partners" + list + " may contact me by phone, text message, and email about insurance quotes, including with automated technology. Consent is not required to buy anything, and I can withdraw it at any time.";
 }
-var CONSENT_LINKS = " I have read the Privacy Policy and Terms of Service.";
+var CONSENT_LINKS = " I have read the Privacy Policy and Terms of Use.";
 var CALL_CONSENT = "I agree that a licensed insurance agent may call me at this number about insurance quotes. Consent is not required to buy anything.";
 
 function basisLine(p) {
@@ -327,8 +346,8 @@ function basisLine(p) {
 // ---------------------------------------------------------------
 var CSS_TEXT = [
   "html,body{margin:0}",
-  ".ig{--bg:#f6f8f7;--surface:#ffffff;--ink:#10261f;--ink2:#4d625a;--mute:#4d625a;--line:rgba(16,38,31,.12);--edge:rgba(16,38,31,.3);--edge-strong:rgba(16,38,31,.5);--brand:#0a6b50;--brand-d:#085540;--brand-t:#e4f0eb;--brand-ink:#ffffff;--ring:rgba(10,107,80,.22);--warn:#b42318;--warn-t:#fdecea;--warn-ink:#7a1a12;--star:#b45309;--shadow:0 1px 3px rgba(0,0,0,.06);--card:var(--surface);--bot:var(--bg);color-scheme:light dark}",
-  "@media (prefers-color-scheme:dark){.ig{--bg:#0c1613;--surface:#131f1b;--ink:#e8f2ee;--ink2:#9fb5ac;--mute:#9fb5ac;--line:rgba(232,242,238,.14);--edge:rgba(232,242,238,.3);--edge-strong:rgba(232,242,238,.5);--brand:#3fcf9f;--brand-d:#6fe0b9;--brand-t:rgba(63,207,159,.14);--brand-ink:#062018;--ring:rgba(63,207,159,.28);--warn:#ff8f85;--warn-t:rgba(255,143,133,.14);--warn-ink:#ffc9c4;--star:#f0b429;--shadow:inset 0 1px 0 rgba(255,255,255,.06)}}",
+  ".ig{--bg:#f6f8f7;--surface:#ffffff;--ink:#10261f;--ink2:#4d625a;--mute:#4d625a;--line:rgba(16,38,31,.12);--edge:rgba(16,38,31,.3);--edge-strong:rgba(16,38,31,.5);--brand:#0a6b50;--brand-d:#085540;--brand-t:#e4f0eb;--brand-ink:#ffffff;--ring:rgba(10,107,80,.22);--warn:#b42318;--warn-t:#fdecea;--warn-ink:#7a1a12;--star:#b45309;--shadow:0 1px 3px rgba(0,0,0,.06);--card:var(--surface);--bot:var(--bg);--pop:#ffb020;--pop-shade:#d98a00;--pop-t:#fff3d6;--pop-ink:#6b4200;--scene:#e4f0eb;--road:#d3e0da;--glass:#cfe6ee;--tire:#17302a;--hub:#c7d3ce;--hero:#0a231c;--hero-ink:#eef6f2;--hero-mute:#a9c2b8;--hero-line:rgba(238,246,242,.16);--hero-acc:#3fcf9f;color-scheme:light dark}",
+  "@media (prefers-color-scheme:dark){.ig{--bg:#0c1613;--surface:#131f1b;--ink:#e8f2ee;--ink2:#9fb5ac;--mute:#9fb5ac;--line:rgba(232,242,238,.14);--edge:rgba(232,242,238,.3);--edge-strong:rgba(232,242,238,.5);--brand:#3fcf9f;--brand-d:#6fe0b9;--brand-t:rgba(63,207,159,.14);--brand-ink:#062018;--ring:rgba(63,207,159,.28);--warn:#ff8f85;--warn-t:rgba(255,143,133,.14);--warn-ink:#ffc9c4;--star:#f0b429;--shadow:inset 0 1px 0 rgba(255,255,255,.06);--pop:#ffc247;--pop-shade:#e0a020;--pop-t:rgba(255,194,71,.14);--pop-ink:#ffe2a3;--scene:#16302a;--road:#1b2c27;--glass:#2b4d57;--tire:#0a1411;--hub:#6f8a82;--hero:#081c16}}",
   ".ig,.ig *{box-sizing:border-box}",
   ".ig p,.ig h2{margin:0}",
   ".ig{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:16px;display:flex;justify-content:center;-webkit-font-smoothing:antialiased}",
@@ -370,7 +389,7 @@ var CSS_TEXT = [
   ".q-id{min-width:0;flex:1}",
   ".q-name{font-weight:600;font-size:16px;line-height:1.25;overflow-wrap:anywhere}",
   ".q-meta{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;font-size:14px;color:var(--ink2);margin-top:4px}",
-  ".q-rate{display:inline-flex;align-items:center;gap:4px}.q-rate svg{color:var(--star)}",
+  ".q-rate{display:inline-flex;align-items:center;gap:4px}.q-rate svg{color:var(--pop-shade)}",
   ".q-tag{font-size:12px;font-weight:500;line-height:1.4;padding:0 8px;border:1px solid var(--line);border-radius:4px;color:var(--ink2)}",
   ".q-price{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;margin-top:12px}",
   ".amt{display:inline-block;font-size:28px;line-height:1.1;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em}",
@@ -400,6 +419,9 @@ var CSS_TEXT = [
   ".send:disabled{background:var(--line);color:var(--mute);cursor:default}",
   ".linkbtn{display:flex;align-items:center;justify-content:center;min-height:44px;margin:4px auto 0;padding:0 8px;border:0;background:none;color:var(--brand);font-size:14px;text-decoration:underline;cursor:pointer}",
   ".disc{font-size:12px;line-height:1.4;color:var(--mute);text-align:center;margin-top:8px}",
+  ".disc-btn{position:relative;padding:0;border:0;background:none;color:var(--brand);font-size:12px;line-height:1.4;text-decoration:underline;cursor:pointer}",
+  ".disc-btn::before{content:'';position:absolute;inset:-14px -12px}",
+  ".disc-full{margin-top:4px}.disc-full a{color:var(--brand);text-decoration:underline}",
   ".ov{position:fixed;inset:0;background:rgba(8,16,13,.55);z-index:50;display:flex;align-items:flex-end;justify-content:center}",
   ".dlg{background:var(--surface);color:var(--ink);border:1px solid var(--line);width:100%;max-width:440px;max-height:92vh;max-height:92dvh;overflow:auto;border-radius:12px 12px 0 0;padding:24px}",
   "@media (min-width:640px){.ov{align-items:center}.dlg{border-radius:12px}}",
@@ -419,6 +441,23 @@ var CSS_TEXT = [
   ".errmsg{font-size:14px;line-height:1.4;color:var(--warn);margin-bottom:12px}",
   ".done{text-align:center;padding:8px 0}",
   ".tick{width:48px;height:48px;border-radius:50%;background:var(--brand-t);color:var(--brand-d);display:grid;place-items:center;margin:0 auto 12px}",
+  ".hd{background:var(--hero);color:var(--hero-ink);border-bottom:1px solid var(--hero-line)}",
+  ".hd .av{background:var(--hero-acc);color:var(--hero)}",
+  ".hd .hd-name em{font-style:normal;color:var(--hero-acc)}",
+  ".hd .hd-sub{color:var(--hero-mute)}.hd .dot{background:var(--hero-acc)}",
+  ".hd .hd-btn{background:transparent;color:var(--hero-ink);border-color:rgba(238,246,242,.34)}.hd .hd-btn:hover{background:transparent;border-color:var(--hero-acc);color:var(--hero-acc)}",
+  ".prog{background:var(--hero-line)}",
+  "@media (max-width:767.98px){.foot .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-left:-16px;margin-right:-16px;padding:0 16px}.foot .chips::-webkit-scrollbar{display:none}.foot .chip{flex:none;white-space:nowrap}}",
+  ".offer{width:min(100%,460px);margin-top:8px;border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--surface);box-shadow:var(--shadow)}",
+  ".offer.is-top{border-color:var(--brand)}",
+  ".offers{display:flex;flex-direction:column;gap:12px;width:100%}",
+  ".o-feat{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:4px;font-size:14px;color:var(--ink2)}",
+  ".o-feat li{display:flex;align-items:center;gap:8px}.o-feat svg{color:var(--brand);flex:none}",
+  ".o-tip{margin-top:12px;padding:8px 12px;border-radius:8px;background:var(--pop-t);color:var(--pop-ink);font-size:14px;line-height:1.4}",
+  ".hd-sub b{font-weight:500;color:var(--hero-ink)}",
+  ".top-pick{display:inline-flex;align-items:center;gap:4px;margin-bottom:12px;padding:2px 8px;border-radius:4px;background:var(--pop-t);color:var(--pop-ink);font-size:12px;font-weight:500;line-height:1.4}",
+  ".top-pick svg{color:var(--pop-shade)}",
+  ".quote.is-top{border-color:var(--brand)}",
   "@media (min-width:768px){.ig{--card:var(--bg);--bot:var(--surface);padding:0;align-items:stretch}.ig-card{max-width:none;height:100vh;height:100dvh;border:0;border-radius:0;box-shadow:none;overflow:visible}.hd{padding:12px 24px}.log{padding:24px max(24px,calc((100% - 880px)/2))}.foot{padding:16px max(24px,calc((100% - 880px)/2)) calc(16px + env(safe-area-inset-bottom))}.bub{max-width:72%}.user .bub{max-width:66%}.quotes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}}",
   "@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}",
   "@keyframes blink{0%,60%,100%{opacity:.35}30%{opacity:1}}",
@@ -445,17 +484,20 @@ function Icon(props) {
   );
 }
 
+
+
 // ---------------------------------------------------------------
 // One insurer quote row
 // ---------------------------------------------------------------
-function QuoteCard({ ins, locked }) {
+function QuoteCard({ ins, locked, top }) {
   var [logoBroken, setLogoBroken] = useState(false);
   var showLogo = !!ins.logoUrl && !logoBroken;
   var feats = (ins.ft || []).slice(0, 3).join(", ");
   var sponsored = !!(ins.pinned || ins.featured);
   var tag = sponsored ? "Sponsored" : (ins.tag || "");
   return (
-    <article className="quote" aria-label={ins.n + " estimate"}>
+    <article className={"quote" + (top ? " is-top" : "")} aria-label={ins.n + " estimate"}>
+      {top ? <span className="top-pick"><Icon n="star" fill size={12} />Top pick for you</span> : null}
       <div className="q-top">
         <div className={"q-logo" + (showLogo ? " img" : "")} style={showLogo ? undefined : { background: ins.bc + "26" }} aria-hidden="true">
           {showLogo ? <img src={ins.logoUrl} alt="" onError={function () { setLogoBroken(true); }} /> : (ins.n || "?").charAt(0)}
@@ -483,6 +525,33 @@ function QuoteCard({ ins, locked }) {
           </p>
         </div>
       ) : null}
+    </article>
+  );
+}
+
+// ---------------------------------------------------------------
+// Partner offer: one recommended quoting partner, opened on their own site
+// ---------------------------------------------------------------
+function OfferCard({ ins, top, tip }) {
+  var [logoBroken, setLogoBroken] = useState(false);
+  var showLogo = !!ins.logoUrl && !logoBroken;
+  var feats = (ins.ft || []).slice(0, 3);
+  return (
+    <article className={"offer" + (top ? " is-top" : "")} aria-label={ins.n}>
+      {top ? <span className="top-pick"><Icon n="star" fill size={12} />Top pick for you</span> : null}
+      <div className="q-top">
+        <div className={"q-logo" + (showLogo ? " img" : "")} style={showLogo ? undefined : { background: (ins.bc || "#0a6b50") + "26" }} aria-hidden="true">
+          {showLogo ? <img src={ins.logoUrl} alt="" onError={function () { setLogoBroken(true); }} /> : (ins.n || "?").charAt(0)}
+        </div>
+        <div className="q-id">
+          <div className="q-name">{ins.n}</div>
+          <div className="q-meta"><span className="q-rate"><Icon n="star" fill size={13} />{ins.r}</span>{ins.pinned || ins.featured ? <span className="q-tag">Sponsored</span> : null}</div>
+        </div>
+      </div>
+      {feats.length ? <ul className="o-feat">{feats.map(function (f, i) { return <li key={i}><Icon n="check" size={14} />{f}</li>; })}</ul> : null}
+      {tip ? <p className="o-tip">{tip}</p> : null}
+      <a className="btn btn-p" href={ins.rUrl || "#"} target="_blank" rel="noopener noreferrer sponsored">Get my quote from {ins.n}</a>
+      <p className="q-note">Opens {ins.n}'s site in a new tab. Fill in their short form to see your quotes.</p>
     </article>
   );
 }
@@ -593,6 +662,7 @@ export default function AIInsureGenie() {
   var [ck, setCk] = useState(false);
   var [showCon, setShowCon] = useState(false);
   var [showCall, setShowCall] = useState(false);
+  var [showDisc, setShowDisc] = useState(false);
   var [fullKb, setFullKb] = useState(false);
   var [startTime] = useState(function(){ return nowTime(); });
   var logRef = useRef(null);
@@ -601,7 +671,7 @@ export default function AIInsureGenie() {
   var [insurerList, setInsurerList] = useState(IS_PREVIEW ? DEFAULT_INSURERS : []);
   var partnerNames = insurerList.map(function(x){ return x.n; });
   var consentMain = buildConsent(partnerNames);
-  var tot = STEPS.filter(function(s){return !s.cond||s.cond(pro);}).length + PII_STEPS.length;
+  var tot = MAIN_STEPS;
 
   // Load partners from shared storage (set by admin dashboard)
   useEffect(function() {
@@ -624,27 +694,34 @@ export default function AIInsureGenie() {
   var bot = function(text, x) { setMsgs(function(p){return p.concat([Object.assign({role:"bot",text:text,time:nowTime()},x||{})]);}); };
   var usr = function(text) { setMsgs(function(p){return p.concat([{role:"user",text:text,time:nowTime()}]);}); };
 
-  var startQ = function() {
+  var startQ = function(extra) {
+    var start = Object.assign({}, pro, extra || {});
+    if (extra) setPro(start);
     setPhase("qualifying"); setTyp(true);
-    setTimeout(function(){bot("Great, let's find your best rate. It takes about a minute, and you can ask me a question at any point.");setTyp(false);setTimeout(function(){advQ(0,{});},500);},500);
+    var got = [];
+    if (extra && extra.priority) got.push("your goal");
+    if (extra && extra.state) got.push("your state");
+    if (extra && extra.vehicleYear) got.push("your car's age");
+    if (got.length) setCs(got.length);
+    var intro = got.length
+      ? "Thanks! I've got " + (got.length > 1 ? got.slice(0, -1).join(", ") + " and " + got[got.length - 1] : got[0]) + " from the website, so I won't ask again. Just a few more quick questions."
+      : "Great! A few quick questions and I'll point you to the partner that fits you best. Ask me anything along the way.";
+    setTimeout(function(){bot(intro);setTyp(false);setTimeout(function(){advQ(0,start);},500);},500);
   };
   var startChat = function() {
     setPhase("chat"); setTyp(true);
-    setTimeout(function(){bot("Sure, ask me anything about auto insurance: coverage types, claims, discounts, SR-22, deductibles, or how to compare insurers. When you're ready for personalized options, tap Get free quotes.");setTyp(false);setIph("Ask me anything...");setTimeout(function(){inRef.current&&inRef.current.focus();},100);},500);
+    setTimeout(function(){bot("Sure, ask me anything about auto insurance: coverage types, claims, discounts, SR-22, deductibles, or how to compare insurers. When you're ready for personalized options, tap Get instant quote.");setTyp(false);setIph("Ask me anything...");setTimeout(function(){inRef.current&&inRef.current.focus();},100);},500);
   };
 
   var advQ = function(idx, prof) {
     var i = idx;
     while (i < STEPS.length) { if (STEPS[i].cond && !STEPS[i].cond(prof)) { i++; continue; } break; }
-    if (i >= STEPS.length) { showLocked(prof); return; }
+    if (i >= STEPS.length) { showMatch(prof); return; }
     setSi(i); setTyp(true);
     var s = STEPS[i];
     setTimeout(function(){
       var px = "";
-      if (s.id === "drv") px = "Now about your history — ";
-      else if (s.id === "cov") px = "Almost there! ";
-      else if (s.id === "pri") px = "Last question: ";
-      else if (s.id === "vmake2" || s.id === "curins2") px = "No problem! ";
+      if (s.id === "vmake2") px = "No problem! ";
       bot(px + s.q); setTyp(false);
       setQr(s.t === "qr" ? s.opts : null); setIph(s.ph || "Type...");
       if (s.t === "text") setTimeout(function(){inRef.current&&inRef.current.focus();},100);
@@ -664,7 +741,7 @@ export default function AIInsureGenie() {
       if (!r.ok) { setTyp(true);setTimeout(function(){bot(r.e,{err:true});setTyp(false);setQr(s.t==="qr"?s.opts:null);setIph(s.ph||"Type...");},300);return; }
       var v = r.v !== undefined ? r.v : (s.ps ? s.ps(val) : val.trim());
       var u = Object.assign({}, pro); u[s.f] = v; if (r.st) u.state = r.st; setPro(u); setCs(function(c){return c+1;});
-      if (s.id === "zip" && r.st) { setTyp(true);setTimeout(function(){bot("Got it: **"+v+"** in **"+r.st+"**.");setTyp(false);setTimeout(function(){advQ(si+1,u);},300);},400);return; }
+      if (s.id === "zip" && r.st) { setTyp(true);setTimeout(function(){bot("Got it: **"+v+"**, **"+r.st+"**.");setTyp(false);setTimeout(function(){advQ(si+1,u);},300);},400);return; }
       advQ(si+1, u);
     } else {
       var v2 = s.ps ? s.ps(val) : val.trim();
@@ -672,19 +749,40 @@ export default function AIInsureGenie() {
     }
   };
 
-  var showLocked = function(prof) {
-    setPhase("locked"); setQr(null); setTyp(true);
+  // After the questions: recommend one quoting partner and send the user to their own form.
+  var GOAL = { price: "the lowest price", coverage: "strong coverage", service: "great service" };
+  var REC = { clean: "a clean record", minor: "a couple of tickets", major: "a recent accident", dui: "a DUI or SR-22" };
+  var TIPS = {
+    price: "Tip: ask about safe-driver and paid-in-full discounts.",
+    coverage: "Tip: compare the same limits and deductible on every quote.",
+    service: "Tip: ask how claims are handled and how to reach support."
+  };
+  var showMatch = function(prof) {
+    var p = Object.assign({}, prof, { coverage: prof.priority === "coverage" ? "full" : (prof.coverage || "standard") });
+    setPro(p); setPhase("locked"); setQr(null); setTyp(true);
     setTimeout(function(){
-      var r = matchInsurers(prof); setResults(r);
+      var r = pickPartners(p).map(function(ins){ return Object.assign({}, ins, { rUrl: buildUrl(ins, p) }); });
+      setResults(r);
       if (!r.length) {
-        bot("I couldn't load insurer options just now. You can talk to a licensed agent, or try again in a minute.");
+        bot(INSURERS.length ? "I don't have a partner for " + (p.state || "your area") + " that fits just yet. A licensed agent can help you instead: tap **Talk to an agent**." : "I couldn't load partner options just now. You can talk to a licensed agent, or try again in a minute.");
         setTyp(false); setPhase("follow");
         return;
       }
-      bot("I found **"+r.length+(r.length===1?" insurer":" insurers")+"** that fit your answers in **"+prof.zip+(prof.state?", "+prof.state:"")+"**. The prices below are estimates, not final quotes.",{ins:r,locked:true,tags:true});
+      bot("Thanks! For " + (REC[p.driving] || "your record") + " and " + (GOAL[p.priority] || "a good fit") + " in " + (p.state || "your state") + ", this partner is my top pick:", { offer: r[0], tip: TIPS[p.priority] });
       setTyp(false);
-      setTimeout(function(){setTyp(true);setTimeout(function(){bot("To see each insurer's real price, I can connect you with them. I just need three details, and nothing is shared without your consent.");setTyp(false);setPhase("pii");setPiiIdx(0);setTimeout(function(){advPII(0,prof);},500);},700);},1800);
-    },1500);
+      setTimeout(function(){ setTyp(true); setTimeout(function(){ bot("Anything else I can help with?"); setTyp(false); setPhase("follow"); }, 700); }, 1200);
+    }, 1200);
+  };
+
+  var showMore = function() {
+    var more = results.slice(1, 3);
+    usr("See other options");
+    setTyp(true);
+    setTimeout(function(){
+      if (!more.length) bot("That's the best fit I have for you right now. You can also talk to a licensed agent.");
+      else bot("Here " + (more.length === 1 ? "is another option" : "are other options") + " that fit your answers:", { offers: more });
+      setTyp(false);
+    }, 600);
   };
 
   var advPII = function(idx, prof) {
@@ -788,10 +886,18 @@ export default function AIInsureGenie() {
   var handleChat = function(val) {
     if (!val.trim()) return; usr(val); setInp("");
     var t = val.toLowerCase();
+    var zm = val.match(/\b\d{5}\b/), zr = zm ? vZip(zm[0]) : null;
+    if (zr && zr.ok) {
+      var pz = Object.assign({}, pro, { zip: zr.v, state: zr.st }); setPro(pz); setCs(function(c){return c+1;});
+      var sad = /(went up|increase|higher|too (much|high|expensive)|renewal)/.test(t);
+      setTyp(true);
+      setTimeout(function(){ bot((sad ? "Sorry to hear that. " : "") + "Got it: **" + zr.v + "**, **" + zr.st + "**. Let's find you a better fit."); setTyp(false); setPhase("qualifying"); setTimeout(function(){ advQ(0, pz); }, 400); }, 500);
+      return;
+    }
     if (["get my quote","get quote","start quote","compare rate","get started","find rate","i want a quote"].some(function(w){return t.includes(w);})) {
       setTyp(true);setTimeout(function(){bot("Great, let's get your quotes.");setTyp(false);setPhase("qualifying");setTimeout(function(){advQ(0,pro);},400);},400);return;
     }
-    setTyp(true);getAnswer(val,pro,results).then(function(a){bot(a);setTyp(false);setIph("Ask more or say 'get my quotes'...");});
+    setTyp(true);getAnswer(val,pro,results).then(function(a){bot(a);setTyp(false);setIph("Ask another question...");});
   };
 
   var handleFollow = function(val) {
@@ -799,9 +905,34 @@ export default function AIInsureGenie() {
     getAnswer(val,pro,results).then(function(a){bot(a);setTyp(false);});
   };
 
+
+  // Open the right flow when arriving from the website (values live in the URL fragment).
+  useEffect(function() {
+    var h = (window.location.hash || "").replace(/^#/, "");
+    if (!h) return;
+    var p = new URLSearchParams(h);
+    var start = p.get("start"), q = (p.get("q") || "").trim().slice(0, 200);
+    try { window.history.replaceState(null, "", window.location.pathname + window.location.search); } catch (e) {}
+    var t = setTimeout(function() {
+      var goal = p.get("goal");
+      var stName = (p.get("state") || "").trim(), st = STATE_ABBR[stName.toLowerCase()];
+      var car = (p.get("car") || "").trim(), yr = CAR_AGE_YEAR[car];
+      var extra = {}, said = [];
+      if (goal === "price" || goal === "coverage") { extra.priority = goal; said.push(goal === "price" ? "Lowest price" : "Best coverage"); }
+      if (st) { extra.state = st; said.push(stName); }
+      if (yr) { extra.vehicleYear = yr; said.push("car " + car); }
+      if (q) { setPhase("chat"); handleChat(q); }
+      else if (start === "quote") { usr(said.length ? said.join(", ") : "Get instant quote"); startQ(said.length ? extra : null); }
+      else if (start === "ask") { usr("I have a question"); startChat(); }
+      else if (start === "agent") { setShowCall(true); }
+    }, 350);
+    return function() { clearTimeout(t); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   var send = function(val) {
     var v = val || inp; if (!v.trim() || typ) return;
-    if (phase==="chat") handleChat(v);
+    if (phase==="welcome") { setPhase("chat"); handleChat(v); }
+    else if (phase==="chat") handleChat(v);
     else if (phase==="qualifying") handleQ(v);
     else if (phase==="pii") handlePII(v);
     else if (phase==="follow"||phase==="consent") handleFollow(v);
@@ -843,7 +974,7 @@ export default function AIInsureGenie() {
 
   var chatChips = ["Cheapest way to insure a car", "Coverage types explained", "What is SR-22?", "How deductibles work"];
   var composerPh = (phase === "locked" || phase === "unlock" || phase === "consent" || phase === "follow") ? "Ask a question" : iph;
-  var followChips = ["Lower my rate", "Compare these insurers", "What full coverage includes"];
+  var followChips = ["See other options", "How do deductibles work?", "Talk to an agent"];
 
   return (
     <div className="ig">
@@ -853,8 +984,8 @@ export default function AIInsureGenie() {
         <header className="hd">
           <div className="av"><Icon n="shield" size={22} /></div>
           <div className="hd-txt">
-            <div className="hd-name">AI InsureGenie</div>
-            <div className="hd-sub"><span className="dot" />AI assistant</div>
+            <div className="hd-name">AI Insure<em>Genie</em></div>
+            <div className="hd-sub"><span className="dot" />{phase === "qualifying" ? <span>Getting your quote <b>· {Math.min(cs + 1, tot)} of {tot}</b></span> : "AI insurance assistant"}</div>
           </div>
           <button type="button" className="hd-btn" aria-label="Talk to an agent" onClick={function(){ setShowCall(true); }}>
             <Icon n="phone" size={16} /><span className="lbl-l">Talk to an agent</span><span className="lbl-s">Agent</span>
@@ -867,10 +998,11 @@ export default function AIInsureGenie() {
         <div className="log" ref={logRef} role="log" aria-live="polite" aria-label="Conversation">
           <div className="row bot first">
             <div className="who">AI InsureGenie</div>
-            <div className="bub">Hi, I'm the AI InsureGenie assistant. I can compare auto insurance options from {insurerList.length > 0 ? insurerList.length + (insurerList.length === 1 ? " insurer" : " insurers") : "several insurers"} in about a minute, or answer your questions about coverage and claims.</div>
-            <div className="bub" style={{ marginTop: 4 }}>It's free, and your details are only shared if you agree to it.</div>
-            {(msgs.length === 0 || msgs[0].role === "user") ? <div className="time">{startTime}</div> : null}
+            <div className="bub">Hi! I help drivers get the best quote for their needs.</div>
+            <div className="bub" style={{ marginTop: 4 }}>Tell me a bit about you and your car, and I'll point you to the quoting partner that fits you best. I can also answer questions or set up a call.</div>
+            <div className="bub" style={{ marginTop: 4 }}>Or just tell me what's going on, for example "my renewal went up $40".</div>
           </div>
+          {(msgs.length === 0 || msgs[0].role === "user") ? <div className="time" style={{ alignSelf: "flex-start" }}>{startTime}</div> : null}
 
           {msgs.map(function(m, i) {
             var prev = i === 0 ? { role: "bot" } : msgs[i - 1];
@@ -883,9 +1015,11 @@ export default function AIInsureGenie() {
                 {m.role === "bot" && first ? <div className="who">AI InsureGenie</div> : null}
                 <div className={"bub" + (m.err ? " err" : "")}>{m.role === "bot" ? renderBold(m.text) : m.text}</div>
                 {basis ? <p className="basis">{basis}</p> : null}
+                {m.offer ? <OfferCard ins={m.offer} top={true} tip={m.tip} /> : null}
+                {m.offers ? <div className="offers">{m.offers.map(function(x, j){ return <OfferCard key={x.id || j} ins={x} top={false} />; })}</div> : null}
                 {m.ins ? (
                   <div className="quotes">
-                    {m.ins.map(function(x, j) { return <QuoteCard key={x.id || j} ins={x} locked={!!m.locked} />; })}
+                    {m.ins.map(function(x, j) { return <QuoteCard key={x.id || j} ins={x} locked={!!m.locked} top={j === 0} />; })}
                   </div>
                 ) : null}
                 {last && m.time ? <div className="time">{m.time}</div> : null}
@@ -898,7 +1032,7 @@ export default function AIInsureGenie() {
               <label>
                 <input type="checkbox" checked={ck} onChange={function(e){ setCk(e.target.checked); }} />
                 <span>
-                  {consentMain} I have read the <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a> and <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>.
+                  {consentMain} I have read the <a href="https://aiinsuregenie.com/privacy/" target="_blank" rel="noopener noreferrer">Privacy Policy</a> and <a href="https://aiinsuregenie.com/terms/" target="_blank" rel="noopener noreferrer">Terms of Use</a>.
                 </span>
               </label>
               <button type="button" className="btn btn-p" disabled={!ck} onClick={handleConsent}>Agree and see my matches</button>
@@ -913,54 +1047,56 @@ export default function AIInsureGenie() {
         <footer className="foot">
           {phase === "welcome" ? (
             <div className="chips">
-              <button type="button" className="chip pri" onClick={function(){ usr("Get free quotes"); startQ(); }}>Get free quotes</button>
+              <button type="button" className="chip pri" onClick={function(){ usr("Get instant quote"); startQ(); }}>Get instant quote</button>
               <button type="button" className="chip" onClick={function(){ usr("I have a question"); startChat(); }}>Ask a question</button>
               <button type="button" className="chip" onClick={function(){ setShowCall(true); }}>Talk to an agent</button>
             </div>
-          ) : (
-            <div>
-              {qr && !typ ? (
-                <div className="chips" role="group" aria-label="Quick replies">
-                  {qr.map(function(o, i) { return <button type="button" key={i} className="chip" onClick={function(){ send(o); }}>{o}</button>; })}
-                </div>
-              ) : null}
+          ) : null}
 
-              {phase === "chat" && !typ ? (
-                <div className="chips">
-                  <button type="button" className="chip pri" onClick={function(){ usr("Get free quotes"); startQ(); }}>Get free quotes</button>
-                  {chatChips.map(function(s, i) { return <button type="button" key={i} className="chip" onClick={function(){ handleChat(s); }}>{s}</button>; })}
-                </div>
-              ) : null}
-
-              {phase === "follow" && !typ ? (
-                <div className="chips">
-                  {followChips.map(function(s, i) { return <button type="button" key={i} className="chip" onClick={function(){ handleFollow(s); }}>{s}</button>; })}
-                </div>
-              ) : null}
-
-              <div className="comp">
-                <input
-                  ref={inRef}
-                  value={inp}
-                  onChange={onType}
-                  onKeyDown={function(e){ if (e.key === "Enter") { e.preventDefault(); send(); } }}
-                  placeholder={composerPh}
-                  aria-label="Type your message"
-                  inputMode={kb.inputMode}
-                  autoComplete={kb.autoComplete}
-                  autoCapitalize={kb.autoCapitalize}
-                  enterKeyHint="send"
-                />
-                <button type="button" className="send" aria-label="Send message" onClick={function(){ send(); }} disabled={!inp.trim() || typ}>
-                  <Icon n="send" size={18} />
-                </button>
-              </div>
-              {(cur === "zip" || cur === "phone") && !fullKb ? (
-                <button type="button" className="linkbtn" onClick={openFullKeyboard}>Have a question instead? Show the full keyboard</button>
-              ) : null}
+          {phase !== "welcome" && qr && !typ ? (
+            <div className="chips" role="group" aria-label="Quick replies">
+              {qr.map(function(o, i) { return <button type="button" key={i} className="chip" onClick={function(){ send(o); }}>{o}</button>; })}
             </div>
-          )}
-          <p className="disc">AI InsureGenie is an AI assistant, not an insurance company or licensed agent. Prices shown are estimates, and your final rate comes from the insurer.</p>
+          ) : null}
+
+          {phase === "chat" && !typ ? (
+            <div className="chips">
+              <button type="button" className="chip pri" onClick={function(){ usr("Get instant quote"); startQ(); }}>Get instant quote</button>
+              {chatChips.map(function(s, i) { return <button type="button" key={i} className="chip" onClick={function(){ handleChat(s); }}>{s}</button>; })}
+            </div>
+          ) : null}
+
+          {phase === "follow" && !typ ? (
+            <div className="chips">
+              {followChips.map(function(s, i) { return <button type="button" key={i} className="chip" onClick={function(){ if (i === 0) showMore(); else if (i === 2) setShowCall(true); else handleFollow(s); }}>{s}</button>; })}
+            </div>
+          ) : null}
+
+          <div className="comp">
+            <input
+              ref={inRef}
+              value={inp}
+              onChange={onType}
+              onKeyDown={function(e){ if (e.key === "Enter") { e.preventDefault(); send(); } }}
+              placeholder={phase === "welcome" ? "Type a message..." : composerPh}
+              aria-label="Type your message"
+              inputMode={kb.inputMode}
+              autoComplete={kb.autoComplete}
+              autoCapitalize={kb.autoCapitalize}
+              enterKeyHint="send"
+            />
+            <button type="button" className="send" aria-label="Send message" onClick={function(){ send(); }} disabled={!inp.trim() || typ}>
+              <Icon n="send" size={18} />
+            </button>
+          </div>
+          {(cur === "zip" || cur === "phone") && !fullKb ? (
+            <button type="button" className="linkbtn" onClick={openFullKeyboard}>Have a question instead? Show the full keyboard</button>
+          ) : null}
+          <div className="disc">
+            <span>AI assistant, not a licensed agent.</span>{" "}
+            <button type="button" className="disc-btn" aria-expanded={showDisc} aria-controls="disc-full" onClick={function(){ setShowDisc(!showDisc); }}>{showDisc ? "Hide details" : "Details"}</button>
+            {showDisc ? <p id="disc-full" className="disc-full">AI InsureGenie is an AI assistant, not an insurance company or licensed agent. We recommend quoting partners, who may pay us a fee. Your quotes and final rate come from the partner or insurer. <a href="https://aiinsuregenie.com/privacy/" target="_blank" rel="noopener noreferrer">Privacy policy</a> · <a href="https://aiinsuregenie.com/terms/" target="_blank" rel="noopener noreferrer">Terms of use</a></p> : null}
+          </div>
         </footer>
 
         {showCall ? (

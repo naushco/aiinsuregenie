@@ -37,6 +37,10 @@ function publicView(p) {
     priority: Number(p.priority) || 3,
     boost: Number(p.boost) || 0,
     enabled: true,
+    placement: p.placement === "other" ? "other" : "top",
+    weight: Math.max(0, Math.min(100, p.weight == null ? 50 : Number(p.weight) || 0)),
+    goals: Array.isArray(p.goals) ? p.goals.filter(function (g) { return ["price", "coverage", "service"].indexOf(g) >= 0; }) : [],
+    states: String(p.states || "").toUpperCase().split(/[^A-Z]+/).filter(function (x) { return x.length === 2; }).slice(0, 60),
     base: Math.round(60 + (Number(p.payout) || 5) * 3) // used only for the on-screen estimate
   };
 }
@@ -58,7 +62,7 @@ module.exports = async function handler(req, res) {
       if (wantsAdmin) return res.status(200).json({ partners: list, storage: true });
       res.setHeader("Cache-Control", "public, s-maxage=5, stale-while-revalidate=30");
       var pub = (list || [])
-        .filter(function (p) { return p && p.enabled === true && validUrl(p.link); })
+        .filter(function (p) { return p && p.enabled === true && p.placement !== "hidden" && validUrl(p.link); })
         .map(publicView);
       return res.status(200).json({ partners: pub, storage: true });
     }
