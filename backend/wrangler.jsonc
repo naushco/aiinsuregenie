@@ -1,0 +1,21 @@
+// Cloudflare Workers config for the AI InsureGenie API (api.aiinsuregenie.com).
+// Secrets (set in the Cloudflare dashboard, never in this file):
+//   ANTHROPIC_API_KEY, ADMIN_PASSWORD, and optionally LEAD_WEBHOOK_URL, CALLBACK_WEBHOOK_URL.
+//   For the one-time copy of old data: KV_REST_API_URL and KV_REST_API_TOKEN (from Upstash);
+//   remove them after /api/health shows old_data_copied_at.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "aiinsuregenie-api",
+  "main": "worker.js",
+  "compatibility_date": "2026-10-01",
+  // Node APIs used by the handlers (crypto) and process.env for settings.
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "aiinsuregenie",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID"
+    }
+  ],
+  "observability": { "enabled": true, "head_sampling_rate": 1 }
+}

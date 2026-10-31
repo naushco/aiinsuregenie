@@ -1,0 +1,12 @@
+// Cloudflare Workers config for the AI InsureGenie dashboard (dashboard1.aiinsuregenie.com).
+// Build: npm run build (Vite, outputs dist/). Static app, no server code.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "aiinsuregenie-dashboard",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    // React app: unknown paths load index.html.
+    "not_found_handling": "single-page-application"
+  }
+}
