@@ -14,7 +14,7 @@
     {
       "binding": "DB",
       "database_name": "aiinsuregenie",
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID"
+      "database_id": "23e91a15-4ae0-4cdd-82da-9524bfc165b6"
     }
   ],
   "observability": { "enabled": true, "head_sampling_rate": 1 }
