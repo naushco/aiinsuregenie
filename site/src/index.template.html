@@ -54,9 +54,10 @@
         <h1>Get the best auto insurance quote <em>for your needs</em></h1>
         <p class="lede">Chat in plain words. Our assistant learns what matters to you and points you to the quoting partner that fits, so you fill in one form instead of ten.</p>
         <div class="hero-actions">
-          <a class="btn" href="https://chat.aiinsuregenie.com/#start=quote" rel="noopener">Get my quote <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-          <a class="btn btn-2" href="#match">Find my match in 3 taps</a>
+          <a class="btn btn-sun" href="https://chat.aiinsuregenie.com/#start=quote" rel="noopener">Get my quote <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="hero-alt" href="#match">or find your match in 3 taps <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg></a>
         </div>
+        <p class="hero-person">Prefer a real person? <a href="https://chat.aiinsuregenie.com/#start=agent" rel="noopener">Ask for a licensed agent</a></p>
         <div class="proof">
           <div><strong>Free</strong><span>No cost, no obligation</span></div>
           <div><strong>Plain words</strong><span>Type it your way</span></div>
@@ -70,8 +71,8 @@
         <svg class="hero-car" viewBox="0 0 240 110" aria-hidden="true"><use href="#ig-car"/></svg>
         <div class="phone">
           <div class="screen" id="hero-screen">
-            <div class="chat-head"><span class="av" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></span><div><b>InsureGenie</b><small><span class="dot" aria-hidden="true"></span>AI insurance assistant</small></div><button type="button" class="replay" aria-label="Replay demo" id="hero-replay"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span class="rl">Replay</span></button></div>
-            <div class="log" id="hero-log" aria-live="polite" aria-label="Demo conversation"><p class="msg bot">Hi! I help drivers get the best quote for their needs. What matters most to you?</p></div>
+            <div class="chat-head"><span class="av genie" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></span><div><b>Genie</b><small><span class="dot" aria-hidden="true"></span>Your AI insurance guide</small></div><button type="button" class="replay" aria-label="Replay demo" id="hero-replay"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span class="rl">Replay</span></button></div>
+            <div class="log" id="hero-log" aria-live="polite" aria-label="Demo conversation"><p class="msg bot">Hi, I’m Genie. I help drivers find the right quote, even in tricky situations. What matters most to you?</p></div>
             <div class="bar" aria-hidden="true"><i>Type a message…</i><b><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></b></div>
           </div>
         </div>
@@ -80,7 +81,7 @@
     </div>
   </div>
 
-  <section id="match">
+  <section id="match" class="cream">
     <div class="page">
       <div class="sec-head reveal">
         <span class="eyebrow">Try it now</span>
@@ -112,13 +113,35 @@
         </div>
         <div class="match-card sticky reveal" aria-live="polite">
           <p class="result-k" id="mk">0 of 3 answered</p>
+          <div class="steplabel"><span id="mstep">Step 1 of 3</span><span>About 20 seconds</span></div>
           <div class="progress" aria-hidden="true"><i id="mbar"></i></div>
           <h3 id="mh">Your match will appear here</h3>
           <p class="muted secondary" id="mp">Pick an answer on the left to get started.</p>
           <dl class="summary" id="ms" hidden></dl>
-          <a class="btn" id="mgo" href="https://chat.aiinsuregenie.com/#start=quote" rel="noopener" aria-disabled="true">See my match <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="btn btn-sun" id="mgo" href="https://chat.aiinsuregenie.com/#start=quote" rel="noopener" aria-disabled="true">See my match <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <p class="match-person">Rather talk it through? <a href="https://chat.aiinsuregenie.com/#start=agent" rel="noopener">Ask for a licensed agent</a></p>
         </div>
       </form>
+    </div>
+  </section>
+
+
+  <section id="tough">
+    <div class="page">
+      <div class="sec-head reveal">
+        <span class="eyebrow">Tricky situation?</span>
+        <h2>You still have options</h2>
+        <p>Lots of drivers have a DUI, a lapse, or a few tickets. Genie talks it through in plain words and never judges.</p>
+      </div>
+      <div class="hard-grid reveal">
+        <a class="hard" href="https://chat.aiinsuregenie.com/#start=quote&situation=sr22" rel="noopener"><span class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z"/></svg></span><h3>DUI or need an SR-22</h3><p>Not every insurer files SR-22s. Genie points you to options that do, without judgment.</p><span class="go">Talk it through <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
+        <a class="hard" href="https://chat.aiinsuregenie.com/#start=quote&situation=lapse" rel="noopener"><span class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><h3>Gap in coverage</h3><p>A lapse can raise prices, but you still have choices. Getting covered again is the first step.</p><span class="go">Talk it through <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
+        <a class="hard" href="https://chat.aiinsuregenie.com/#start=quote&situation=record" rel="noopener"><span class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16v10H4z"/><path d="M8 11h8M8 14h5"/></svg></span><h3>Tickets or an accident</h3><p>Some insurers are more forgiving than others. Comparing can make a real difference.</p><span class="go">Talk it through <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
+        <a class="hard" href="https://chat.aiinsuregenie.com/#start=quote&situation=new-driver" rel="noopener"><span class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 5 5.5.8-4 3.9 1 5.5-5-2.6-5 2.6 1-5.5-4-3.9 5.5-.8z"/></svg></span><h3>New or young driver</h3><p>First policy or adding a teen? Learn which discounts and coverage matter most.</p><span class="go">Talk it through <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
+        <a class="hard" href="https://chat.aiinsuregenie.com/#start=quote&situation=rideshare" rel="noopener"><span class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16l1.5-5h11L19 16"/><path d="M4 16h16v3H4z"/><circle cx="8" cy="19" r="1"/><circle cx="16" cy="19" r="1"/></svg></span><h3>Rideshare or delivery</h3><p>Driving for Uber, Lyft, or DoorDash usually needs extra coverage. Find out what fits.</p><span class="go">Talk it through <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
+        <a class="hard" href="/es/"><span class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h9M8.5 3v2M6 5c0 4 3 7 6 8"/><path d="M11 5c0 4-3 7-7 8"/><path d="M13 21l4-9 4 9M14.5 18h5"/></svg></span><h3>¿Prefieres español?</h3><p>Tenemos una página en español para empezar. Visit our Spanish page.</p><span class="go">Ver en español <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
+      </div>
+      <p class="hard-note">General information, not advice. Prices and eligibility depend on the insurer and your state.</p>
     </div>
   </section>
 
@@ -132,7 +155,7 @@
       <div class="qa">
         <div class="qlist reveal"><button type="button" class="qbtn" aria-pressed="false" data-q="0"><span>Why did my renewal go up?</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button><button type="button" class="qbtn" aria-pressed="false" data-q="1"><span>What deductible should I choose?</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button><button type="button" class="qbtn" aria-pressed="false" data-q="2"><span>Do I need full coverage?</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button><button type="button" class="qbtn" aria-pressed="false" data-q="3"><span>Does my credit affect my rate?</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button><button type="button" class="qbtn" aria-pressed="false" data-q="4"><span>How can I lower my premium?</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button><button type="button" class="qbtn" aria-pressed="false" data-q="5"><span>What is an SR-22?</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
         <div class="chat reveal">
-          <div class="chat-head"><span class="av" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></span><div><b>InsureGenie</b><small><span class="dot" aria-hidden="true"></span>Answers in plain words</small></div></div>
+          <div class="chat-head"><span class="av genie" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></span><div><b>Genie</b><small><span class="dot" aria-hidden="true"></span>Answers in plain words</small></div></div>
           <div class="log" id="qa-log" aria-live="polite"><p class="msg bot">Pick a question and I'll answer it here.</p></div>
           <div class="chat-foot">
             <form class="composer" id="qa-form" action="https://chat.aiinsuregenie.com/">
@@ -154,10 +177,10 @@
         <h2>From chat to quote in three steps</h2>
       </div>
       <div class="story">
-        <div class="stage" aria-hidden="true"><div class="phone"><div class="screen" id="stage"><div class="layer on" data-i="0"><div class="chat-head"><span class="av" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></span><div><b>InsureGenie</b><small><span class="dot" aria-hidden="true"></span>AI insurance assistant</small></div></div><div class="log"><p class="msg bot">What matters most to you?</p><div class="qr"><span>Lowest price</span><span class="on">Best coverage</span><span>Talk to an agent</span></div><p class="msg user">Best coverage. I'm in 23220 with a 2021 Toyota.</p><p class="msg bot">Thanks! A couple more quick questions.</p></div><div class="bar" aria-hidden="true"><i>Type a message…</i><b><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></b></div></div><div class="layer" data-i="1"><div class="chat-head"><span class="av" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></span><div><b>InsureGenie</b><small><span class="dot" aria-hidden="true"></span>AI insurance assistant</small></div></div><div class="log"><p class="msg bot">For full coverage in Virginia, this partner is my top pick:</p><div class="offer"><span class="badge"><svg class="star" width="12" height="12" aria-hidden="true"><use href="#ig-star"/></svg>Top pick for you</span><strong>Quoting Partner</strong><span class="secondary muted">Compares several insurers in one form</span><span class="btn btn-sm" aria-hidden="true">Get my quote</span></div><p class="msg bot">They compare several insurers at once, so you only fill in one form.</p></div><div class="bar" aria-hidden="true"><i>Type a message…</i><b><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></b></div></div><div class="layer" data-i="2"><div class="pform"><div class="ph">Quoting Partner<span class="badge">Secure form</span></div><label>ZIP code<i>23220</i></label><label>Vehicle<i>2021 Toyota</i></label><label>Coverage<i>Full coverage</i></label><span class="btn" aria-hidden="true">See my quotes</span><p class="meta muted">Illustration of a partner's form.</p></div></div></div></div></div>
+        <div class="stage" aria-hidden="true"><div class="phone"><div class="screen" id="stage"><div class="layer on" data-i="0"><div class="chat-head"><span class="av genie" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></span><div><b>Genie</b><small><span class="dot" aria-hidden="true"></span>Your AI insurance guide</small></div></div><div class="log"><p class="msg bot">What matters most to you?</p><div class="qr"><span>Lowest price</span><span class="on">Best coverage</span><span>Talk to an agent</span></div><p class="msg user">Best coverage. I'm in 23220 with a 2021 Toyota.</p><p class="msg bot">Thanks! A couple more quick questions.</p></div><div class="bar" aria-hidden="true"><i>Type a message…</i><b><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></b></div></div><div class="layer" data-i="1"><div class="chat-head"><span class="av genie" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></span><div><b>Genie</b><small><span class="dot" aria-hidden="true"></span>Your AI insurance guide</small></div></div><div class="log"><p class="msg bot">For full coverage in Virginia, this partner is my top pick:</p><div class="offer"><span class="badge"><svg class="star" width="12" height="12" aria-hidden="true"><use href="#ig-star"/></svg>Top pick for you</span><strong>Quoting Partner</strong><span class="secondary muted">Compares several insurers in one form</span><span class="btn btn-sm" aria-hidden="true">Get my quote</span></div><p class="msg bot">They compare several insurers at once, so you only fill in one form.</p></div><div class="bar" aria-hidden="true"><i>Type a message…</i><b><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></b></div></div><div class="layer" data-i="2"><div class="pform"><div class="ph">Quoting Partner<span class="badge">Secure form</span></div><label>ZIP code<i>23220</i></label><label>Vehicle<i>2021 Toyota</i></label><label>Coverage<i>Full coverage</i></label><span class="btn" aria-hidden="true">See my quotes</span><p class="meta muted">Illustration of a partner's form.</p></div></div></div></div></div>
         <ol id="steps">
-          <li class="on" data-i="0"><span class="num">1</span><h3>Tell us what you need</h3><p>Share what matters most and a few details about you and your car. Type it your way or tap an answer.</p><div class="inline" aria-hidden="true"><div class="phone"><div class="screen" style="position:relative"><div class="layer on on" data-i="0"><div class="chat-head"><span class="av" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></span><div><b>InsureGenie</b><small><span class="dot" aria-hidden="true"></span>AI insurance assistant</small></div></div><div class="log"><p class="msg bot">What matters most to you?</p><div class="qr"><span>Lowest price</span><span class="on">Best coverage</span><span>Talk to an agent</span></div><p class="msg user">Best coverage. I'm in 23220 with a 2021 Toyota.</p><p class="msg bot">Thanks! A couple more quick questions.</p></div><div class="bar" aria-hidden="true"><i>Type a message…</i><b><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></b></div></div></div></div></div></li>
-          <li data-i="1"><span class="num">2</span><h3>Get your top pick</h3><p>The assistant recommends the quoting partner that fits your needs and location, and tells you why.</p><div class="inline" aria-hidden="true"><div class="phone"><div class="screen" style="position:relative"><div class="layer on" data-i="1"><div class="chat-head"><span class="av" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></span><div><b>InsureGenie</b><small><span class="dot" aria-hidden="true"></span>AI insurance assistant</small></div></div><div class="log"><p class="msg bot">For full coverage in Virginia, this partner is my top pick:</p><div class="offer"><span class="badge"><svg class="star" width="12" height="12" aria-hidden="true"><use href="#ig-star"/></svg>Top pick for you</span><strong>Quoting Partner</strong><span class="secondary muted">Compares several insurers in one form</span><span class="btn btn-sm" aria-hidden="true">Get my quote</span></div><p class="msg bot">They compare several insurers at once, so you only fill in one form.</p></div><div class="bar" aria-hidden="true"><i>Type a message…</i><b><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></b></div></div></div></div></div></li>
+          <li class="on" data-i="0"><span class="num">1</span><h3>Tell us what you need</h3><p>Share what matters most and a few details about you and your car. Type it your way or tap an answer.</p><div class="inline" aria-hidden="true"><div class="phone"><div class="screen" style="position:relative"><div class="layer on on" data-i="0"><div class="chat-head"><span class="av genie" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></span><div><b>Genie</b><small><span class="dot" aria-hidden="true"></span>Your AI insurance guide</small></div></div><div class="log"><p class="msg bot">What matters most to you?</p><div class="qr"><span>Lowest price</span><span class="on">Best coverage</span><span>Talk to an agent</span></div><p class="msg user">Best coverage. I'm in 23220 with a 2021 Toyota.</p><p class="msg bot">Thanks! A couple more quick questions.</p></div><div class="bar" aria-hidden="true"><i>Type a message…</i><b><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></b></div></div></div></div></div></li>
+          <li data-i="1"><span class="num">2</span><h3>Get your top pick</h3><p>The assistant recommends the quoting partner that fits your needs and location, and tells you why.</p><div class="inline" aria-hidden="true"><div class="phone"><div class="screen" style="position:relative"><div class="layer on" data-i="1"><div class="chat-head"><span class="av genie" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></span><div><b>Genie</b><small><span class="dot" aria-hidden="true"></span>Your AI insurance guide</small></div></div><div class="log"><p class="msg bot">For full coverage in Virginia, this partner is my top pick:</p><div class="offer"><span class="badge"><svg class="star" width="12" height="12" aria-hidden="true"><use href="#ig-star"/></svg>Top pick for you</span><strong>Quoting Partner</strong><span class="secondary muted">Compares several insurers in one form</span><span class="btn btn-sm" aria-hidden="true">Get my quote</span></div><p class="msg bot">They compare several insurers at once, so you only fill in one form.</p></div><div class="bar" aria-hidden="true"><i>Type a message…</i><b><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></b></div></div></div></div></div></li>
           <li data-i="2"><span class="num">3</span><h3>See your quotes</h3><p>Continue to the partner's site and fill in one short form to see real quotes. You decide what happens next.</p><div class="inline" aria-hidden="true"><div class="phone"><div class="screen" style="position:relative"><div class="layer on" data-i="2"><div class="pform"><div class="ph">Quoting Partner<span class="badge">Secure form</span></div><label>ZIP code<i>23220</i></label><label>Vehicle<i>2021 Toyota</i></label><label>Coverage<i>Full coverage</i></label><span class="btn" aria-hidden="true">See my quotes</span><p class="meta muted">Illustration of a partner's form.</p></div></div></div></div></div></li>
         </ol>
       </div>
@@ -259,11 +282,13 @@
       <div class="inner inv reveal">
         <h2>Find your best quote, starting with a chat</h2>
         <p>It's free, and you choose what happens next.</p>
-        <a class="btn" href="https://chat.aiinsuregenie.com/#start=quote" rel="noopener">Get my quote <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="btn btn-sun" href="https://chat.aiinsuregenie.com/#start=quote" rel="noopener">Get my quote <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
       </div>
     </div>
   </section>
 </main>
+
+<div class="mcta" id="mcta" aria-hidden="true"><small>Free. No obligation.</small><a class="btn btn-sun" href="https://chat.aiinsuregenie.com/#start=quote" rel="noopener" tabindex="-1">Get my quote <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
 
 {{FOOTER}}
 
@@ -279,7 +304,7 @@
   // ---------- Hero autoplay demo ----------
   var log = document.getElementById('hero-log'), timers = [];
   var steps = [
-    ['bot', 'Hi! I help drivers get the best quote for their needs. What matters most to you?'],
+    ['bot', 'Hi, I’m Genie. I help drivers find the right quote, even in tricky situations. What matters most to you?'],
     ['qr', ['Lowest price', 'Best coverage', 'Talk to an agent'], 0],
     ['user', 'Lowest price'],
     ['bot', 'Got it. What\u2019s your ZIP code?'],
@@ -317,10 +342,7 @@
       } else { timers.push(setTimeout(function () { render(s); }, t)); t += s[0] === 'qr' ? 900 : 700; }
     });
   }
-  var heroIO = 'IntersectionObserver' in window ? new IntersectionObserver(function (es) {
-    if (es[0].isIntersecting) { play(); heroIO.disconnect(); }
-  }, { threshold: 0.15 }) : null;
-  if (heroIO) heroIO.observe(document.getElementById('hero-screen')); else play();
+  steps.forEach(render); // full conversation visible on load, no blank phone
   document.getElementById('hero-replay').addEventListener('click', play);
 
   // ---------- Matcher ----------
@@ -337,6 +359,10 @@
     document.getElementById('m1').classList.toggle('done', !!g);
     document.getElementById('m2').classList.toggle('done', !!s);
     document.getElementById('m3').classList.toggle('done', !!c);
+    var cur = !g ? 'm1' : !s ? 'm2' : !c ? 'm3' : '';
+    ['m1','m2','m3'].forEach(function (id) { document.getElementById(id).classList.toggle('now', id === cur); });
+    document.getElementById('mstep').textContent = n === 3 ? 'All 3 answered' : 'Step ' + (n + 1) + ' of 3';
+    form.querySelector('.match-card').classList.toggle('ready', n === 3);
     mk.textContent = n === 3 ? 'Your match is ready' : n + ' of 3 answered';
     mbar.style.transform = 'scaleX(' + n / 3 + ')';
     if (n < 3) {
@@ -420,6 +446,21 @@
     h.textContent = out[Math.min(n, 3)];
     bars.forEach(function (x, i) { x.classList.toggle('on', i < n); });
   }); });
+
+  // ---------- Sticky mobile CTA ----------
+  var mcta = document.getElementById('mcta');
+  if (mcta && 'IntersectionObserver' in window) {
+    document.body.classList.add('has-mcta');
+    var seen = {};
+    var watch = [document.querySelector('.hero4'), document.querySelector('#match .match-card'), document.querySelector('.final')];
+    var mio = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { seen[watch.indexOf(e.target)] = e.isIntersecting; });
+      var show = !seen[0] && !seen[1] && !seen[2];
+      mcta.classList.toggle('show', show); mcta.setAttribute('aria-hidden', String(!show));
+      mcta.querySelector('a').tabIndex = show ? 0 : -1;
+    });
+    watch.forEach(function (w) { if (w) mio.observe(w); });
+  }
 
   // ---------- Reveal on scroll ----------
   var rv = [].slice.call(document.querySelectorAll('.reveal'));

@@ -78,6 +78,19 @@ function parse(file) {
 }
 const fmtDate = (d) => new Date(d + 'T00:00:00Z').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
 
+// ---------- brand tags shared by every page ----------
+const brandHead = `<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#0a6b50">
+<meta property="og:image" content="${SITE}/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="${SITE}/og-image.png">`;
+const langLinks = `<link rel="alternate" hreflang="en" href="${SITE}/">
+<link rel="alternate" hreflang="es" href="${SITE}/es/">
+<link rel="alternate" hreflang="x-default" href="${SITE}/">`;
+
 // ---------- shared page shell ----------
 function head({ title, description, url, type = 'website', extra = '' }) {
   return `<!DOCTYPE html>
@@ -101,6 +114,7 @@ function head({ title, description, url, type = 'website', extra = '' }) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+${brandHead}
 <link rel="stylesheet" href="/styles.css">
 ${extra}
 </head>
@@ -202,9 +216,27 @@ fs.writeFileSync(path.join(dist, 'blog', 'index.html'), head({
 // ---------- homepage ----------
 let home = read('src/index.template.html');
 home = home.replace('{{HEADER}}', header).replace('{{FOOTER}}', footer).replace('{{MENU_SCRIPT}}', menuScript)
-  .replace('{{LATEST_POSTS}}', list(posts.slice(0, 3)));
+  .replace('{{LATEST_POSTS}}', list(posts.slice(0, 3)))
+  .replace('<link rel="stylesheet" href="/styles.css">', brandHead + '\n' + langLinks + '\n<link rel="stylesheet" href="/styles.css">');
 if (!posts.length) home = home.replace(/<section id="latest-guides">[\s\S]*?<\/section>\n/, '');
 fs.writeFileSync(path.join(dist, 'index.html'), home);
+
+// ---------- Spanish homepage ----------
+const headerEs = header
+  .replace('href="/" aria-label="AI InsureGenie home"', 'href="/es/" aria-label="Inicio de AI InsureGenie"')
+  .replace('aria-label="Open menu"', 'aria-label="Abrir menú"')
+  .replace('aria-label="Main"', 'aria-label="Principal"')
+  .replace('<a href="/#how-it-works">How it works</a>', '<a href="/es/#como-funciona">Cómo funciona</a>')
+  .replace('<a href="/blog/">Guides</a>', '<a href="/es/#situaciones">Situaciones difíciles</a>')
+  .replace('<a href="/partners/">For partners</a>', '')
+  .replace('<a href="/#faq">FAQ</a>', '<a href="/es/#preguntas">Preguntas</a>')
+  .replace('<a class="lang" href="/es/" hreflang="es" lang="es">Español</a>', '<a class="lang" href="/" hreflang="en" lang="en">English</a>')
+  .replace('>Get my quote</a>', '>Obtener mi cotización</a>');
+let es = read('src/es.template.html');
+es = es.replace('{{HEADER}}', headerEs).replace('{{FOOTER}}', footer).replace('{{MENU_SCRIPT}}', menuScript)
+  .replace('<link rel="stylesheet" href="/styles.css">', brandHead + '\n' + langLinks + '\n<link rel="stylesheet" href="/styles.css">');
+fs.mkdirSync(path.join(dist, 'es'), { recursive: true });
+fs.writeFileSync(path.join(dist, 'es', 'index.html'), es);
 
 // ---------- partners ----------
 fs.mkdirSync(path.join(dist, 'partners'), { recursive: true });
@@ -244,6 +276,7 @@ for (const f of fs.readdirSync(path.join(root, 'public'))) fs.copyFileSync(path.
 // ---------- sitemap, rss ----------
 const urls = [
   { loc: SITE + '/', lastmod: posts[0] ? (posts[0].updated || posts[0].date) : undefined },
+  { loc: SITE + '/es/' },
   { loc: SITE + '/partners/' },
   { loc: SITE + '/contact/' },
   { loc: SITE + '/privacy/' },

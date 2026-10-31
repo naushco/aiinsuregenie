@@ -48,4 +48,4 @@ Some policies start cheap and rise later. Ask how renewal pricing works, and set
 
 ## A quicker way to compare
 
-Repeating the same details on many websites takes time. With AI InsureGenie you answer a few questions once in a chat and compare options from multiple insurers side by side. It is free, and you decide whether to continue with any insurer.
+Repeating the same details on many websites takes time. With AI InsureGenie you answer a few questions once in a chat, and Genie points you to the quoting partner that fits your needs. Many partners compare several insurers in one form, so you fill in one form instead of ten. It is free, and you decide whether to continue.
