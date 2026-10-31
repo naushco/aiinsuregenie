@@ -342,7 +342,7 @@
       } else { timers.push(setTimeout(function () { render(s); }, t)); t += s[0] === 'qr' ? 900 : 700; }
     });
   }
-  steps.forEach(render); // full conversation visible on load, no blank phone
+  log.innerHTML = ''; steps.forEach(render); // full conversation visible on load, no blank phone
   document.getElementById('hero-replay').addEventListener('click', play);
 
   // ---------- Matcher ----------
