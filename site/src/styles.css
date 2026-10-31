@@ -685,3 +685,69 @@ section.cream .mstep, section.cream .match-card, section.cream .hard { backgroun
 .nav a.lang { color: var(--ink); }
 .es-note { margin-top: var(--s3); font-size: var(--text-meta); color: var(--muted); }
 .inv .es-note { color: var(--muted); }
+
+/* =========================================================
+   v7 — Midnight navy + sunshine
+   60% warm neutral · 30% navy (dark sections, text, structure)
+   10% sunshine (primary buttons) · green only as brand signature
+   (logo, checkmarks, progress, success)
+   ========================================================= */
+:root {
+  --canvas: #faf8f3; --surface: #ffffff; --sunk: #eef1f6;
+  --ink: #0f1b2d; --muted: #4a5a70;
+  --border: rgba(15, 27, 45, 0.12); --control: rgba(15, 27, 45, 0.28);
+  --accent: #1e3a5f; --accent-hover: #16304f; --accent-tint: #e8eef6; --accent-ink: #ffffff;
+  --brand: #0a6b50; --brand-tint: #e4f0eb;
+  --cream: #f2f5f9; --cream-line: #e0e6ee;
+  --scene: #e8eef6; --road: #dce3ec;
+  --shadow: 0 1px 2px rgba(15, 27, 45, 0.05), 0 6px 20px rgba(15, 27, 45, 0.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --canvas: #0b1220; --surface: #121c2e; --sunk: #0e1727; --ink: #e8edf5; --muted: #a3b0c2;
+    --border: rgba(232, 237, 245, 0.12); --control: rgba(232, 237, 245, 0.3);
+    --accent: #8fb4e0; --accent-hover: #b0cbea; --accent-tint: #1b2a44; --accent-ink: #0b1220;
+    --brand: #3fcf9f; --brand-tint: #15302a; --cream: #101a2b; --cream-line: #1f2c42;
+    --scene: #172a44; --road: #1a3050;
+  }
+}
+:root[data-theme="dark"] {
+  --canvas: #0b1220; --surface: #121c2e; --sunk: #0e1727; --ink: #e8edf5; --muted: #a3b0c2;
+  --border: rgba(232, 237, 245, 0.12); --control: rgba(232, 237, 245, 0.3);
+  --accent: #8fb4e0; --accent-hover: #b0cbea; --accent-tint: #1b2a44; --accent-ink: #0b1220;
+  --brand: #3fcf9f; --brand-tint: #15302a; --cream: #101a2b; --cream-line: #1f2c42;
+  --scene: #172a44; --road: #1a3050;
+}
+
+/* Dark sections: midnight navy instead of deep green */
+.inv {
+  --canvas: #0f1b2d; --surface: #16253b; --sunk: #12203a; --ink: #eef2f7; --muted: #a9b6c8;
+  --border: rgba(238, 242, 247, 0.14); --control: rgba(238, 242, 247, 0.34);
+  --accent: #7fd6b4; --accent-hover: #a5e4cb; --accent-tint: #1d3350; --accent-ink: #0f1b2d;
+  --scene: #172a44; --road: #1a3050; --car-glass: #2b4d57;
+}
+.hero4 h1 em { color: var(--sun); }
+
+/* Green only as the brand signature */
+.logo-mark { background: var(--brand); color: #fff; }
+.logo em { color: var(--brand); }
+.inv .logo em, .inv .logo-mark { color: inherit; }
+.dot { background: var(--brand); }
+.goal:has(input:checked)::after { border-color: var(--brand); background-color: var(--brand); }
+.mstep.done .num { background: var(--brand); border-color: var(--brand); color: #fff; }
+.mstep.done { border-color: color-mix(in srgb, var(--brand) 40%, transparent); }
+.match-card .progress i, .meter i.on, .trend .gauge i.on { background: var(--brand); }
+.match-card.ready { border-color: var(--brand); background: var(--brand-tint); }
+.pick:has(input:checked) { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.story li.on .num, .steps li::before { background: var(--accent); color: var(--accent-ink); }
+
+/* Neutral, calmer icon tiles and labels */
+.goal .ico, .tile .ico, .ways .ico { background: var(--sunk); color: var(--accent); }
+.goal:has(input:checked) .ico { background: var(--accent); color: var(--accent-ink); }
+.hard .ico { background: #fff1d0; color: #8a4300; }
+.eyebrow { color: var(--muted); letter-spacing: 0.01em; }
+.inv .eyebrow { color: var(--accent); }
+.hard .go { color: var(--accent); }
+
+/* Chat mockups inside the phone: navy bubbles, sunshine Genie avatar */
+.phone .screen { --accent: #1e3a5f; --accent-hover: #16304f; --accent-tint: #e8eef6; --ink: #0f1b2d; --muted: #4a5a70; }
