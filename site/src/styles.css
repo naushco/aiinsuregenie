@@ -760,3 +760,12 @@ section.cream .mstep, section.cream .match-card, section.cream .hard { backgroun
 .article th { background: #f2f5f9; font-weight: 600; }
 .article tr:last-child td { border-bottom: 0; }
 .guides-h { margin: var(--s12) 0 var(--s6); }
+/* Guide tables stay real tables on phones (scroll sideways if needed) */
+@media (max-width: 767.98px) {
+  .article .table-wrap table { display: table; min-width: 100%; }
+  .article .table-wrap thead { display: table-header-group; }
+  .article .table-wrap tbody { display: table-row-group; }
+  .article .table-wrap tr { display: table-row; }
+  .article .table-wrap th, .article .table-wrap td { display: table-cell; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 15px; }
+  .article .table-wrap tr:last-child td { border-bottom: 0; }
+}

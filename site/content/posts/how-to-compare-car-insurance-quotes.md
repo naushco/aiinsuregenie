@@ -2,6 +2,7 @@
 title: How to compare car insurance quotes (without getting misled)
 description: A step-by-step way to compare car insurance quotes fairly, so the price you see matches the coverage you actually need.
 date: 2026-10-14
+updated: 2026-11-01
 ---
 
 A low quote is only a good deal if it covers what you need. Insurers set prices differently, so the only fair way to compare is to hold everything else the same. Here is a simple process.
@@ -23,7 +24,7 @@ Minimum required coverage depends on where you live, so check your local rules. 
 
 ## 3. Compare the same limits and deductibles
 
-A higher deductible usually lowers the price, because you agree to pay more yourself after a claim. Lower liability limits can also lower the price while leaving you more exposed. When you compare quotes, use the **same limits and the same deductibles** on every one.
+A higher deductible usually lowers the price, because you agree to pay more yourself after a claim. Lower liability limits can also lower the price while leaving you more exposed. When you compare quotes, use the **same limits and the same deductibles** on every one ([NAIC](https://content.naic.org/article/consumer-insight-comparing-online-auto-insurance-quotes)).
 
 ## 4. Give every insurer the same details
 
@@ -34,6 +35,8 @@ Small differences in the information you provide can change the price. Use the s
 - Garaging address
 - Driving and claims history
 
+Include every driver in your household. Leaving one out can lead an insurer to cancel or not renew the policy if they later have an accident ([NAIC](https://content.naic.org/article/consumer-insight-comparing-online-auto-insurance-quotes)).
+
 ## 5. Look beyond the price
 
 Once the quotes match, compare the things that don't show up in the premium:
@@ -41,6 +44,9 @@ Once the quotes match, compare the things that don't show up in the premium:
 - How claims are handled and how easy it is to get help
 - Discounts you qualify for, such as bundling or safe-driving programs
 - Add-ons like roadside assistance or rental car coverage, and what they cost
+- Whether the company and agent are licensed in your state, and how the company's complaint record compares ([NAIC](https://content.naic.org/article/consumer-insight-comparing-online-auto-insurance-quotes))
+
+And don't cancel your current policy until the new one is in place ([Texas Department of Insurance](https://tdi.texas.gov/tips/car-insurance.html)).
 
 ## 6. Check what happens at renewal
 
@@ -49,3 +55,8 @@ Some policies start cheap and rise later. Ask how renewal pricing works, and set
 ## A quicker way to compare
 
 Repeating the same details on many websites takes time. With AI InsureGenie you answer a few questions once in a chat, and Genie points you to the quoting partner that fits your needs. Many partners compare several insurers in one form, so you fill in one form instead of ten. It is free, and you decide whether to continue.
+
+## Sources
+
+- [NAIC (National Association of Insurance Commissioners): comparing online auto insurance quotes](https://content.naic.org/article/consumer-insight-comparing-online-auto-insurance-quotes)
+- [Texas Department of Insurance: car insurance tips](https://tdi.texas.gov/tips/car-insurance.html)

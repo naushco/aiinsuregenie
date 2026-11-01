@@ -142,6 +142,9 @@ ${menuScript}
 const guidesDir = path.join(root, 'content/guides');
 const guides = (fs.existsSync(guidesDir) ? fs.readdirSync(guidesDir) : []).filter((f) => f.endsWith('.md') && !f.startsWith('_'))
   .map((f) => parse(path.join(guidesDir, f))).filter((g) => g.draft !== 'true').sort((a, b) => a.path.length - b.path.length);
+for (const g of guides) {
+  if (!/^## (Sources|Fuentes)\s*$/m.test(g.body) || !/\]\(https?:\/\//.test(g.body)) throw new Error(`${g.path}: every guide needs a "## Sources" section with links`);
+}
 
 // ---------- posts ----------
 const postsDir = path.join(root, 'content/posts');
@@ -180,7 +183,7 @@ for (const p of posts) {
 <article class="article">
   <p class="crumbs"><a href="/">Home</a> / <a href="/blog/">Guides</a></p>
   <h1>${esc(p.title)}</h1>
-  <p class="byline">By ${NAME} &middot; <time datetime="${p.date}">${fmtDate(p.date)}</time>${p.updated ? ` &middot; Updated <time datetime="${p.updated}">${fmtDate(p.updated)}</time>` : ''} &middot; ${Math.max(1, Math.round(words(p.body) / 220))} min read</p>
+  <p class="byline">By ${NAME} &middot; <time datetime="${p.date}">${fmtDate(p.date)}</time>${p.updated ? ` &middot; Updated <time datetime="${p.updated}">${fmtDate(p.updated)}</time>` : ''} &middot; ${Math.max(1, Math.round(words(p.body) / 220))} min read &middot; <a href="/how-we-check-facts/">How we check facts</a></p>
 ${md(p.body)}
   <aside class="article-cta">
     <h2>Find the best quote for your needs</h2>
@@ -315,7 +318,7 @@ const landings = [
     faq: [['What is an SR-22?', 'An SR-22 is a form your insurer files with the state to show you carry the required liability coverage. It is often needed after a DUI, driving without insurance, or a license suspension.'], ['How long do I need it?', 'It depends on your state and your case, often around three years. Your court or DMV paperwork will say. Ask the insurer to confirm before you buy.'], ['Will my rate go up?', 'Usually yes, but prices vary a lot between insurers. That is why comparing matters more for SR-22 drivers than almost anyone else.'], ['Do I have to own a car?', 'No. If you don’t own a car, ask about a non-owner SR-22 policy. Genie can help you find partners that offer it.']],
     finalTitle: 'Let’s get you back on the road',
     finalBtn: 'Start with Genie', barBtn: 'Start with Genie →',
-    legal: LEGAL_EN,
+    legal: 'Sources: <a href="https://www.nationwide.com/lc/resources/auto-insurance/articles/what-is-an-sr-22" rel="noopener">Nationwide: What is an SR-22?</a> · <a href="https://www.dps.texas.gov/node/676" rel="noopener">Texas DPS: SR-22</a> · <a href="https://www.carinsurance.com/kb/how-to-get-sr22-without-valid-license" rel="noopener">CarInsurance.com: non-owner SR-22</a>. More in our <a href="/sr22-insurance/">SR-22 guide</a>.<br><br>' + LEGAL_EN,
     config: {
       page: 'sr22', typing: 'Genie is typing',
       stateLabel: 'Your state', statePlaceholder: 'Choose your state',
@@ -347,7 +350,7 @@ const landings = [
     faq: [['¿Puedo asegurar mi auto con licencia extranjera?', 'Muchas aseguradoras lo permiten, aunque el precio puede variar. Genie le ayuda a encontrar socios que trabajan con conductores en su situación.'], ['¿Tiene algún costo?', 'No. Usar Genie es gratis. Los socios de cotización pueden pagarnos una comisión, sin costo extra para usted.'], ['¿Tengo que dar mi número de teléfono?', 'Solo si quiere que un agente le llame. Puede ver opciones sin compartir su número.']],
     finalTitle: 'Empiece a ahorrar hoy',
     finalBtn: 'Hablar con Genie', barBtn: 'Hablar con Genie →',
-    legal: LEGAL_ES,
+    legal: 'Fuentes: <a href="https://insurify.com/es/car-insurance/driver/international-drivers/" rel="noopener">Insurify: conductores internacionales</a> · <a href="https://www.carinsurance.com/insurance-with-mexican-license.aspx" rel="noopener">CarInsurance.com: licencia mexicana</a>. Más en nuestra <a href="/es/seguro-de-auto-licencia-extranjera/">guía</a>.<br><br>' + LEGAL_ES,
     config: {
       page: 'seguro-es', typing: 'Genie está escribiendo',
       stateLabel: 'Su estado', statePlaceholder: 'Elija su estado',
@@ -430,7 +433,7 @@ for (const g of guides) {
 <article class="article">
   <p class="crumbs">${es ? '<a href="/es/">Inicio</a>' : '<a href="/">Home</a> / <a href="/blog/">Guides</a>'}</p>
   <h1>${esc(g.title)}</h1>
-  <p class="byline">${es ? 'Por' : 'By'} ${NAME} &middot; ${es ? 'Actualizado' : 'Updated'} <time datetime="${g.updated || g.date}">${es ? new Date((g.updated || g.date) + 'T00:00:00Z').toLocaleDateString('es-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : fmtDate(g.updated || g.date)}</time></p>
+  <p class="byline">${es ? 'Por' : 'By'} ${NAME} &middot; ${es ? 'Datos verificados el' : 'Facts checked'} <time datetime="${g.updated || g.date}">${es ? new Date((g.updated || g.date) + 'T00:00:00Z').toLocaleDateString('es-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : fmtDate(g.updated || g.date)}</time> &middot; <a href="/how-we-check-facts/">${es ? 'Cómo verificamos los datos' : 'How we check facts'}</a></p>
 ${body}
   ${cta}
   <p class="disclaimer">${es ? 'Solo información general, no es asesoría de seguros, legal ni financiera. Las reglas y los precios cambian según el estado y la aseguradora.' : 'General information only, not insurance, legal, or financial advice. Rules and prices vary by state and insurer; check your official notice.'}</p>
@@ -469,6 +472,7 @@ const urls = [
   { loc: SITE + '/contact/' },
   { loc: SITE + '/privacy/' },
   { loc: SITE + '/terms/' },
+  { loc: SITE + '/how-we-check-facts/' },
   { loc: SITE + '/blog/', lastmod: posts[0] ? (posts[0].updated || posts[0].date) : undefined },
   ...posts.map((p) => ({ loc: `${SITE}/blog/${p.slug}/`, lastmod: p.updated || p.date })),
   ...guides.map((g) => ({ loc: `${SITE}/${g.path}/`, lastmod: g.updated || g.date })),
