@@ -389,6 +389,20 @@ const GENIE = {
   'sr22-tx': { cfg: Object.assign({}, byPage('sr22'), { page: 'sr22-tx', state: 'Texas',
     hello: ['Hi, I\u2019m Genie \ud83d\udc4b', 'Need an SR-22 in Texas? I can point you to insurers that file it with DPS. No judgment.'],
     afterState: ['Has DPS or a court already asked you for one?'] }), sub: 'Your AI insurance guide · replies in seconds', note: 'Genie is an AI assistant. A licensed agent is one tap away.', aria: 'Chat with Genie' },
+  'sr22-fl': { cfg: Object.assign({}, byPage('sr22'), { page: 'fr44-fl', state: 'Florida',
+    hello: ['Hi, I’m Genie 👋', 'Need an FR-44 or SR-22 in Florida? I can point you to insurers that file them. No judgment.'],
+    afterState: ['Has the court or FLHSMV already asked you for one?'] }), sub: 'Your AI insurance guide · replies in seconds', note: 'Genie is an AI assistant. A licensed agent is one tap away.', aria: 'Chat with Genie' },
+  lapse: { cfg: Object.assign({}, byPage('sr22'), { page: 'lapse',
+    hello: ['Hi, I’m Genie 👋', 'A lapse happens to lots of drivers. Let’s get you covered again, quickly.', 'Which state is your car registered in?'],
+    afterState: ['Got it, {state}.', 'How long have you been without insurance?'],
+    q2: [
+      { label: 'Less than 30 days', goal: 'price', reply: ['Good, that usually means a smaller price bump.', 'I’ll ask a couple more questions in the chat and point you to a partner. About a minute.'] },
+      { label: 'More than 30 days', goal: 'price', reply: ['No problem, plenty of insurers still work with you.', 'Let’s find one in {state}. About a minute in the chat.'] },
+      { label: 'I’d rather talk to a person', agent: true, reply: ['Of course.', 'Leave your number in the chat and a licensed agent will call you back.'] }
+    ] }), sub: 'Your AI insurance guide · replies in seconds', note: 'Genie is an AI assistant. A licensed agent is one tap away.', aria: 'Chat with Genie' },
+  'seguro-tx': { cfg: Object.assign({}, byPage('seguro-es'), { page: 'seguro-tx', state: 'Texas',
+    hello: ['¡Hola! Soy Genie 👋', '¿Busca seguro de auto en Texas? Le ayudo a encontrar uno que cumpla con la ley, en español.'],
+    afterState: ['¿Qué es lo más importante para usted?'] }), sub: 'Su guía de seguros con IA · responde al instante', note: 'Genie es un asistente de IA. Algunas partes del chat están en inglés por ahora.', aria: 'Hable con Genie' },
   seguro: { cfg: Object.assign({}, byPage('seguro-es'), { hello: ['¡Hola! Soy Genie \ud83d\udc4b', '¿Tiene licencia de otro país? Le ayudo a encontrar aseguradoras que trabajan con conductores como usted.', '¿En qué estado vive?'] }), sub: 'Su guía de seguros con IA · responde al instante', note: 'Genie es un asistente de IA. Algunas partes del chat están en inglés por ahora.', aria: 'Hable con Genie' },
 };
 for (const g of guides) {

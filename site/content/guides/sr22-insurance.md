@@ -31,7 +31,7 @@ The exact rules depend on your state, but these are the most common reasons:
 - An unpaid court judgment from a crash
 - Too many points or serious tickets in a short time
 
-Your court or DMV paperwork will say whether you need an SR-22, and for how long. Florida and Virginia also use a stricter form called an **FR-44** for some offenses, with higher liability limits.
+Your court or DMV paperwork will say whether you need an SR-22, and for how long. Florida and Virginia also use a stricter form called an **FR-44** for some offenses, with higher liability limits (see our [Florida FR-44 guide](/fr44-insurance/florida/)).
 
 ## How long you need an SR-22
 
@@ -56,7 +56,7 @@ Prices vary a lot between insurers for SR-22 drivers. That is why comparing quot
 
 ## Non-owner SR-22 insurance
 
-If you don't own a car, you may still need an SR-22 to get your license back. A **non-owner policy** covers you when you drive a car you don't own, such as a borrowed or rented car, and the insurer can file the SR-22 with it. It is usually cheaper than insuring a car. Most national and regional insurers offer it, but not all of them, so ask directly.
+If you don't own a car, you may still need an SR-22 to get your license back. A **non-owner policy** covers you when you drive a car you don't own, such as a borrowed or rented car, and the insurer can file the SR-22 with it. It is usually cheaper than insuring a car. Most national and regional insurers offer it, but not all of them, so ask directly. More in our [non-owner SR-22 guide](/sr22-insurance/non-owner/).
 
 ## How to get an SR-22, step by step
 
