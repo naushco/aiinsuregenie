@@ -54,11 +54,11 @@
   .gc-av::after { content: ""; position: absolute; right: 0; bottom: 0; width: 11px; height: 11px; border-radius: 50%; background: #2fbf71; border: 2px solid #fff; }
   .gc-name { font-weight: 600; font-size: 16px; line-height: 1.2; }
   .gc-sub { font-size: 13px; color: #4a5a70; }
-  .gc-log { padding: 16px; display: flex; flex-direction: column; gap: 8px; min-height: 300px; background: #faf8f3; }
+  .gc-log { padding: 18px 18px 20px; display: flex; flex-direction: column; gap: 10px; min-height: 300px; background: #fff; }
   .b { max-width: 86%; padding: 10px 14px; border-radius: 14px; font-size: 16px; line-height: 1.45; animation: pop .25s ease-out both; }
-  .b.g { align-self: flex-start; background: #fff; border: 1px solid #e3e6ec; border-bottom-left-radius: 4px; }
-  .b.u { align-self: flex-end; background: #1e3a5f; color: #fff; border-bottom-right-radius: 4px; }
-  .typing { align-self: flex-start; display: inline-flex; gap: 4px; padding: 14px 16px; background: #fff; border: 1px solid #e3e6ec; border-radius: 14px; border-bottom-left-radius: 4px; }
+  .b.g { align-self: flex-start; max-width: 100%; padding: 0; border-radius: 0; font-size: 17px; line-height: 1.55; color: #0f1b2d; }
+  .b.u { align-self: flex-end; background: #e9eef5; color: #0f1b2d; border-radius: 20px; padding: 10px 16px; margin: 6px 0; }
+  .typing { align-self: flex-start; display: inline-flex; gap: 4px; padding: 8px 0; }
   .typing i { width: 7px; height: 7px; border-radius: 50%; background: #8a96a8; animation: blink 1.2s infinite; }
   .typing i:nth-child(2) { animation-delay: .2s; } .typing i:nth-child(3) { animation-delay: .4s; }
   .opts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; animation: pop .25s ease-out both; }
@@ -68,7 +68,7 @@
   .gc select { width: 100%; min-height: 48px; padding: 0 12px; border: 1.5px solid #c5ccd6; border-radius: 10px; background: #fff; color: #0f1b2d; font: inherit; font-size: 16px; animation: pop .25s ease-out both; }
   .go { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 52px; margin-top: 6px; border-radius: 12px; background: var(--sun); color: #3d2600; font-weight: 700; font-size: 17px; text-decoration: none; animation: pop .25s ease-out both; }
   .go:hover { background: var(--sun-hover); }
-  .gc-ft { padding: 10px 16px 14px; font-size: 12px; color: #4a5a70; text-align: center; background: #faf8f3; border-top: 1px solid #eef1f5; }
+  .gc-ft { padding: 10px 16px 14px; font-size: 12px; color: #4a5a70; text-align: center; background: #fff; border-top: 1px solid #eef1f5; }
   @keyframes pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   @keyframes blink { 0%, 60%, 100% { opacity: .35; } 30% { opacity: 1; } }
   @media (prefers-reduced-motion: reduce) { .b, .opts, .go, .gc select { animation: none; } .typing i { animation: none; } }

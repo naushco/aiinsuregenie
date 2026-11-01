@@ -460,7 +460,17 @@ var CSS_TEXT = [
   "@media (min-width:768px){.ig{--card:var(--bg);--bot:var(--surface);padding:0;align-items:stretch}.ig-card{max-width:none;height:100vh;height:100dvh;border:0;border-radius:0;box-shadow:none;overflow:visible}.hd{padding:12px 24px}.log{padding:24px max(24px,calc((100% - 880px)/2))}.foot{padding:16px max(24px,calc((100% - 880px)/2)) calc(16px + env(safe-area-inset-bottom))}.bub{max-width:72%}.user .bub{max-width:66%}.quotes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}}",
   "@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}",
   "@keyframes blink{0%,60%,100%{opacity:.35}30%{opacity:1}}",
-  "@media (prefers-reduced-motion:reduce){.ig *{animation:none!important;transition:none!important}}"
+  "@media (prefers-reduced-motion:reduce){.ig *{animation:none!important;transition:none!important}}",
+  /* Conversational look: Genie writes as plain text, the visitor gets a soft bubble */
+  ".who{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--ink);margin:0 0 6px}",
+  ".who::before{content:'';width:26px;height:26px;border-radius:50%;flex:none;background:var(--sun) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11 4l6 2.6v4.3c0 4-2.5 7.2-6 8.8-3.5-1.6-6-4.8-6-8.8V6.6z' fill='%230f1b2d'/%3E%3Cpath d='M8.6 11.6l1.8 1.8 3.4-3.5' fill='none' stroke='%23ffc247' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\") center/18px no-repeat}",
+  ".bot .bub{background:none;border:0;border-radius:0;padding:2px 0 2px 34px;font-size:17px;line-height:1.6;color:var(--ink);max-width:92%}",
+  ".bot .bub + .bub{margin-top:2px}",
+  ".bub.err{padding:12px 16px!important;border-radius:12px!important;background:var(--warn-t)!important}",
+  ".user .bub{background:#e9eef5;color:var(--ink);border-radius:20px;border-bottom-right-radius:20px;padding:10px 16px;font-size:16px}",
+  ".typing{background:none;border:0;padding:10px 0 10px 34px;margin-top:8px}",
+  ".row.bot .time{margin-left:34px}",
+  "@media (min-width:768px){.bot .bub{max-width:80%}}"
 ].join("\n");
 
 // ---------------------------------------------------------------
@@ -996,7 +1006,7 @@ export default function AIInsureGenie() {
 
         <div className="log" ref={logRef} role="log" aria-live="polite" aria-label="Conversation">
           <div className="row bot first">
-            <div className="who">AI InsureGenie</div>
+            <div className="who">Genie</div>
             <div className="bub">Hi! I help drivers get the best quote for their needs.</div>
             <div className="bub" style={{ marginTop: 4 }}>Tell me a bit about you and your car, and I'll point you to the quoting partner that fits you best. I can also answer questions or set up a call.</div>
             <div className="bub" style={{ marginTop: 4 }}>Or just tell me what's going on, for example "my renewal went up $40".</div>
@@ -1011,7 +1021,7 @@ export default function AIInsureGenie() {
             var basis = m.tags ? basisLine(pro) : "";
             return (
               <div key={i} className={"row " + m.role + (first ? " first" : "") + (prev.ins ? " after" : "")}>
-                {m.role === "bot" && first ? <div className="who">AI InsureGenie</div> : null}
+                {m.role === "bot" && first ? <div className="who">Genie</div> : null}
                 <div className={"bub" + (m.err ? " err" : "")}>{m.role === "bot" ? renderBold(m.text) : m.text}</div>
                 {basis ? <p className="basis">{basis}</p> : null}
                 {m.offer ? <OfferCard ins={m.offer} top={true} tip={m.tip} /> : null}
