@@ -274,6 +274,98 @@ fs.writeFileSync(path.join(dist, 'contact', 'index.html'), head({
 fs.copyFileSync(path.join(root, 'src/styles.css'), path.join(dist, 'styles.css'));
 for (const f of fs.readdirSync(path.join(root, 'public'))) fs.copyFileSync(path.join(root, 'public', f), path.join(dist, f));
 
+// ---------- ad landing pages (/go/...) — noindex, built for Meta ads ----------
+// Paste your Meta Pixel ID here when you have one; nothing loads until it's set.
+const META_PIXEL_ID = '';
+const pixel = META_PIXEL_ID ? `<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${META_PIXEL_ID}');fbq('track','PageView');</script>` : '';
+const US_STATES = (read('src/index.template.html').match(/<select class="select" id="state"[\s\S]*?<\/select>/)[0].match(/<option>([^<]+)<\/option>/g) || []).map((o) => o.replace(/<\/?option>/g, ''));
+const check = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>';
+const LEGAL_EN = 'AI InsureGenie is an AI assistant, not an insurance company or licensed agent. We connect you with quoting partners, who may pay us a fee. Quotes, eligibility, and final rates come from the partner or insurer. General information only, not insurance, legal, or financial advice. <a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a>';
+const LEGAL_ES = 'AI InsureGenie es un asistente de IA, no una compañía de seguros ni un agente con licencia. Le conectamos con socios de cotización, que pueden pagarnos una comisión. Las cotizaciones, la elegibilidad y las tarifas finales las da el socio o la aseguradora. Solo información general, no es asesoría de seguros, legal ni financiera. <a href="/privacy/">Privacidad</a> · <a href="/terms/">Términos</a>';
+
+const landings = [
+  {
+    slug: 'sr22', lang: 'en', home: '/',
+    title: 'SR-22 Insurance Help | AI InsureGenie',
+    desc: 'Need an SR-22? Genie helps you find insurers that file SR-22s in your state, in plain words and without judgment.',
+    trustMini: 'Free · No judgment',
+    kicker: 'Need an SR-22?',
+    h1: 'A DUI or suspension doesn’t mean <em>you’re out of options</em>',
+    lede: 'Not every insurer files SR-22s. Genie asks a few quick questions and points you to quoting partners that work with drivers in your situation.',
+    points: ['Free, and nothing to sign up for', 'Plain words, no judgment', 'Talk to a licensed agent any time'],
+    genieSub: 'Your AI insurance guide · replies in seconds',
+    cardNote: 'Genie is an AI assistant. A licensed agent is one tap away.',
+    howTitle: 'How it works',
+    steps: [['Tell Genie your situation', 'Your state and what the court or DMV asked for. No long forms.'], ['Get pointed to the right partner', 'Genie matches you with quoting partners that file SR-22s where you live.'], ['Compare and file', 'Get your quotes from the partner and ask them to file the SR-22 for you.']],
+    faqTitle: 'Common questions',
+    faq: [['What is an SR-22?', 'An SR-22 is a form your insurer files with the state to show you carry the required liability coverage. It is often needed after a DUI, driving without insurance, or a license suspension.'], ['How long do I need it?', 'It depends on your state and your case, often around three years. Your court or DMV paperwork will say. Ask the insurer to confirm before you buy.'], ['Will my rate go up?', 'Usually yes, but prices vary a lot between insurers. That is why comparing matters more for SR-22 drivers than almost anyone else.'], ['Do I have to own a car?', 'No. If you don’t own a car, ask about a non-owner SR-22 policy. Genie can help you find partners that offer it.']],
+    finalTitle: 'Let’s get you back on the road',
+    finalBtn: 'Start with Genie', barBtn: 'Start with Genie →',
+    legal: LEGAL_EN,
+    config: {
+      page: 'sr22', typing: 'Genie is typing',
+      stateLabel: 'Your state', statePlaceholder: 'Choose your state',
+      hello: ['Hi, I’m Genie 👋', 'I help drivers who need an SR-22 find insurers that will actually file it. No judgment, promise.', 'Which state do you need it in?'],
+      afterState: ['Got it, {state}.', 'Has the court or DMV already asked you for an SR-22?'],
+      q2: [
+        { label: 'Yes, I need it now', goal: 'price', reply: ['Okay, let’s move quickly then.', 'I’ll ask a couple more questions in the chat and point you to a partner that files SR-22s in {state}. About a minute.'] },
+        { label: 'Not yet, but soon', goal: 'price', reply: ['Smart to plan ahead.', 'Let’s look at what drivers in {state} usually pay, so there are no surprises. About a minute.'] },
+        { label: 'I’d rather talk to a person', agent: true, reply: ['Of course. A licensed agent can walk you through it.', 'Leave your number in the chat and they’ll call you back.'] }
+      ],
+      go: 'Continue with Genie', goAgent: 'Request a call',
+      states: US_STATES
+    }
+  },
+  {
+    slug: 'seguro', lang: 'es', home: '/es/',
+    title: 'Seguro de auto en español | AI InsureGenie',
+    desc: 'Encuentre el seguro de auto que le conviene, en español. Genie le hace unas preguntas y le indica el socio de cotización adecuado.',
+    trustMini: 'Gratis · Sin compromiso',
+    kicker: 'Seguro de auto, en su idioma',
+    h1: 'Su seguro de auto, <em>explicado en español</em>',
+    lede: 'Genie le hace unas preguntas rápidas y le indica el socio de cotización que mejor le conviene. Sin formularios largos y sin presión.',
+    points: ['Gratis y sin compromiso', 'Ayuda con licencia extranjera, multas o SR-22', 'Hable con un agente con licencia cuando quiera'],
+    genieSub: 'Su guía de seguros con IA · responde al instante',
+    cardNote: 'Genie es un asistente de IA. Algunas partes del chat están en inglés por ahora.',
+    howTitle: 'Cómo funciona',
+    steps: [['Cuéntele a Genie lo que necesita', 'Su estado y lo que más le importa. Sin formularios largos.'], ['Reciba su recomendación', 'Genie le indica el socio de cotización que mejor encaja con usted.'], ['Compare y decida', 'Usted elige. No tiene que comprar nada para ver sus cotizaciones.']],
+    faqTitle: 'Preguntas frecuentes',
+    faq: [['¿Puedo asegurar mi auto con licencia extranjera?', 'Muchas aseguradoras lo permiten, aunque el precio puede variar. Genie le ayuda a encontrar socios que trabajan con conductores en su situación.'], ['¿Tiene algún costo?', 'No. Usar Genie es gratis. Los socios de cotización pueden pagarnos una comisión, sin costo extra para usted.'], ['¿Tengo que dar mi número de teléfono?', 'Solo si quiere que un agente le llame. Puede ver opciones sin compartir su número.']],
+    finalTitle: 'Empiece a ahorrar hoy',
+    finalBtn: 'Hablar con Genie', barBtn: 'Hablar con Genie →',
+    legal: LEGAL_ES,
+    config: {
+      page: 'seguro-es', typing: 'Genie está escribiendo',
+      stateLabel: 'Su estado', statePlaceholder: 'Elija su estado',
+      hello: ['¡Hola! Soy Genie 👋', 'Le ayudo a encontrar un buen seguro de auto, en español y sin complicaciones.', '¿En qué estado vive?'],
+      afterState: ['Perfecto, {state}.', '¿Qué es lo más importante para usted?'],
+      q2: [
+        { label: 'Pagar menos', goal: 'price', reply: ['¡Entendido! Vamos a buscar el mejor precio.', 'Le haré unas preguntas más en el chat. Toma como un minuto.'] },
+        { label: 'Mejor cobertura', goal: 'coverage', reply: ['Muy buena decisión.', 'Vamos a buscar una cobertura que le proteja bien. Toma como un minuto.'] },
+        { label: 'Hablar con una persona', agent: true, reply: ['Claro que sí.', 'Deje su número en el chat y un agente con licencia le llamará.'] }
+      ],
+      go: 'Continuar con Genie', goAgent: 'Pedir una llamada',
+      states: US_STATES
+    }
+  }
+];
+const landingTpl = read('src/landing.template.html');
+for (const L of landings) {
+  const url = `${SITE}/go/${L.slug}/`;
+  const html = landingTpl
+    .replace('{{LANG}}', L.lang).replace(/\{\{TITLE\}\}/g, esc(L.title)).replace(/\{\{DESC\}\}/g, esc(L.desc)).replace(/\{\{URL\}\}/g, url)
+    .replace('{{BRAND_HEAD}}', brandHead).replace('{{PIXEL}}', pixel).replace('{{HOME}}', L.home)
+    .replace('{{TRUST_MINI}}', esc(L.trustMini)).replace('{{KICKER}}', esc(L.kicker)).replace('{{H1}}', L.h1).replace('{{LEDE}}', esc(L.lede))
+    .replace('{{POINTS}}', L.points.map((p) => `<li>${check}<span>${esc(p)}</span></li>`).join(''))
+    .replace('{{GENIE_SUB}}', esc(L.genieSub)).replace('{{CARD_NOTE}}', esc(L.cardNote))
+    .replace('{{HOW_TITLE}}', esc(L.howTitle)).replace('{{STEPS}}', L.steps.map((s) => `<li><h3>${esc(s[0])}</h3><p>${esc(s[1])}</p></li>`).join(''))
+    .replace('{{FAQ_TITLE}}', esc(L.faqTitle)).replace('{{FAQ}}', L.faq.map((f) => `<details><summary>${esc(f[0])}</summary><p>${esc(f[1])}</p></details>`).join('\n    '))
+    .replace('{{FINAL_TITLE}}', esc(L.finalTitle)).replace('{{FINAL_BTN}}', esc(L.finalBtn)).replace('{{BAR_BTN}}', esc(L.barBtn))
+    .replace('{{LEGAL}}', L.legal).replace('{{CONFIG}}', JSON.stringify(L.config).replace(/</g, '\\u003c'));
+  fs.mkdirSync(path.join(dist, 'go', L.slug), { recursive: true });
+  fs.writeFileSync(path.join(dist, 'go', L.slug, 'index.html'), html);
+}
+
 // ---------- sitemap, rss ----------
 const urls = [
   { loc: SITE + '/', lastmod: posts[0] ? (posts[0].updated || posts[0].date) : undefined },
