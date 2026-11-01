@@ -346,8 +346,7 @@ function basisLine(p) {
 // ---------------------------------------------------------------
 var CSS_TEXT = [
   "html,body{margin:0}",
-  ".ig{--bg:#f6f8f7;--surface:#ffffff;--ink:#10261f;--ink2:#4d625a;--mute:#4d625a;--line:rgba(16,38,31,.12);--edge:rgba(16,38,31,.3);--edge-strong:rgba(16,38,31,.5);--brand:#0a6b50;--brand-d:#085540;--brand-t:#e4f0eb;--brand-ink:#ffffff;--ring:rgba(10,107,80,.22);--warn:#b42318;--warn-t:#fdecea;--warn-ink:#7a1a12;--star:#b45309;--shadow:0 1px 3px rgba(0,0,0,.06);--card:var(--surface);--bot:var(--bg);--pop:#ffb020;--pop-shade:#d98a00;--pop-t:#fff3d6;--pop-ink:#6b4200;--scene:#e4f0eb;--road:#d3e0da;--glass:#cfe6ee;--tire:#17302a;--hub:#c7d3ce;--hero:#0a231c;--hero-ink:#eef6f2;--hero-mute:#a9c2b8;--hero-line:rgba(238,246,242,.16);--hero-acc:#3fcf9f;color-scheme:light dark}",
-  "@media (prefers-color-scheme:dark){.ig{--bg:#0c1613;--surface:#131f1b;--ink:#e8f2ee;--ink2:#9fb5ac;--mute:#9fb5ac;--line:rgba(232,242,238,.14);--edge:rgba(232,242,238,.3);--edge-strong:rgba(232,242,238,.5);--brand:#3fcf9f;--brand-d:#6fe0b9;--brand-t:rgba(63,207,159,.14);--brand-ink:#062018;--ring:rgba(63,207,159,.28);--warn:#ff8f85;--warn-t:rgba(255,143,133,.14);--warn-ink:#ffc9c4;--star:#f0b429;--shadow:inset 0 1px 0 rgba(255,255,255,.06);--pop:#ffc247;--pop-shade:#e0a020;--pop-t:rgba(255,194,71,.14);--pop-ink:#ffe2a3;--scene:#16302a;--road:#1b2c27;--glass:#2b4d57;--tire:#0a1411;--hub:#6f8a82;--hero:#081c16}}",
+  ".ig{--bg:#faf8f3;--surface:#ffffff;--ink:#0f1b2d;--ink2:#4a5a70;--mute:#4a5a70;--line:rgba(15,27,45,.12);--edge:rgba(15,27,45,.28);--edge-strong:rgba(15,27,45,.5);--brand:#1e3a5f;--brand-d:#16304f;--brand-t:#e8eef6;--brand-ink:#ffffff;--ring:rgba(30,58,95,.22);--sun:#ffc247;--sun-d:#ffb020;--sun-ink:#3d2600;--ok:#1e3a5f;--warn:#b42318;--warn-t:#fdecea;--warn-ink:#7a1a12;--star:#b45309;--shadow:0 1px 3px rgba(15,27,45,.06);--card:var(--surface);--bot:#f2f5f9;--pop:#ffb020;--pop-shade:#d98a00;--pop-t:#fff3d6;--pop-ink:#6b4200;--scene:#e8eef6;--road:#d5deea;--glass:#cfe0ee;--tire:#0f1b2d;--hub:#c5cfdb;--hero:#0f1b2d;--hero-ink:#eef2f7;--hero-mute:#a9b6c8;--hero-line:rgba(238,242,247,.16);--hero-acc:#ffc247;color-scheme:light}",
   ".ig,.ig *{box-sizing:border-box}",
   ".ig p,.ig h2{margin:0}",
   ".ig{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:16px;display:flex;justify-content:center;-webkit-font-smoothing:antialiased}",
@@ -356,11 +355,11 @@ var CSS_TEXT = [
   "@media (min-width:640px) and (max-width:767.98px){.ig{padding:24px;align-items:center}.ig-card{height:min(780px,calc(100dvh - 48px));border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}}",
   ".ig button:focus-visible,.ig a:focus-visible,.ig input:focus-visible{outline:3px solid var(--brand);outline-offset:3px}",
   ".hd{display:flex;align-items:center;gap:12px;padding:12px 16px;flex:none;background:var(--card)}",
-  ".av{width:40px;height:40px;border-radius:8px;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;flex:none}",
+  ".av{width:40px;height:40px;border-radius:8px;background:var(--sun);color:var(--ink);display:grid;place-items:center;flex:none}",
   ".hd-txt{min-width:0;flex:1}",
   ".hd-name{font-weight:600;font-size:16px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
   ".hd-sub{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink2)}",
-  ".dot{width:8px;height:8px;border-radius:50%;background:var(--brand);flex:none}",
+  ".dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none}",
   ".hd-btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border:1px solid var(--edge);border-radius:8px;background:var(--surface);color:var(--ink);font-size:14px;font-weight:500;cursor:pointer;flex:none}",
   ".hd-btn:hover{border-color:var(--brand);background:var(--brand-t)}",
   ".hd-btn .lbl-s{display:none}",
@@ -397,7 +396,7 @@ var CSS_TEXT = [
   ".per{font-size:14px;line-height:1.4;color:var(--mute)}",
   ".q-feat{font-size:14px;line-height:1.5;color:var(--ink2);margin-top:8px}",
   ".btn{display:flex;align-items:center;justify-content:center;min-height:48px;width:100%;padding:0 16px;border:0;border-radius:8px;font-size:16px;font-weight:500;text-decoration:none;cursor:pointer;margin-top:12px}",
-  ".btn-p{background:var(--brand);color:var(--brand-ink)}.btn-p:hover{background:var(--brand-d)}",
+  ".btn-p{background:var(--sun);color:var(--sun-ink);font-weight:600}.btn-p:hover{background:var(--sun-d)}",
   ".btn:disabled{background:var(--line);color:var(--mute);cursor:not-allowed}",
   ".q-note{font-size:12px;line-height:1.4;color:var(--mute);text-align:center;margin-top:8px}",
   ".consent{margin-top:16px;border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--surface)}",
@@ -540,7 +539,7 @@ function OfferCard({ ins, top, tip }) {
     <article className={"offer" + (top ? " is-top" : "")} aria-label={ins.n}>
       {top ? <span className="top-pick"><Icon n="star" fill size={12} />Top pick for you</span> : null}
       <div className="q-top">
-        <div className={"q-logo" + (showLogo ? " img" : "")} style={showLogo ? undefined : { background: (ins.bc || "#0a6b50") + "26" }} aria-hidden="true">
+        <div className={"q-logo" + (showLogo ? " img" : "")} style={showLogo ? undefined : { background: (ins.bc || "#1e3a5f") + "26" }} aria-hidden="true">
           {showLogo ? <img src={ins.logoUrl} alt="" onError={function () { setLogoBroken(true); }} /> : (ins.n || "?").charAt(0)}
         </div>
         <div className="q-id">

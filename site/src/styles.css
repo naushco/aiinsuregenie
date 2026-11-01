@@ -30,24 +30,8 @@
   --prose: 68ch;
   color-scheme: light;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --canvas: #0c1613; --surface: #131f1b; --sunk: #0f1a17; --ink: #e8f2ee; --muted: #a3b5ad;
-    --border: rgba(232, 242, 238, 0.12); --control: rgba(232, 242, 238, 0.32);
-    --accent: #3fcf9f; --accent-hover: #6fe0b8; --accent-tint: #16302a; --accent-ink: #06221a;
-    --warm: #f0b46a; --warm-tint: #2a2012; --warm-line: #5a4423;
-    --shadow: none; --edge: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --canvas: #0c1613; --surface: #131f1b; --sunk: #0f1a17; --ink: #e8f2ee; --muted: #a3b5ad;
-  --border: rgba(232, 242, 238, 0.12); --control: rgba(232, 242, 238, 0.32);
-  --accent: #3fcf9f; --accent-hover: #6fe0b8; --accent-tint: #16302a; --accent-ink: #06221a;
-  --warm: #f0b46a; --warm-tint: #2a2012; --warm-line: #5a4423;
-  --shadow: none; --edge: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  color-scheme: dark;
-}
+
+
 
 /* ---------- Base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
@@ -536,8 +520,8 @@ section.tight { padding-top: 0; }
    ========================================================= */
 :root { --pop: #ffb020; --pop-shade: #d98a00; --pop-tint: #fff3d6; --pop-ink: #6b4200;
   --car-glass: #cfe6ee; --car-tire: #17302a; --car-hub: #c7d3ce; --road: #dfe8e4; --scene: #e4f0eb; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --pop: #ffc247; --pop-shade: #e0a020; --pop-tint: #3a2c10; --pop-ink: #ffe2a3; --car-glass: #2b4d57; --car-tire: #0a1411; --car-hub: #6f8a82; --road: #1b2c27; --scene: #16302a; } }
-:root[data-theme="dark"] { --pop: #ffc247; --pop-shade: #e0a020; --pop-tint: #3a2c10; --pop-ink: #ffe2a3; --car-glass: #2b4d57; --car-tire: #0a1411; --car-hub: #6f8a82; --road: #1b2c27; --scene: #16302a; }
+
+
 .inv { --car-glass: #2b4d57; --car-tire: #071510; --car-hub: #8aa59c; --road: #12372e; --scene: #0f3229; }
 
 /* Hand-drawn underline on the hero promise */
@@ -614,10 +598,8 @@ section.tight { padding-top: 0; }
   --cream: #fff4d9; --cream-line: #f1dfb2;
   --sun: #ffc247; --sun-hover: #ffb020; --sun-ink: #3d2600;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --canvas: #0c1613; --sunk: #0f1a17; --cream: #12241e; --cream-line: #23392f; --sun-ink: #2a1a00; }
-}
-:root[data-theme="dark"] { --canvas: #0c1613; --sunk: #0f1a17; --cream: #12241e; --cream-line: #23392f; --sun-ink: #2a1a00; }
+
+
 
 /* Primary call to action: sunshine fill, dark text (never yellow text) */
 .btn-sun, .inv .btn-sun { background: var(--sun); border-color: var(--sun); color: var(--sun-ink); font-weight: var(--w-semibold); }
@@ -702,22 +684,8 @@ section.cream .mstep, section.cream .match-card, section.cream .hard { backgroun
   --scene: #e8eef6; --road: #dce3ec;
   --shadow: 0 1px 2px rgba(15, 27, 45, 0.05), 0 6px 20px rgba(15, 27, 45, 0.06);
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --canvas: #0b1220; --surface: #121c2e; --sunk: #0e1727; --ink: #e8edf5; --muted: #a3b0c2;
-    --border: rgba(232, 237, 245, 0.12); --control: rgba(232, 237, 245, 0.3);
-    --accent: #8fb4e0; --accent-hover: #b0cbea; --accent-tint: #1b2a44; --accent-ink: #0b1220;
-    --brand: #3fcf9f; --brand-tint: #15302a; --cream: #101a2b; --cream-line: #1f2c42;
-    --scene: #172a44; --road: #1a3050;
-  }
-}
-:root[data-theme="dark"] {
-  --canvas: #0b1220; --surface: #121c2e; --sunk: #0e1727; --ink: #e8edf5; --muted: #a3b0c2;
-  --border: rgba(232, 237, 245, 0.12); --control: rgba(232, 237, 245, 0.3);
-  --accent: #8fb4e0; --accent-hover: #b0cbea; --accent-tint: #1b2a44; --accent-ink: #0b1220;
-  --brand: #3fcf9f; --brand-tint: #15302a; --cream: #101a2b; --cream-line: #1f2c42;
-  --scene: #172a44; --road: #1a3050;
-}
+
+
 
 /* Dark sections: midnight navy instead of deep green */
 .inv {
@@ -756,8 +724,8 @@ section.cream .mstep, section.cream .match-card, section.cream .hard { backgroun
 :root { --logo-tile: #0f1b2d; --logo-genie: var(--sun); }
 .logo-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--logo-tile); color: inherit; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
 .logo em { color: var(--logo-genie); font-weight: var(--w-bold, 700); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --logo-tile: #1e3a5f; --logo-genie: var(--sun); } }
-:root[data-theme="dark"] { --logo-tile: #1e3a5f; --logo-genie: var(--sun); }
+
+
 .inv .logo em { color: var(--sun); }
 .inv .logo-mark { background: #1e3a5f; }
 
@@ -781,3 +749,6 @@ section.cream .mstep, section.cream .match-card, section.cream .hard { backgroun
 /* Primary buttons on navy sections use sunshine, never mint */
 .inv .btn:not(.btn-2):not(.btn-ghost) { background: var(--sun); border-color: var(--sun); color: var(--sun-ink); }
 .inv .btn:not(.btn-2):not(.btn-ghost):hover { background: var(--sun-hover); border-color: var(--sun-hover); color: var(--sun-ink); }
+
+/* Light mode only */
+:root { color-scheme: light; }
