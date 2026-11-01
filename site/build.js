@@ -426,6 +426,27 @@ ${body}
   fs.writeFileSync(path.join(dist, g.path, 'index.html'), html);
 }
 
+// ---------- llms.txt: a plain summary of the site for AI assistants ----------
+fs.writeFileSync(path.join(dist, 'llms.txt'), `# ${NAME}
+
+> ${NAME} is a free AI assistant (Genie) that helps US drivers understand car insurance and points them to the quoting partner that fits their needs. It is not an insurance company or licensed agent; quotes and final rates come from partners or insurers. Plain-language help in English and Spanish, including SR-22 and harder situations.
+
+## Guides
+${guides.filter((g) => g.lang === 'en').map((g) => `- [${g.title}](${SITE}/${g.path}/): ${g.description}`).join('\n')}
+${posts.map((p) => `- [${p.title}](${SITE}/blog/${p.slug}/): ${p.description}`).join('\n')}
+
+## En español
+- [Inicio en español](${SITE}/es/): Ayuda con el seguro de auto en español.
+${guides.filter((g) => g.lang === 'es').map((g) => `- [${g.title}](${SITE}/${g.path}/): ${g.description}`).join('\n')}
+
+## Use the assistant
+- [Chat with Genie](${CHAT_URL}/): Answers car insurance questions and suggests a quoting partner. Free, no obligation.
+
+## About
+- [For partners](${SITE}/partners/): How insurers and quoting platforms work with ${NAME}.
+- [Privacy](${SITE}/privacy/) · [Terms](${SITE}/terms/)
+`);
+
 // ---------- sitemap, rss ----------
 const urls = [
   { loc: SITE + '/', lastmod: posts[0] ? (posts[0].updated || posts[0].date) : undefined },
