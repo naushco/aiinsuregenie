@@ -103,6 +103,7 @@ module.exports = async function handler(req, res) {
     }
 
     var system = SYSTEM_PROMPT + cleanProfile(body.profile) + cleanResults(body.results);
+    if (body.lang === "es") system += "\n\nLANGUAGE: The user is browsing in Spanish. Always reply in clear, neutral Latin American Spanish, using \"usted\". Keep insurance terms like SR-22 as-is.";
 
     var controller = new AbortController();
     var timer = setTimeout(function () { controller.abort(); }, 15000);
