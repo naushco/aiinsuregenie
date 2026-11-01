@@ -41,6 +41,14 @@ function md(src) {
     let m;
     if ((m = l.match(/^(#{2,3})\s+(.*)$/))) { out.push(`<h${m[1].length}>${inline(m[2])}</h${m[1].length}>`); i++; continue; }
     if (/^---+\s*$/.test(l)) { out.push('<hr>'); i++; continue; }
+    if (/^\|.*\|\s*$/.test(l) && i + 1 < lines.length && /^\|[\s:|-]+\|\s*$/.test(lines[i + 1])) {
+      const cells = (row) => row.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
+      const head = cells(l); i += 2;
+      const rows = [];
+      while (i < lines.length && /^\|.*\|\s*$/.test(lines[i])) rows.push(cells(lines[i++]));
+      out.push(`<div class="table-wrap"><table><thead><tr>${head.map((h) => `<th scope="col">${inline(h)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
+      continue;
+    }
     if (/^>\s?/.test(l)) {
       const b = [];
       while (i < lines.length && /^>\s?/.test(lines[i])) b.push(lines[i++].replace(/^>\s?/, ''));
@@ -93,9 +101,9 @@ const langLinks = `<link rel="alternate" hreflang="en" href="${SITE}/">
 <link rel="alternate" hreflang="x-default" href="${SITE}/">`;
 
 // ---------- shared page shell ----------
-function head({ title, description, url, type = 'website', extra = '' }) {
+function head({ title, description, url, type = 'website', extra = '', lang = 'en', hdr = null }) {
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -120,7 +128,7 @@ ${brandHead}
 ${extra}
 </head>
 <body>
-${header}
+${hdr || header}
 `;
 }
 const tail = `
@@ -129,6 +137,11 @@ ${menuScript}
 </body>
 </html>
 `;
+
+// ---------- topic guides (content/guides/*.md, own URL via "path") ----------
+const guidesDir = path.join(root, 'content/guides');
+const guides = (fs.existsSync(guidesDir) ? fs.readdirSync(guidesDir) : []).filter((f) => f.endsWith('.md') && !f.startsWith('_'))
+  .map((f) => parse(path.join(guidesDir, f))).filter((g) => g.draft !== 'true').sort((a, b) => a.path.length - b.path.length);
 
 // ---------- posts ----------
 const postsDir = path.join(root, 'content/posts');
@@ -212,6 +225,7 @@ fs.writeFileSync(path.join(dist, 'blog', 'index.html'), head({
     <p class="lede">Plain-language answers to help you compare coverage and prices with confidence.</p>
   </div>
   ${list(posts)}
+  ${guides.filter((g) => g.lang === 'en').length ? `<h2 class="guides-h">Topic guides</h2><ul class="post-list">${guides.filter((g) => g.lang === 'en').map((g, i) => `<li><a href="/${g.path}/"><div class="cover">${cover(i + 1)}</div><h3>${esc(g.title)}</h3><p>${esc(g.description)}</p></a></li>`).join('')}</ul>` : ''}
 </main>` + tail);
 
 // ---------- homepage ----------
@@ -366,6 +380,52 @@ for (const L of landings) {
   fs.writeFileSync(path.join(dist, 'go', L.slug, 'index.html'), html);
 }
 
+
+// ---------- topic guide pages ----------
+const genieTpl = read('src/partials/genie.html');
+const byPage = (k) => landings.find((L) => L.config.page === k).config;
+const GENIE = {
+  sr22: { cfg: byPage('sr22'), sub: 'Your AI insurance guide · replies in seconds', note: 'Genie is an AI assistant. A licensed agent is one tap away.', aria: 'Chat with Genie' },
+  'sr22-tx': { cfg: Object.assign({}, byPage('sr22'), { page: 'sr22-tx', state: 'Texas',
+    hello: ['Hi, I\u2019m Genie \ud83d\udc4b', 'Need an SR-22 in Texas? I can point you to insurers that file it with DPS. No judgment.'],
+    afterState: ['Has DPS or a court already asked you for one?'] }), sub: 'Your AI insurance guide · replies in seconds', note: 'Genie is an AI assistant. A licensed agent is one tap away.', aria: 'Chat with Genie' },
+  seguro: { cfg: Object.assign({}, byPage('seguro-es'), { hello: ['¡Hola! Soy Genie \ud83d\udc4b', '¿Tiene licencia de otro país? Le ayudo a encontrar aseguradoras que trabajan con conductores como usted.', '¿En qué estado vive?'] }), sub: 'Su guía de seguros con IA · responde al instante', note: 'Genie es un asistente de IA. Algunas partes del chat están en inglés por ahora.', aria: 'Hable con Genie' },
+};
+for (const g of guides) {
+  const url = `${SITE}/${g.path}/`;
+  const es = g.lang === 'es';
+  const G = GENIE[g.genie];
+  const box = G ? genieTpl.replace('{{ARIA}}', G.aria).replace('{{SUB}}', esc(G.sub)).replace('{{NOTE}}', esc(G.note))
+    .replace('{{CONFIG}}', JSON.stringify(G.cfg).replace(/</g, '\\u003c')) : '';
+  // FAQ structured data from the "### question" + answer pairs in the questions section
+  const faqPart = (g.body.split(/^## (?:Common questions|Preguntas frecuentes)\s*$/m)[1] || '').split(/^## /m)[0];
+  const faqs = [...faqPart.matchAll(/^### (.+)\n([\s\S]*?)(?=^### |(?![\s\S]))/gm)].map((m) => ({ q: m[1].trim(), a: m[2].trim().replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/\*\*/g, '') }));
+  const crumbs = es ? [['Inicio', SITE + '/es/'], [g.title, url]] : [['Home', SITE + '/'], ['Guides', SITE + '/blog/'], [g.title, url]];
+  const ld = { '@context': 'https://schema.org', '@graph': [
+    { '@type': 'Article', headline: g.title, description: g.description, inLanguage: g.lang, datePublished: g.date, dateModified: g.updated || g.date,
+      mainEntityOfPage: url, author: { '@type': 'Organization', name: NAME, url: SITE }, publisher: { '@type': 'Organization', name: NAME, url: SITE } },
+    { '@type': 'BreadcrumbList', itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c[0], item: c[1] })) },
+    ...(faqs.length ? [{ '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) }] : []),
+  ] };
+  const body = md(g.body).replace('<p>[[genie]]</p>', box);
+  const cta = es
+    ? `<aside class="article-cta"><h2>¿Listo para comparar?</h2><p>Genie le hace unas preguntas y le indica el socio de cotización que le conviene. Gratis y sin compromiso.</p><a class="btn btn-sun" href="#genie">Hablar con Genie</a></aside>`
+    : `<aside class="article-cta"><h2>Ready to find an insurer that will file it?</h2><p>Genie asks a few quick questions and points you to the quoting partner that fits. Free, no obligation.</p><a class="btn btn-sun" href="#genie">Start with Genie</a></aside>`;
+  const html = head({ title: `${g.title} | ${NAME}`, description: g.description, url, type: 'article', lang: g.lang, hdr: es ? headerEs : null,
+    extra: `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>` }) + `<main class="page">
+<article class="article">
+  <p class="crumbs">${es ? '<a href="/es/">Inicio</a>' : '<a href="/">Home</a> / <a href="/blog/">Guides</a>'}</p>
+  <h1>${esc(g.title)}</h1>
+  <p class="byline">${es ? 'Por' : 'By'} ${NAME} &middot; ${es ? 'Actualizado' : 'Updated'} <time datetime="${g.updated || g.date}">${es ? new Date((g.updated || g.date) + 'T00:00:00Z').toLocaleDateString('es-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : fmtDate(g.updated || g.date)}</time></p>
+${body}
+  ${cta}
+  <p class="disclaimer">${es ? 'Solo información general, no es asesoría de seguros, legal ni financiera. Las reglas y los precios cambian según el estado y la aseguradora.' : 'General information only, not insurance, legal, or financial advice. Rules and prices vary by state and insurer; check your official notice.'}</p>
+</article>
+</main>` + tail;
+  fs.mkdirSync(path.join(dist, g.path), { recursive: true });
+  fs.writeFileSync(path.join(dist, g.path, 'index.html'), html);
+}
+
 // ---------- sitemap, rss ----------
 const urls = [
   { loc: SITE + '/', lastmod: posts[0] ? (posts[0].updated || posts[0].date) : undefined },
@@ -376,6 +436,7 @@ const urls = [
   { loc: SITE + '/terms/' },
   { loc: SITE + '/blog/', lastmod: posts[0] ? (posts[0].updated || posts[0].date) : undefined },
   ...posts.map((p) => ({ loc: `${SITE}/blog/${p.slug}/`, lastmod: p.updated || p.date })),
+  ...guides.map((g) => ({ loc: `${SITE}/${g.path}/`, lastmod: g.updated || g.date })),
 ];
 fs.writeFileSync(path.join(dist, 'sitemap.xml'),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +

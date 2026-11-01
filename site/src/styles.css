@@ -752,3 +752,11 @@ section.cream .mstep, section.cream .match-card, section.cream .hard { backgroun
 
 /* Light mode only */
 :root { color-scheme: light; }
+
+/* Guide tables */
+.article .table-wrap { overflow-x: auto; margin: 0 0 var(--s6); border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.article table { width: 100%; border-collapse: collapse; font-size: var(--text-secondary); }
+.article th, .article td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--ink); font-size: 16px; }
+.article th { background: #f2f5f9; font-weight: 600; }
+.article tr:last-child td { border-bottom: 0; }
+.guides-h { margin: var(--s12) 0 var(--s6); }
