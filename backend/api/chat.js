@@ -7,7 +7,7 @@ const { cors } = require("../lib/http");
 const MODEL = process.env.CHAT_MODEL || "claude-haiku-4-5-20251001"; // fast + cheap. Use "claude-sonnet-5-5" for higher quality.
 const MAX_MSG_CHARS = 600;
 const MAX_HISTORY = 10;
-const MAX_OUTPUT_TOKENS = 450;
+const MAX_OUTPUT_TOKENS = 300;
 
 // Basic per-instance rate limit (resets on cold start; fine for launch).
 // For heavy traffic, move this to Upstash Redis or Vercel KV.
@@ -103,6 +103,7 @@ module.exports = async function handler(req, res) {
     }
 
     var system = SYSTEM_PROMPT + cleanProfile(body.profile) + cleanResults(body.results);
+    system += "\n\nSTYLE: Answer in under 120 words. No greetings like \"Great question\". If you use a number example, check the arithmetic (e.g. $3,000 damage with a $500 deductible: you pay $500, insurer pays $2,500).";
     if (body.lang === "es") system += "\n\nLANGUAGE: The user is browsing in Spanish. Always reply in clear, neutral Latin American Spanish, using \"usted\". Keep insurance terms like SR-22 as-is.";
 
     var controller = new AbortController();
