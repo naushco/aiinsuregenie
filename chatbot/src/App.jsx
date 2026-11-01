@@ -704,6 +704,7 @@ export default function AIInsureGenie() {
   var usr = function(text) { setMsgs(function(p){return p.concat([{role:"user",text:text,time:nowTime()}]);}); };
 
   var startQ = function(extra) {
+    var sit = extra && extra._sit; if (extra) { extra = Object.assign({}, extra); delete extra._sit; if (!Object.keys(extra).length) extra = null; }
     var start = Object.assign({}, pro, extra || {});
     if (extra) setPro(start);
     setPhase("qualifying"); setTyp(true);
@@ -715,7 +716,7 @@ export default function AIInsureGenie() {
     var intro = got.length
       ? "Thanks! I've got " + (got.length > 1 ? got.slice(0, -1).join(", ") + " and " + got[got.length - 1] : got[0]) + " from the website, so I won't ask again. Just a few more quick questions."
       : "Great! A few quick questions and I'll point you to the partner that fits you best. Ask me anything along the way.";
-    setTimeout(function(){bot(intro);setTyp(false);setTimeout(function(){advQ(0,start);},500);},500);
+    setTimeout(function(){if(sit)bot(sit);bot(intro);setTyp(false);setTimeout(function(){advQ(0,start);},500);},sit?900:500);
   };
   var startChat = function() {
     setPhase("chat"); setTyp(true);
@@ -915,6 +916,15 @@ export default function AIInsureGenie() {
   };
 
 
+  // Topics the website can open the chat with (#start=quote&situation=...&lang=es).
+  var SITUATIONS = {
+    sr22: { en: ["SR-22 / DUI", "No judgment here. Lots of drivers need an SR-22. I'll point you to partners that file SR-22s in your state."], es: ["SR-22 / DUI", "Aquí nadie le juzga. Muchos conductores necesitan una SR-22. Le indicaré socios que la presentan en su estado."] },
+    lapse: { en: ["Gap in coverage", "A lapse happens to lots of drivers. The sooner you're covered again, the better the price usually is."], es: ["Estuve sin seguro", "Le pasa a muchos conductores. Mientras antes vuelva a tener seguro, mejor suele ser el precio."] },
+    record: { en: ["Tickets or an accident", "A ticket or accident can raise your price, but some insurers are much more forgiving than others. Comparing makes a real difference."], es: ["Multas o un accidente", "Una multa o un accidente puede subir el precio, pero algunas aseguradoras son mucho más flexibles que otras. Comparar ayuda mucho."] },
+    "new-driver": { en: ["New or young driver", "First policy or adding a teen? Discounts like good grades and driver's ed can help a lot. I'll point you to the right partner."], es: ["Conductor nuevo o joven", "¿Primera póliza o agregar a un hijo? Descuentos por buenas notas o curso de manejo pueden ayudar mucho."] },
+    rideshare: { en: ["Rideshare or delivery", "Driving for Uber, Lyft or DoorDash? A personal policy often doesn't cover you while the app is on, so it's worth asking about rideshare coverage."], es: ["Uber, Lyft o entregas", "¿Maneja para Uber, Lyft o DoorDash? Una póliza personal a menudo no le cubre con la app encendida. Vale la pena preguntar por cobertura para rideshare."] }
+  };
+
   // Open the right flow when arriving from the website (values live in the URL fragment).
   useEffect(function() {
     var h = (window.location.hash || "").replace(/^#/, "");
@@ -930,7 +940,9 @@ export default function AIInsureGenie() {
       if (goal === "price" || goal === "coverage") { extra.priority = goal; said.push(goal === "price" ? "Lowest price" : "Best coverage"); }
       if (st) { extra.state = st; said.push(stName); }
       if (yr) { extra.vehicleYear = yr; said.push("car " + car); }
+      var S = SITUATIONS[p.get("situation") || ""], es = p.get("lang") === "es";
       if (q) { setPhase("chat"); handleChat(q); }
+      else if (start === "quote" && S) { var L = es ? S.es : S.en; usr(said.length ? L[0] + ", " + said.join(", ") : L[0]); startQ(Object.assign({}, extra, { _sit: L[1] })); }
       else if (start === "quote") { usr(said.length ? said.join(", ") : "Get instant quote"); startQ(said.length ? extra : null); }
       else if (start === "ask") { usr("I have a question"); startChat(); }
       else if (start === "agent") { setShowCall(true); }
