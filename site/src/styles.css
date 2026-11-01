@@ -778,3 +778,6 @@ section.cream .mstep, section.cream .match-card, section.cream .hard { backgroun
   .site-header .nav a:not(.btn) { color: var(--hdr-ink); border-bottom-color: var(--hdr-line); }
 }
 .hero4 .eyebrow, .inv .eyebrow { color: #a9bcd6; }
+/* Primary buttons on navy sections use sunshine, never mint */
+.inv .btn:not(.btn-2):not(.btn-ghost) { background: var(--sun); border-color: var(--sun); color: var(--sun-ink); }
+.inv .btn:not(.btn-2):not(.btn-ghost):hover { background: var(--sun-hover); border-color: var(--sun-hover); color: var(--sun-ink); }
