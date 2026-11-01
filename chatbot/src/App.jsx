@@ -6,7 +6,7 @@ var STORAGE_KEY = "aiinsuregenie-partners-v3";
 var LANG = (function () {
   if (typeof window === "undefined") return "en";
   var h = (window.location.hash || "") + "&" + (window.location.search || "");
-  var l = /[#&?]lang=es\b/.test(h) ? "es" : (/[#&?]lang=en\b/.test(h) ? "en" : null);
+  var l = /[#&?]lang=es\b/.test(h) ? "es" : (/[#&?](lang=en|start=)/.test(h) ? "en" : null);
   try { if (l) sessionStorage.setItem("aig-lang", l); else l = sessionStorage.getItem("aig-lang"); } catch (e) {}
   return l === "es" ? "es" : "en";
 })();
