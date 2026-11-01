@@ -760,3 +760,21 @@ section.cream .mstep, section.cream .match-card, section.cream .hard { backgroun
 :root[data-theme="dark"] { --logo-tile: #1e3a5f; --logo-genie: var(--sun); }
 .inv .logo em { color: var(--sun); }
 .inv .logo-mark { background: #1e3a5f; }
+
+/* v9 — navy header, yellow header button, calm eyebrow */
+.site-header { --hdr: #0f1b2d; --hdr-2: #16253b; --hdr-line: rgba(255,255,255,.08); --hdr-ink: #eef2f7; --hdr-muted: #b4c0d0;
+  background: color-mix(in srgb, var(--hdr) 96%, transparent); border-bottom-color: var(--hdr-line); color: var(--hdr-ink); }
+.site-header .logo { color: var(--hdr-ink); }
+.site-header .logo em { color: var(--sun); }
+.site-header .logo-mark { background: #1e3a5f; }
+.site-header .nav a:not(.btn) { color: var(--hdr-muted); }
+.site-header .nav a:not(.btn):hover, .site-header .nav a[aria-current="page"], .site-header .nav a.lang { color: #fff; }
+.site-header .nav a:not(.btn):focus-visible, .site-header .menu-btn:focus-visible { outline: 2px solid var(--sun); outline-offset: 2px; }
+.site-header .nav .btn { background: var(--sun); border-color: var(--sun); color: var(--sun-ink); font-weight: var(--w-semibold); }
+.site-header .nav .btn:hover { background: var(--sun-hover); border-color: var(--sun-hover); color: var(--sun-ink); }
+.site-header .menu-btn { background: var(--hdr-2); color: var(--hdr-ink); border-color: var(--hdr-line); }
+@media (max-width: 767.98px) {
+  .site-header .nav { background: var(--hdr-2); border-bottom-color: var(--hdr-line); }
+  .site-header .nav a:not(.btn) { color: var(--hdr-ink); border-bottom-color: var(--hdr-line); }
+}
+.hero4 .eyebrow, .inv .eyebrow { color: #a9bcd6; }
