@@ -340,10 +340,10 @@ function parseFree(text) {
 }
 // Answer cards (icon + short explainer), "why we ask" notes and short reactions.
 var CARDS = {
-  pri: { cols: 1, items: T([["💰","Pay as little as possible"],["🛡️","Strong protection if something happens"],["⭐","Easy claims and helpful support"]], [["💰","Pagar lo menos posible"],["🛡️","Buena protección si algo pasa"],["⭐","Reclamos fáciles y buen soporte"]]) },
-  vyear: { cols: 3, items: [["✨"],["🚙"],["🚗"],["🚘"],["🔧"]] },
-  vmake: { cols: 3, items: [[""],[""],[""],[""],[""],[""]] },
-  drv: { cols: 2, items: T([["✅","No tickets or accidents"],["🧾","Speeding or similar"],["💥","In the last 3 years"],["⚖️","Need a state filing"]], [["✅","Sin multas ni accidentes"],["🧾","Exceso de velocidad u otra"],["💥","En los últimos 3 años"],["⚖️","Necesito un formulario estatal"]]) }
+  pri: { items: T([["tag","Pay less for the cover you need"],["shield","Be properly protected"],["headset","Easy claims and helpful support"]], [["tag","Pague menos por la cobertura que necesita"],["shield","Esté bien protegido"],["headset","Reclamos fáciles y buen soporte"]]) },
+  vyear: { compact: true, items: [[],[],[],[],[]] },
+  vmake: { compact: true, items: [[],[],[],[],[],[]] },
+  drv: { items: T([["shield","No tickets or accidents"],["file","Speeding or similar"],["alert","In the last 3 years"],["scale","Need a state filing"]], [["shield","Sin multas ni accidentes"],["file","Exceso de velocidad u otra"],["alert","En los últimos 3 años"],["scale","Necesito un formulario estatal"]]) }
 };
 var WHY = {
   zip: T("Prices and partners depend on where you live.", "Los precios y los socios dependen de dónde vive."),
@@ -563,19 +563,22 @@ var CSS_TEXT = [
   ".seg-ck{display:inline-grid;place-items:center;width:14px;height:14px;border-radius:50%;background:var(--brand);color:#fff;font-size:9px}",
   ".seg:focus-visible{outline:3px solid var(--sun);outline-offset:1px}",
   "@media (min-width:768px){.steps{padding:10px max(24px,calc((100% - 880px)/2))}}",
-  /* Answer cards */
-  ".acards{display:grid;gap:8px;margin-bottom:12px}.acards.c1{grid-template-columns:1fr}.acards.c2{grid-template-columns:repeat(2,minmax(0,1fr))}.acards.c3{grid-template-columns:repeat(3,minmax(0,1fr))}",
-  ".acard{display:flex;align-items:center;gap:10px;min-height:52px;padding:10px 12px;border:1.5px solid #d5dce6;border-radius:14px;background:#fff;color:var(--ink);font:inherit;text-align:left;cursor:pointer;box-shadow:0 1px 2px rgba(15,27,45,.04);animation:in .25s ease-out both;transition:border-color .15s,background .15s,transform .1s}",
-  ".acard:hover{border-color:var(--brand);background:#f3f6fb}.acard:active{transform:scale(.98)}.acard:focus-visible{outline:3px solid var(--sun);outline-offset:2px}",
-  ".acards.c3 .acard{justify-content:center;text-align:center;flex-direction:column;gap:2px;padding:8px 6px}",
-  ".acards.c2 .acard{flex-direction:column;align-items:flex-start;gap:4px}",
-  ".ac-ic{font-size:22px;line-height:1;flex:none}.acards.c3 .ac-ic{font-size:18px}",
-  ".ac-tx{display:flex;flex-direction:column;gap:2px;min-width:0}",
-  ".ac-l{font-size:15px;font-weight:600;line-height:1.25}.ac-s{font-size:13px;color:var(--mute);line-height:1.3}",
-  ".acards.c1 .acard{min-height:60px;padding:10px 14px}.acards.c1 .ac-ic{width:40px;height:40px;border-radius:12px;background:#f4f7fb;display:grid;place-items:center}",
+  /* Answer cards: stacked rows with line icons and a radio */
+  ".acards{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:12px;max-height:46vh;overflow-y:auto;padding:2px}",
+  ".acard{display:flex;align-items:center;gap:12px;min-height:62px;padding:10px 14px;border:1.5px solid #d5dce6;border-radius:14px;background:#fff;color:var(--ink);font:inherit;text-align:left;cursor:pointer;animation:in .25s ease-out both;transition:border-color .15s,background .15s}",
+  ".acard:hover:not(:disabled){border-color:#9fb0c6;background:#f8fafc}.acard:focus-visible{outline:3px solid var(--sun);outline-offset:2px}.acard:disabled{cursor:default}",
+  ".acard.on{border-color:var(--brand);background:#eef3f9}",
+  ".ac-ic{width:40px;height:40px;border-radius:10px;background:#eef2f7;color:var(--brand);display:grid;place-items:center;flex:none;transition:background .15s,color .15s}",
+  ".acard.on .ac-ic{background:var(--brand);color:#fff}",
+  ".ac-tx{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}",
+  ".ac-l{font-size:16px;font-weight:600;line-height:1.25}.ac-s{font-size:14px;color:var(--mute);line-height:1.35}",
+  ".ac-rd{width:22px;height:22px;border-radius:50%;border:1.5px solid #b7c2d0;flex:none;display:grid;place-items:center;color:#fff;transition:all .15s}",
+  ".acard.on .ac-rd{background:var(--brand);border-color:var(--brand)}",
+  ".acards.compact{gap:6px}.acards.compact .acard{min-height:48px;padding:8px 14px}.acards.compact .ac-l{font-size:15.5px;font-weight:500}",
+  "@media (min-width:768px){.acards.compact{grid-template-columns:repeat(2,minmax(0,1fr))}}",
   /* Why we ask + expectations */
   ".row .why{margin:4px 0 0 34px;font-size:13px;color:var(--mute);line-height:1.4;max-width:calc(92% - 34px)}",
-  ".row .expect,.expect{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px 34px}.expect span{font-size:13px;color:var(--ink2);background:#f4f7fb;border:1px solid var(--line);border-radius:999px;padding:4px 10px}",
+  ".row .expect,.expect{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px 34px}.expect span{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink2);background:#f4f7fb;border:1px solid var(--line);border-radius:999px;padding:4px 10px}",
   ".wcta{display:grid;gap:8px;margin-bottom:12px}",
   ".cta-main{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:58px;border:0;border-radius:14px;background:var(--sun);color:#3d2600;font:inherit;font-size:17px;font-weight:700;cursor:pointer;box-shadow:0 6px 16px rgba(255,194,71,.35);animation:in .3s ease-out both}",
   ".cta-main:hover{filter:brightness(.97)}.cta-main:focus-visible{outline:3px solid var(--brand);outline-offset:2px}",
@@ -600,6 +603,14 @@ var ICONS = {
   star: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",
   shield: "M12 3l7 3v5c0 4.5-3 8.2-7 9.5C8 19.2 5 15.5 5 11V6l7-3z M9 12l2 2 4-4",
   close: "M18 6L6 18M6 6l12 12",
+  tag: "M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z M7.5 7.5h.01",
+  headset: "M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3",
+  file: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8",
+  alert: "M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z M12 9v4 M12 17h.01",
+  scale: "M16 16l3-8 3 8c-.9.7-1.9 1-3 1s-2.1-.3-3-1z M2 16l3-8 3 8c-.9.7-1.9 1-3 1s-2.1-.3-3-1z M7 21h10 M12 3v18 M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2",
+  clock: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 6v6l4 2",
+  unlock: "M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z M7 11V7a5 5 0 0 1 9.9-1",
+  lock: "M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z M7 11V7a5 5 0 0 1 10 0v4",
   edit: "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z",
   check: "M20 6L9 17l-5-5"
 };
@@ -785,6 +796,7 @@ export default function AIInsureGenie() {
   var [phase, setPhase] = useState("welcome");
   var [piiIdx, setPiiIdx] = useState(0);
   var [qr, setQr] = useState(null);
+  var [pick, setPick] = useState(null);
   var [iph, setIph] = useState(T("Type here...", "Escriba aquí..."));
   var [results, setResults] = useState([]);
   var [cs, setCs] = useState(0);
@@ -897,7 +909,7 @@ export default function AIInsureGenie() {
       if (!r.ok) { setTyp(true);setTimeout(function(){bot(r.e,{err:true});setTyp(false);setQr(s.t==="qr"?s.opts:null);setIph(s.ph||T("Type...", "Escriba..."));},300);return; }
       var v = r.v !== undefined ? r.v : (s.ps ? s.ps(val) : val.trim());
       var u = Object.assign({}, pro); u[s.f] = v; if (r.st) u.state = r.st; setPro(u); setCs(function(c){return c+1;});
-      if (s.id === "zip" && r.st) { setTyp(true);setTimeout(function(){bot(T("📍 Got it: **", "📍 Perfecto: **")+(ABBR_STATE[r.st]||r.st)+"** ("+v+")."+T(" Partners and prices depend on your state, so this helps.", " Los socios y precios dependen de su estado, así que esto ayuda."));setTyp(false);setTimeout(function(){advQ(si+1,u);},300);},400);return; }
+      if (s.id === "zip" && r.st) { setTyp(true);setTimeout(function(){bot(T("Got it: **", "Perfecto: **")+(ABBR_STATE[r.st]||r.st)+"** ("+v+")."+T(" Partners and prices depend on your state, so this helps.", " Los socios y precios dependen de su estado, así que esto ayuda."));setTyp(false);setTimeout(function(){advQ(si+1,u);},300);},400);return; }
       advQ(si+1, u);
     } else {
       var v2 = s.ps ? s.ps(val) : val.trim();
@@ -938,7 +950,7 @@ export default function AIInsureGenie() {
         setTyp(false); setPhase("follow");
         return;
       }
-      bot(T("✨ Your match is ready! For ", "✨ ¡Su opción está lista! Para ") + (REC[p.driving] || T("your record", "su historial")) + T(" and ", " y ") + (GOAL[p.priority] || T("a good fit", "una buena opción")) + T(" in ", " en ") + stn + T(", this partner is my top pick:", ", este socio es mi mejor opción:"), { offer: r[0], tip: TIPS[p.priority] });
+      bot(T("Your match is ready. For ", "Su opción está lista. Para ") + (REC[p.driving] || T("your record", "su historial")) + T(" and ", " y ") + (GOAL[p.priority] || T("a good fit", "una buena opción")) + T(" in ", " en ") + stn + T(", this partner is my top pick:", ", este socio es mi mejor opción:"), { offer: r[0], tip: TIPS[p.priority] });
       setTyp(false);
       setTimeout(function(){ setTyp(true); setTimeout(function(){ bot(T("Anything else I can help with? You can also tap your profile above to change an answer.", "¿Le ayudo con algo más? También puede tocar su perfil arriba para cambiar una respuesta.")); setTyp(false); setPhase("follow"); }, 700); }, 1200);
     }, 3000);
@@ -1213,7 +1225,7 @@ export default function AIInsureGenie() {
             <div className="bub" style={{ marginTop: 4 }}>{T("Or just tell me in one line, for example \"Texas, 2018 Camry, one ticket\".", "O dígamelo en una línea, por ejemplo: \"Texas, Camry 2018, una multa\".")}</div>
           </div>
           <div className="expect" aria-label={T("What to expect", "Qué esperar")}>
-            <span>⏱ {T("About 60 seconds", "Unos 60 segundos")}</span><span>🔓 {T("No account", "Sin cuenta")}</span><span>📵 {T("No phone number to see your match", "Sin teléfono para ver su opción")}</span>
+            <span><Icon n="clock" size={14} />{T("About 60 seconds", "Unos 60 segundos")}</span><span><Icon n="unlock" size={14} />{T("No account", "Sin cuenta")}</span><span><Icon n="lock" size={14} />{T("No phone number to see your match", "Sin teléfono para ver su opción")}</span>
           </div>
           {(msgs.length === 0 || msgs[0].role === "user") ? <div className="time" style={{ alignSelf: "flex-start" }}>{startTime}</div> : null}
 
@@ -1271,11 +1283,12 @@ export default function AIInsureGenie() {
           ) : null}
 
           {phase !== "welcome" && qr && !typ && curCards ? (
-            <div className={"acards c" + curCards.cols} role="group" aria-label={T("Choose an answer", "Elija una respuesta")}>
-              {qr.map(function(o, i) { var m = curCards.items[i] || []; return (
-                <button type="button" key={i} className="acard" style={{ animationDelay: (i * 0.04) + "s" }} onClick={function(){ send(o); }}>
-                  {m[0] ? <span className="ac-ic" aria-hidden="true">{m[0]}</span> : null}
+            <div className={"acards" + (curCards.compact ? " compact" : "")} role="radiogroup" aria-label={T("Choose an answer", "Elija una respuesta")}>
+              {qr.map(function(o, i) { var m = curCards.items[i] || [], on = pick === i; return (
+                <button type="button" key={i} role="radio" aria-checked={on} className={"acard" + (on ? " on" : "")} style={{ animationDelay: (i * 0.04) + "s" }} disabled={pick !== null} onClick={function(){ setPick(i); setTimeout(function(){ setPick(null); send(o); }, 220); }}>
+                  {m[0] ? <span className="ac-ic" aria-hidden="true"><Icon n={m[0]} size={20} /></span> : null}
                   <span className="ac-tx"><span className="ac-l">{o}</span>{m[1] ? <span className="ac-s">{m[1]}</span> : null}</span>
+                  <span className="ac-rd" aria-hidden="true">{on ? <Icon n="check" size={13} /> : null}</span>
                 </button>
               ); })}
             </div>
