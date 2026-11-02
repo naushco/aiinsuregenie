@@ -804,6 +804,7 @@ export default function AIInsureGenie() {
   var [piiIdx, setPiiIdx] = useState(0);
   var [qr, setQr] = useState(null);
   var [pick, setPick] = useState(null);
+  var [form, setForm] = useState(false); // structured quote screen: only when the visitor taps "Find my match" / a plain get-quote link
   var [iph, setIph] = useState(T("Type here...", "Escriba aquí..."));
   var [results, setResults] = useState([]);
   var [cs, setCs] = useState(0);
@@ -1129,7 +1130,7 @@ export default function AIInsureGenie() {
       if (p.get("situation") === "sr22") extra.driving = "dui";
       if (q) { setPhase("chat"); handleChat(q); }
       else if (start === "quote" && S) { var L = es ? S.es : S.en; usr(said.length ? L[0] + ", " + said.join(", ") : L[0]); startQ(Object.assign({}, extra, { _sit: L[1] })); }
-      else if (start === "quote") { usr(said.length ? said.join(", ") : T("Get instant quote", "Obtener cotización")); startQ(said.length ? extra : null); }
+      else if (start === "quote") { if (!said.length) setForm(true); usr(said.length ? said.join(", ") : T("Find my match", "Buscar mi opción")); startQ(said.length ? extra : null); }
       else if (start === "ask") { usr(T("I have a question", "Tengo una pregunta")); startChat(); }
       else if (start === "agent") { setShowCall(true); }
     }, 350);
@@ -1156,7 +1157,7 @@ export default function AIInsureGenie() {
   var filled = filledCount(pro), left = Math.max(1, tot - filled);
   var pct = (phase === "welcome" || phase === "chat") ? 0 : (phase === "follow" || phase === "locked" ? 100 : Math.min(100, Math.round(filled / tot * 100)));
   var items = profileItems(pro);
-  var showProf = (phase === "qualifying" || phase === "locked" || phase === "follow") && (filled > 0 || si >= 0);
+  var showProf = form && (phase === "qualifying" || phase === "locked" || phase === "follow") && (filled > 0 || si >= 0);
   var byK = {}; items.forEach(function(x){ byK[x.k] = x; });
   var curStep = phase === "qualifying" && STEPS[si] ? STEPS[si].id : "";
   var curK = { pri: "pri", zip: "loc", vyear: "car", vmake: "car", vmake2: "car", drv: "drv" }[curStep] || "";
@@ -1166,7 +1167,7 @@ export default function AIInsureGenie() {
     return { k: a[0], lbl: a[1], v: sv, done: done, active: curK === a[0] };
   });
   var doneN = seg.filter(function(x){ return x.done; }).length;
-  var curCards = phase === "qualifying" && STEPS[si] && STEPS[si].t === "qr" ? CARDS[STEPS[si].id] : null;
+  var curCards = form && phase === "qualifying" && STEPS[si] && STEPS[si].t === "qr" ? CARDS[STEPS[si].id] : null;
 
   // Which answer is the user being asked for right now? Used to pick the right mobile keyboard.
   var cur = null;
@@ -1205,7 +1206,7 @@ export default function AIInsureGenie() {
           <div className="av"><Icon n="shield" size={22} /></div>
           <div className="hd-txt">
             <div className="hd-name">AI Insure<em>Genie</em></div>
-            <div className="hd-sub"><span className="dot" />{T("AI insurance assistant", "Asistente de seguros con IA")}</div>
+            <div className="hd-sub"><span className="dot" />{!form && phase === "qualifying" ? <span>{T("Your quote", "Su cotización")} <b>· {left === 1 ? T("last question", "última pregunta") : T(left + " taps left", "faltan " + left)}</b></span> : T("AI insurance assistant", "Asistente de seguros con IA")}</div>
           </div>
           <button type="button" className="hd-btn" aria-label={T("Talk to an agent", "Hablar con un agente")} onClick={function(){ setShowCall(true); }}>
             <Icon n="phone" size={16} /><span className="lbl-l">{T("Talk to an agent", "Hablar con un agente")}</span><span className="lbl-s">{T("Agent", "Agente")}</span>
@@ -1290,7 +1291,7 @@ export default function AIInsureGenie() {
         <footer className="foot">
           {phase === "welcome" ? (
             <div className="wcta">
-              <button type="button" className="cta-main" onClick={function(){ usr(T("Find my match", "Buscar mi opción")); startQ(); }}>{T("Find my match", "Buscar mi opción")}<span className="cta-sub">{T("Free · about 60 seconds", "Gratis · unos 60 segundos")}</span></button>
+              <button type="button" className="cta-main" onClick={function(){ setForm(true); usr(T("Find my match", "Buscar mi opción")); startQ(); }}>{T("Find my match", "Buscar mi opción")}<span className="cta-sub">{T("Free · about 60 seconds", "Gratis · unos 60 segundos")}</span></button>
               <div className="cta-row">
                 <button type="button" className="chip" onClick={function(){ usr(T("I have a question", "Tengo una pregunta")); startChat(); }}>{T("Ask a question", "Hacer una pregunta")}</button>
                 <button type="button" className="chip" onClick={function(){ setShowCall(true); }}>{T("Talk to an agent", "Hablar con un agente")}</button>
@@ -1317,7 +1318,7 @@ export default function AIInsureGenie() {
 
           {phase === "chat" && !typ ? (
             <div className="chips">
-              <button type="button" className="chip pri" onClick={function(){ usr(T("Get instant quote", "Obtener cotización")); startQ(); }}>{T("Get instant quote", "Obtener cotización")}</button>
+              <button type="button" className="chip pri" onClick={function(){ setForm(true); usr(T("Get instant quote", "Obtener cotización")); startQ(); }}>{T("Get instant quote", "Obtener cotización")}</button>
               {chatChips.map(function(s, i) { return <button type="button" key={i} className="chip" onClick={function(){ handleChat(s); }}>{s}</button>; })}
             </div>
           ) : null}
