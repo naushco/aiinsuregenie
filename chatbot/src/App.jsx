@@ -1218,7 +1218,7 @@ export default function AIInsureGenie() {
           <div className="trk" role="group" aria-label={T("Quote progress", "Progreso de la cotización")}>
             <div className="trk-top">
               <span className="trk-t">{doneN === 4 ? T("All set", "Todo listo") : (doneN === 3 ? T("Nearly there", "Ya casi") : T("Step ", "Paso ") + Math.min(doneN + 1, 4) + T(" of 4", " de 4"))}</span>
-              <span className="trk-r">{doneN === 4 ? T("Your match is ready", "Su opción está lista") : T("About ", "Unos ") + Math.max(10, (4 - doneN) * 10) + T(" sec left", " seg más")}</span>
+              <span className="trk-r">{doneN === 4 ? T("Your match is ready", "Su opción está lista") : (4 - doneN === 1 ? T("1 step left", "Falta 1 paso") : T((4 - doneN) + " steps left", "Faltan " + (4 - doneN) + " pasos"))}</span>
             </div>
             <div className="trk-bar" style={{ "--fill": (Math.max(0, doneN - (doneN === 4 ? 1 : 0)) / 3 * 100) + "%", "--fill2": (doneN === 4 ? 100 : (doneN / 3 * 100)) + "%" }}>
               <div className="trk-line"><i /></div>
