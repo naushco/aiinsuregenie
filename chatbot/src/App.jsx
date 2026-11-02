@@ -553,16 +553,23 @@ var CSS_TEXT = [
   "@media (max-width:767.98px){.pcard-t{display:none}}",
   ".pchip svg{color:var(--mute)}.pchip:hover{border-color:var(--brand)}.pchip:focus-visible{outline:3px solid var(--sun);outline-offset:1px}.pchip:disabled{opacity:.6;cursor:default}",
   "@media (min-width:768px){.pcard{padding:8px max(24px,calc((100% - 880px)/2))}}",
-  /* Step tracker */
-  ".steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:8px 12px;background:#f4f7fb;border-bottom:1px solid var(--line);flex:none}",
-  ".seg{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0;min-height:44px;padding:6px 7px;border:1px solid #dbe2ec;border-radius:10px;background:#fff;font:inherit;text-align:left;color:var(--mute);cursor:default;border-top:3px solid #dbe2ec;transition:border-color .2s}",
-  ".seg-l{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}",
-  ".seg-v{font-size:12.5px;font-weight:600;color:var(--ink);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-  ".seg.done{border-top-color:var(--brand);cursor:pointer}.seg.done:hover:not(:disabled){border-color:var(--brand)}",
-  ".seg.active{border-top-color:var(--sun);background:#fffaf0}.seg.active .seg-v{color:#8a5a00}",
-  ".seg-ck{display:inline-grid;place-items:center;width:14px;height:14px;border-radius:50%;background:var(--brand);color:#fff;font-size:9px}",
-  ".seg:focus-visible{outline:3px solid var(--sun);outline-offset:1px}",
-  "@media (min-width:768px){.steps{padding:10px max(24px,calc((100% - 880px)/2))}}",
+  /* Progress tracker: connected steps */
+  ".trk{padding:10px 16px 8px;background:#fff;border-bottom:1px solid var(--line);flex:none}",
+  ".trk-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}",
+  ".trk-t{font-size:14px;font-weight:700;color:var(--ink)}.trk-r{font-size:12.5px;color:var(--mute)}",
+  ".trk-bar{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}",
+  ".trk-line{position:absolute;left:12.5%;right:12.5%;top:13px;height:4px;border-radius:2px;background:#e3e8ef}",
+  ".trk-line i{position:absolute;left:0;top:0;bottom:0;width:var(--fill2);max-width:100%;border-radius:2px;background:linear-gradient(90deg,var(--brand),#2f5d93);transition:width .5s cubic-bezier(.2,.8,.2,1)}",
+  ".trk-s{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:0 2px;border:0;background:none;font:inherit;color:var(--mute);cursor:default}",
+  ".trk-dot{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#fff;border:2px solid #d3dae4;font-size:13px;font-weight:700;color:var(--mute);transition:all .3s}",
+  ".trk-s.done .trk-dot{background:var(--brand);border-color:var(--brand);color:#fff}",
+  ".trk-s.active .trk-dot{border-color:var(--sun);background:#fff8e6;color:#8a5a00;box-shadow:0 0 0 4px rgba(255,194,71,.25)}",
+  ".trk-l{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}",
+  ".trk-s.done .trk-l,.trk-s.active .trk-l{color:var(--ink)}",
+  ".trk-v{font-size:12.5px;font-weight:600;color:var(--brand);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:16px}",
+  ".trk-s.active .trk-v{color:#8a5a00}",
+  ".trk-s.done{cursor:pointer}.trk-s.done:hover .trk-dot{box-shadow:0 0 0 4px rgba(30,58,95,.15)}.trk-s:focus-visible{outline:3px solid var(--sun);outline-offset:2px;border-radius:8px}",
+  "@media (min-width:768px){.trk{padding:12px max(24px,calc((100% - 880px)/2)) 10px}}",
   /* Answer cards: stacked rows with line icons and a radio */
   ".acards{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:12px;max-height:46vh;overflow-y:auto;padding:2px}",
   ".acard{display:flex;align-items:center;gap:12px;min-height:62px;padding:10px 14px;border:1.5px solid #d5dce6;border-radius:14px;background:#fff;color:var(--ink);font:inherit;text-align:left;cursor:pointer;animation:in .25s ease-out both;transition:border-color .15s,background .15s}",
@@ -1158,6 +1165,7 @@ export default function AIInsureGenie() {
     var sv = it ? it.v.replace(/ \d{5}$/, "") : ""; if (a[0] === "car" && done) sv = pro.vehicleMake + " '" + String(pro.vehicleYear).slice(-2); if (a[0] === "pri" && pro.priority) sv = T({ price: "Price", coverage: "Coverage", service: "Service" }, { price: "Precio", coverage: "Cobertura", service: "Servicio" })[pro.priority];
     return { k: a[0], lbl: a[1], v: sv, done: done, active: curK === a[0] };
   });
+  var doneN = seg.filter(function(x){ return x.done; }).length;
   var curCards = phase === "qualifying" && STEPS[si] && STEPS[si].t === "qr" ? CARDS[STEPS[si].id] : null;
 
   // Which answer is the user being asked for right now? Used to pick the right mobile keyboard.
@@ -1197,24 +1205,32 @@ export default function AIInsureGenie() {
           <div className="av"><Icon n="shield" size={22} /></div>
           <div className="hd-txt">
             <div className="hd-name">AI Insure<em>Genie</em></div>
-            <div className="hd-sub"><span className="dot" />{phase === "qualifying" ? <span>{T("Your quote", "Su cotización")} <b>· {left === 1 ? T("last question", "última pregunta") : T(left + " taps left", "faltan " + left)}</b></span> : T("AI insurance assistant", "Asistente de seguros con IA")}</div>
+            <div className="hd-sub"><span className="dot" />{T("AI insurance assistant", "Asistente de seguros con IA")}</div>
           </div>
           <button type="button" className="hd-btn" aria-label={T("Talk to an agent", "Hablar con un agente")} onClick={function(){ setShowCall(true); }}>
             <Icon n="phone" size={16} /><span className="lbl-l">{T("Talk to an agent", "Hablar con un agente")}</span><span className="lbl-s">{T("Agent", "Agente")}</span>
           </button>
         </header>
-        <div className="prog" role="progressbar" aria-label={T("Quote progress", "Progreso de la cotización")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
+        {showProf ? null : <div className="prog" role="progressbar" aria-label={T("Quote progress", "Progreso de la cotización")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
           <div style={{ width: pct + "%" }} />
-        </div>
+        </div>}
         {showProf ? (
-          <nav className="steps" aria-label={T("Your answers", "Sus respuestas")}>
-            {seg.map(function(x){ return (
-              <button type="button" key={x.k} className={"seg" + (x.done ? " done" : "") + (x.active ? " active" : "")} disabled={!x.done || typ} onClick={function(){ editItem(x.k); }} aria-label={x.lbl + (x.done ? ": " + x.v + ". " + T("Tap to change", "Toque para cambiar") : "")}>
-                <span className="seg-l">{x.done ? <span className="seg-ck" aria-hidden="true">✓</span> : null}{x.lbl}</span>
-                <span className="seg-v">{x.done ? x.v : (x.active ? T("Now", "Ahora") : "—")}</span>
-              </button>
-            ); })}
-          </nav>
+          <div className="trk" role="group" aria-label={T("Quote progress", "Progreso de la cotización")}>
+            <div className="trk-top">
+              <span className="trk-t">{doneN === 4 ? T("All set", "Todo listo") : (doneN === 3 ? T("Nearly there", "Ya casi") : T("Step ", "Paso ") + Math.min(doneN + 1, 4) + T(" of 4", " de 4"))}</span>
+              <span className="trk-r">{doneN === 4 ? T("Your match is ready", "Su opción está lista") : T("About ", "Unos ") + Math.max(10, (4 - doneN) * 10) + T(" sec left", " seg más")}</span>
+            </div>
+            <div className="trk-bar" style={{ "--fill": (Math.max(0, doneN - (doneN === 4 ? 1 : 0)) / 3 * 100) + "%", "--fill2": (doneN === 4 ? 100 : (doneN / 3 * 100)) + "%" }}>
+              <div className="trk-line"><i /></div>
+              {seg.map(function(x, i){ return (
+                <button type="button" key={x.k} className={"trk-s" + (x.done ? " done" : "") + (x.active ? " active" : "")} disabled={!x.done || typ} onClick={function(){ editItem(x.k); }} aria-label={x.lbl + (x.done ? ": " + x.v + ". " + T("Tap to change", "Toque para cambiar") : (x.active ? T(" (now)", " (ahora)") : ""))}>
+                  <span className="trk-dot" aria-hidden="true">{x.done ? <Icon n="check" size={12} /> : (i + 1)}</span>
+                  <span className="trk-l">{x.lbl}</span>
+                  <span className="trk-v">{x.done ? x.v : (x.active ? T("Now", "Ahora") : "")}</span>
+                </button>
+              ); })}
+            </div>
+          </div>
         ) : null}
 
         <div className="log" ref={logRef} role="log" aria-live="polite" aria-label={T("Conversation", "Conversación")}>
