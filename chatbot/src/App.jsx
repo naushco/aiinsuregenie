@@ -338,6 +338,23 @@ function parseFree(text) {
   else if (/(full coverage|best coverage|more coverage|cobertura total|mejor cobertura)/.test(t)) o.priority = "coverage";
   return o;
 }
+// Answer cards (icon + short explainer), "why we ask" notes and short reactions.
+var CARDS = {
+  pri: { cols: 1, items: T([["💰","Pay as little as possible"],["🛡️","Strong protection if something happens"],["⭐","Easy claims and helpful support"]], [["💰","Pagar lo menos posible"],["🛡️","Buena protección si algo pasa"],["⭐","Reclamos fáciles y buen soporte"]]) },
+  vyear: { cols: 3, items: [["✨"],["🚙"],["🚗"],["🚘"],["🔧"]] },
+  vmake: { cols: 3, items: [[""],[""],[""],[""],[""],[""]] },
+  drv: { cols: 2, items: T([["✅","No tickets or accidents"],["🧾","Speeding or similar"],["💥","In the last 3 years"],["⚖️","Need a state filing"]], [["✅","Sin multas ni accidentes"],["🧾","Exceso de velocidad u otra"],["💥","En los últimos 3 años"],["⚖️","Necesito un formulario estatal"]]) }
+};
+var WHY = {
+  zip: T("Prices and partners depend on where you live.", "Los precios y los socios dependen de dónde vive."),
+  vyear: T("Car age changes what coverage makes sense.", "La edad del auto cambia qué cobertura conviene."),
+  drv: T("Be honest: insurers check this anyway, and it helps me match you right.", "Sea sincero: las aseguradoras lo revisan de todos modos, y me ayuda a darle la opción correcta.")
+};
+function reaction(id, v) {
+  if (id === "vyear") { var y = parseInt(v, 10); if (y >= 2020) return T("Nice. Newer cars often qualify for safety-feature discounts, so ask about them.", "Bien. Los autos más nuevos suelen tener descuentos por equipo de seguridad; pregunte por ellos."); if (y && y < 2012) return T("Good to know. On an older car, some drivers skip collision coverage to save; a partner can tell you if that makes sense for you.", "Bueno saberlo. En un auto más viejo, algunos conductores quitan la cobertura de choque para ahorrar; un socio le puede decir si le conviene."); }
+  if (id === "drv") { if (v === "minor") return T("That's common. Some insurers are much more forgiving of a ticket than others.", "Es algo común. Algunas aseguradoras son mucho más flexibles con una multa que otras."); if (v === "major") return T("Thanks for being upfront. After an accident, comparing makes the biggest difference.", "Gracias por su sinceridad. Después de un accidente, comparar es lo que más ayuda."); if (v === "dui") return T("No judgment. Lots of drivers are in the same spot, and comparing really pays off here.", "Aquí nadie le juzga. Muchos conductores están en lo mismo, y comparar vale mucho la pena."); }
+  return "";
+}
 function filledCount(p) { return (p.priority ? 1 : 0) + ((p.zip || p.state) ? 1 : 0) + (p.vehicleYear ? 1 : 0) + ((p.vehicleMake && p.vehicleMake !== "Other") ? 1 : 0) + (p.driving ? 1 : 0); }
 var REC_SHORT = T({ clean: "Clean record", minor: "1-2 tickets", major: "Accident", dui: "DUI / SR-22" }, { clean: "Historial limpio", minor: "1-2 multas", major: "Accidente", dui: "DUI / SR-22" });
 var GOAL_SHORT = T({ price: "Lowest price", coverage: "Best coverage", service: "Best service" }, { price: "Precio más bajo", coverage: "Mejor cobertura", service: "Mejor servicio" });
@@ -536,6 +553,34 @@ var CSS_TEXT = [
   "@media (max-width:767.98px){.pcard-t{display:none}}",
   ".pchip svg{color:var(--mute)}.pchip:hover{border-color:var(--brand)}.pchip:focus-visible{outline:3px solid var(--sun);outline-offset:1px}.pchip:disabled{opacity:.6;cursor:default}",
   "@media (min-width:768px){.pcard{padding:8px max(24px,calc((100% - 880px)/2))}}",
+  /* Step tracker */
+  ".steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:8px 12px;background:#f4f7fb;border-bottom:1px solid var(--line);flex:none}",
+  ".seg{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0;min-height:44px;padding:6px 7px;border:1px solid #dbe2ec;border-radius:10px;background:#fff;font:inherit;text-align:left;color:var(--mute);cursor:default;border-top:3px solid #dbe2ec;transition:border-color .2s}",
+  ".seg-l{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}",
+  ".seg-v{font-size:12.5px;font-weight:600;color:var(--ink);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+  ".seg.done{border-top-color:var(--brand);cursor:pointer}.seg.done:hover:not(:disabled){border-color:var(--brand)}",
+  ".seg.active{border-top-color:var(--sun);background:#fffaf0}.seg.active .seg-v{color:#8a5a00}",
+  ".seg-ck{display:inline-grid;place-items:center;width:14px;height:14px;border-radius:50%;background:var(--brand);color:#fff;font-size:9px}",
+  ".seg:focus-visible{outline:3px solid var(--sun);outline-offset:1px}",
+  "@media (min-width:768px){.steps{padding:10px max(24px,calc((100% - 880px)/2))}}",
+  /* Answer cards */
+  ".acards{display:grid;gap:8px;margin-bottom:12px}.acards.c1{grid-template-columns:1fr}.acards.c2{grid-template-columns:repeat(2,minmax(0,1fr))}.acards.c3{grid-template-columns:repeat(3,minmax(0,1fr))}",
+  ".acard{display:flex;align-items:center;gap:10px;min-height:52px;padding:10px 12px;border:1.5px solid #d5dce6;border-radius:14px;background:#fff;color:var(--ink);font:inherit;text-align:left;cursor:pointer;box-shadow:0 1px 2px rgba(15,27,45,.04);animation:in .25s ease-out both;transition:border-color .15s,background .15s,transform .1s}",
+  ".acard:hover{border-color:var(--brand);background:#f3f6fb}.acard:active{transform:scale(.98)}.acard:focus-visible{outline:3px solid var(--sun);outline-offset:2px}",
+  ".acards.c3 .acard{justify-content:center;text-align:center;flex-direction:column;gap:2px;padding:8px 6px}",
+  ".acards.c2 .acard{flex-direction:column;align-items:flex-start;gap:4px}",
+  ".ac-ic{font-size:22px;line-height:1;flex:none}.acards.c3 .ac-ic{font-size:18px}",
+  ".ac-tx{display:flex;flex-direction:column;gap:2px;min-width:0}",
+  ".ac-l{font-size:15px;font-weight:600;line-height:1.25}.ac-s{font-size:13px;color:var(--mute);line-height:1.3}",
+  ".acards.c1 .acard{min-height:60px;padding:10px 14px}.acards.c1 .ac-ic{width:40px;height:40px;border-radius:12px;background:#f4f7fb;display:grid;place-items:center}",
+  /* Why we ask + expectations */
+  ".row .why{margin:4px 0 0 34px;font-size:13px;color:var(--mute);line-height:1.4;max-width:calc(92% - 34px)}",
+  ".row .expect,.expect{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px 34px}.expect span{font-size:13px;color:var(--ink2);background:#f4f7fb;border:1px solid var(--line);border-radius:999px;padding:4px 10px}",
+  ".wcta{display:grid;gap:8px;margin-bottom:12px}",
+  ".cta-main{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:58px;border:0;border-radius:14px;background:var(--sun);color:#3d2600;font:inherit;font-size:17px;font-weight:700;cursor:pointer;box-shadow:0 6px 16px rgba(255,194,71,.35);animation:in .3s ease-out both}",
+  ".cta-main:hover{filter:brightness(.97)}.cta-main:focus-visible{outline:3px solid var(--brand);outline-offset:2px}",
+  ".cta-sub{font-size:12.5px;font-weight:500;opacity:.8}",
+  ".cta-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cta-row .chip{text-align:center;justify-content:center}",
   /* Tip bubble */
   ".bot .bub.hint{font-size:15px;color:var(--ink2);background:#fff8e6;border-radius:12px;padding:10px 14px;margin-left:34px;margin-top:6px;max-width:calc(92% - 34px)}",
   /* Reveal checklist */
@@ -808,7 +853,7 @@ export default function AIInsureGenie() {
     setTimeout(function(){
       var px = "";
       if (s.id === "vmake2") px = T("No problem! ", "¡No hay problema! ");
-      bot(px + s.q); setTyp(false);
+      bot(px + s.q, WHY[s.id] ? { why: WHY[s.id] } : null); setTyp(false);
       setQr(s.t === "qr" ? s.opts : null); setIph(s.ph || T("Type...", "Escriba..."));
       if (s.t === "text") setTimeout(function(){inRef.current&&inRef.current.focus();},100);
     }, 500 + Math.random()*300);
@@ -852,11 +897,14 @@ export default function AIInsureGenie() {
       if (!r.ok) { setTyp(true);setTimeout(function(){bot(r.e,{err:true});setTyp(false);setQr(s.t==="qr"?s.opts:null);setIph(s.ph||T("Type...", "Escriba..."));},300);return; }
       var v = r.v !== undefined ? r.v : (s.ps ? s.ps(val) : val.trim());
       var u = Object.assign({}, pro); u[s.f] = v; if (r.st) u.state = r.st; setPro(u); setCs(function(c){return c+1;});
-      if (s.id === "zip" && r.st) { setTyp(true);setTimeout(function(){bot(T("Got it: **", "Perfecto: **")+v+"**, **"+r.st+"**.");setTyp(false);setTimeout(function(){advQ(si+1,u);},300);},400);return; }
+      if (s.id === "zip" && r.st) { setTyp(true);setTimeout(function(){bot(T("📍 Got it: **", "📍 Perfecto: **")+(ABBR_STATE[r.st]||r.st)+"** ("+v+")."+T(" Partners and prices depend on your state, so this helps.", " Los socios y precios dependen de su estado, así que esto ayuda."));setTyp(false);setTimeout(function(){advQ(si+1,u);},300);},400);return; }
       advQ(si+1, u);
     } else {
       var v2 = s.ps ? s.ps(val) : val.trim();
-      var u2 = Object.assign({}, pro); u2[s.f] = v2; setPro(u2); setCs(function(c){return c+1;}); advQ(si+1, u2);
+      var u2 = Object.assign({}, pro); u2[s.f] = v2; setPro(u2); setCs(function(c){return c+1;});
+      var re = reaction(s.id, v2);
+      if (re) { setTyp(true); setTimeout(function(){ bot(re); setTyp(false); setTimeout(function(){ advQ(si+1, u2); }, 250); }, 450); return; }
+      advQ(si+1, u2);
     }
   };
 
@@ -1059,6 +1107,7 @@ export default function AIInsureGenie() {
       if (st) { extra.state = st; said.push(stName); }
       if (yr) { extra.vehicleYear = yr; said.push(T("car ", "auto ") + car); }
       var S = SITUATIONS[p.get("situation") || ""], es = ES;
+      if (p.get("situation") === "sr22") extra.driving = "dui";
       if (q) { setPhase("chat"); handleChat(q); }
       else if (start === "quote" && S) { var L = es ? S.es : S.en; usr(said.length ? L[0] + ", " + said.join(", ") : L[0]); startQ(Object.assign({}, extra, { _sit: L[1] })); }
       else if (start === "quote") { usr(said.length ? said.join(", ") : T("Get instant quote", "Obtener cotización")); startQ(said.length ? extra : null); }
@@ -1088,7 +1137,16 @@ export default function AIInsureGenie() {
   var filled = filledCount(pro), left = Math.max(1, tot - filled);
   var pct = (phase === "welcome" || phase === "chat") ? 0 : (phase === "follow" || phase === "locked" ? 100 : Math.min(100, Math.round(filled / tot * 100)));
   var items = profileItems(pro);
-  var showProf = items.length > 0 && (phase === "qualifying" || phase === "locked" || phase === "follow");
+  var showProf = (phase === "qualifying" || phase === "locked" || phase === "follow") && (filled > 0 || si >= 0);
+  var byK = {}; items.forEach(function(x){ byK[x.k] = x; });
+  var curStep = phase === "qualifying" && STEPS[si] ? STEPS[si].id : "";
+  var curK = { pri: "pri", zip: "loc", vyear: "car", vmake: "car", vmake2: "car", drv: "drv" }[curStep] || "";
+  var seg = [["pri", T("Goal", "Meta")], ["loc", T("Where", "Dónde")], ["car", T("Car", "Auto")], ["drv", T("Record", "Historial")]].map(function(a){
+    var it = byK[a[0]]; var done = !!it && !(a[0] === "car" && (!pro.vehicleYear || !pro.vehicleMake || pro.vehicleMake === "Other"));
+    var sv = it ? it.v.replace(/ \d{5}$/, "") : ""; if (a[0] === "car" && done) sv = pro.vehicleMake + " '" + String(pro.vehicleYear).slice(-2); if (a[0] === "pri" && pro.priority) sv = T({ price: "Price", coverage: "Coverage", service: "Service" }, { price: "Precio", coverage: "Cobertura", service: "Servicio" })[pro.priority];
+    return { k: a[0], lbl: a[1], v: sv, done: done, active: curK === a[0] };
+  });
+  var curCards = phase === "qualifying" && STEPS[si] && STEPS[si].t === "qr" ? CARDS[STEPS[si].id] : null;
 
   // Which answer is the user being asked for right now? Used to pick the right mobile keyboard.
   var cur = null;
@@ -1127,7 +1185,7 @@ export default function AIInsureGenie() {
           <div className="av"><Icon n="shield" size={22} /></div>
           <div className="hd-txt">
             <div className="hd-name">AI Insure<em>Genie</em></div>
-            <div className="hd-sub"><span className="dot" />{phase === "qualifying" ? <span>{T("Your quote", "Su cotización")} <b>· {left === 1 ? T("last question", "última pregunta") : left + T(" taps left", " toques más")}</b></span> : T("AI insurance assistant", "Asistente de seguros con IA")}</div>
+            <div className="hd-sub"><span className="dot" />{phase === "qualifying" ? <span>{T("Your quote", "Su cotización")} <b>· {left === 1 ? T("last question", "última pregunta") : T(left + " taps left", "faltan " + left)}</b></span> : T("AI insurance assistant", "Asistente de seguros con IA")}</div>
           </div>
           <button type="button" className="hd-btn" aria-label={T("Talk to an agent", "Hablar con un agente")} onClick={function(){ setShowCall(true); }}>
             <Icon n="phone" size={16} /><span className="lbl-l">{T("Talk to an agent", "Hablar con un agente")}</span><span className="lbl-s">{T("Agent", "Agente")}</span>
@@ -1137,22 +1195,25 @@ export default function AIInsureGenie() {
           <div style={{ width: pct + "%" }} />
         </div>
         {showProf ? (
-          <div className="pcard" aria-label={T("Your profile", "Su perfil")}>
-            <span className="pcard-t">{T("Your profile", "Su perfil")}</span>
-            {items.map(function(x){ return (
-              <button type="button" key={x.k} className="pchip" disabled={typ} onClick={function(){ editItem(x.k); }} aria-label={T("Change ", "Cambiar ") + x.v}>
-                <span aria-hidden="true">{x.ic}</span>{x.v}<Icon n="edit" size={12} />
+          <nav className="steps" aria-label={T("Your answers", "Sus respuestas")}>
+            {seg.map(function(x){ return (
+              <button type="button" key={x.k} className={"seg" + (x.done ? " done" : "") + (x.active ? " active" : "")} disabled={!x.done || typ} onClick={function(){ editItem(x.k); }} aria-label={x.lbl + (x.done ? ": " + x.v + ". " + T("Tap to change", "Toque para cambiar") : "")}>
+                <span className="seg-l">{x.done ? <span className="seg-ck" aria-hidden="true">✓</span> : null}{x.lbl}</span>
+                <span className="seg-v">{x.done ? x.v : (x.active ? T("Now", "Ahora") : "—")}</span>
               </button>
             ); })}
-          </div>
+          </nav>
         ) : null}
 
         <div className="log" ref={logRef} role="log" aria-live="polite" aria-label={T("Conversation", "Conversación")}>
           <div className="row bot first">
             <div className="who">Genie</div>
             <div className="bub">{T("Hi! I help drivers get the best quote for their needs.", "¡Hola! Soy Genie y le ayudo a encontrar la mejor cotización de seguro de auto para usted.")}</div>
-            <div className="bub" style={{ marginTop: 4 }}>{T("Tell me a bit about you and your car, and I'll point you to the quoting partner that fits you best. I can also answer questions or set up a call.", "Cuénteme un poco sobre usted y su auto, y le indicaré el socio de cotización que mejor le conviene. También puedo responder preguntas o pedir que un agente le llame.")}</div>
+            <div className="bub" style={{ marginTop: 4 }}>{T("Answer a few taps about you and your car, and I'll show you the partner that fits you best.", "Responda unos toques sobre usted y su auto, y le mostraré el socio que mejor le conviene.")}</div>
             <div className="bub" style={{ marginTop: 4 }}>{T("Or just tell me in one line, for example \"Texas, 2018 Camry, one ticket\".", "O dígamelo en una línea, por ejemplo: \"Texas, Camry 2018, una multa\".")}</div>
+          </div>
+          <div className="expect" aria-label={T("What to expect", "Qué esperar")}>
+            <span>⏱ {T("About 60 seconds", "Unos 60 segundos")}</span><span>🔓 {T("No account", "Sin cuenta")}</span><span>📵 {T("No phone number to see your match", "Sin teléfono para ver su opción")}</span>
           </div>
           {(msgs.length === 0 || msgs[0].role === "user") ? <div className="time" style={{ alignSelf: "flex-start" }}>{startTime}</div> : null}
 
@@ -1166,6 +1227,7 @@ export default function AIInsureGenie() {
               <div key={i} className={"row " + m.role + (first ? " first" : "") + (prev.ins ? " after" : "")}>
                 {m.role === "bot" && first ? <div className="who">Genie</div> : null}
                 <div className={"bub" + (m.err ? " err" : "") + (m.hint ? " hint" : "")}>{m.role === "bot" ? renderBold(m.text) : m.text}</div>
+                {m.why ? <p className="why"><span aria-hidden="true">ⓘ</span> {m.why}</p> : null}
                 {m.scan ? <ul className="scan">{m.scan.map(function(x, j){ return <li key={j} style={{ animationDelay: (0.5 + j * 0.6) + "s" }}><span className="ck" style={{ animationDelay: (0.5 + j * 0.6) + "s" }}>✓</span>{x}</li>; })}</ul> : null}
                 {basis ? <p className="basis">{basis}</p> : null}
                 {m.offer ? <OfferCard ins={m.offer} top={true} tip={m.tip} /> : null}
@@ -1199,14 +1261,26 @@ export default function AIInsureGenie() {
 
         <footer className="foot">
           {phase === "welcome" ? (
-            <div className="chips">
-              <button type="button" className="chip pri" onClick={function(){ usr(T("Get instant quote", "Obtener cotización")); startQ(); }}>{T("Get instant quote", "Obtener cotización")}</button>
-              <button type="button" className="chip" onClick={function(){ usr(T("I have a question", "Tengo una pregunta")); startChat(); }}>{T("Ask a question", "Hacer una pregunta")}</button>
-              <button type="button" className="chip" onClick={function(){ setShowCall(true); }}>{T("Talk to an agent", "Hablar con un agente")}</button>
+            <div className="wcta">
+              <button type="button" className="cta-main" onClick={function(){ usr(T("Find my match", "Buscar mi opción")); startQ(); }}>{T("Find my match", "Buscar mi opción")}<span className="cta-sub">{T("Free · about 60 seconds", "Gratis · unos 60 segundos")}</span></button>
+              <div className="cta-row">
+                <button type="button" className="chip" onClick={function(){ usr(T("I have a question", "Tengo una pregunta")); startChat(); }}>{T("Ask a question", "Hacer una pregunta")}</button>
+                <button type="button" className="chip" onClick={function(){ setShowCall(true); }}>{T("Talk to an agent", "Hablar con un agente")}</button>
+              </div>
             </div>
           ) : null}
 
-          {phase !== "welcome" && qr && !typ ? (
+          {phase !== "welcome" && qr && !typ && curCards ? (
+            <div className={"acards c" + curCards.cols} role="group" aria-label={T("Choose an answer", "Elija una respuesta")}>
+              {qr.map(function(o, i) { var m = curCards.items[i] || []; return (
+                <button type="button" key={i} className="acard" style={{ animationDelay: (i * 0.04) + "s" }} onClick={function(){ send(o); }}>
+                  {m[0] ? <span className="ac-ic" aria-hidden="true">{m[0]}</span> : null}
+                  <span className="ac-tx"><span className="ac-l">{o}</span>{m[1] ? <span className="ac-s">{m[1]}</span> : null}</span>
+                </button>
+              ); })}
+            </div>
+          ) : null}
+          {phase !== "welcome" && qr && !typ && !curCards ? (
             <div className="chips" role="group" aria-label={T("Quick replies", "Respuestas rápidas")}>
               {qr.map(function(o, i) { return <button type="button" key={i} className="chip" onClick={function(){ send(o); }}>{o}</button>; })}
             </div>
