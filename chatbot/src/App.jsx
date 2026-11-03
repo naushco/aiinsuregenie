@@ -320,14 +320,16 @@ var MAIN_STEPS = 5;
 var MAKES = ["Toyota","Honda","Ford","Chevrolet","Chevy","Nissan","Hyundai","Kia","Subaru","Jeep","Dodge","Ram","GMC","Tesla","BMW","Mercedes","Audi","Volkswagen","VW","Mazda","Lexus","Acura","Infiniti","Buick","Cadillac","Chrysler","Lincoln","Mitsubishi","Volvo","Porsche","Mini","Genesis"];
 var MODELS = {camry:"Toyota",corolla:"Toyota",rav4:"Toyota",tacoma:"Toyota",tundra:"Toyota",highlander:"Toyota",prius:"Toyota",civic:"Honda",accord:"Honda","cr-v":"Honda",crv:"Honda",pilot:"Honda","f-150":"Ford",f150:"Ford",mustang:"Ford",explorer:"Ford",escape:"Ford",silverado:"Chevrolet",malibu:"Chevrolet",equinox:"Chevrolet",tahoe:"Chevrolet",altima:"Nissan",sentra:"Nissan",rogue:"Nissan",elantra:"Hyundai",sonata:"Hyundai",tucson:"Hyundai",optima:"Kia",sorento:"Kia",soul:"Kia",outback:"Subaru",forester:"Subaru",wrangler:"Jeep",cherokee:"Jeep",charger:"Dodge",model3:"Tesla","model 3":"Tesla","model y":"Tesla"};
 var ABBR_STATE = {}; Object.keys(STATE_ABBR).forEach(function(k){ ABBR_STATE[STATE_ABBR[k]] = k.replace(/\b\w/g, function(c){ return c.toUpperCase(); }); });
-function parseFree(text) {
+function parseFree(text, step) {
   var t = " " + text.toLowerCase().replace(/[,.;!?]/g, " ") + " ", o = {};
-  var z = text.match(/\b\d{5}\b/); if (z) { var zr = vZip(z[0]); if (zr.ok) { o.zip = zr.v; o.state = zr.st; } }
+  // A 5-digit number only counts as a ZIP when we are asking for one (or before the quote starts); at the car-year step "22025" is a typo for 2025.
+  var z = (!step || step === "zip") ? text.match(/\b\d{5}\b/) : null; if (z) { var zr = vZip(z[0]); if (zr.ok) { o.zip = zr.v; o.state = zr.st; } }
   if (!o.state) {
     Object.keys(STATE_ABBR).sort(function(a,b){return b.length-a.length;}).some(function(n){ if (t.indexOf(" " + n + " ") >= 0) { o.state = STATE_ABBR[n]; return true; } return false; });
     if (!o.state) { var ab = text.match(/\b([A-Z]{2})\b/g); if (ab) ab.some(function(a){ if (ABBR_STATE[a] && a !== "OR" && a !== "IN" && a !== "ME") { o.state = a; return true; } return false; }); }
   }
   var y = text.match(/\b(19[89]\d|20[0-2]\d)\b/); if (y && !(z && z[0].indexOf(y[0]) >= 0)) o.vehicleYear = y[1];
+  if (!o.vehicleYear && step === "vyear") { var y2 = text.match(/\d{5,6}/); if (y2) { var tail = y2[0].slice(-4); if (/^(19[89]\d|20[0-2]\d)$/.test(tail)) o.vehicleYear = tail; } }
   MAKES.some(function(m){ if (t.indexOf(" " + m.toLowerCase() + " ") >= 0) { o.vehicleMake = m === "Chevy" ? "Chevrolet" : (m === "VW" ? "Volkswagen" : m); return true; } return false; });
   if (!o.vehicleMake) Object.keys(MODELS).some(function(k){ if (t.indexOf(" " + k + " ") >= 0) { o.vehicleMake = MODELS[k]; return true; } return false; });
   if (/\b(dui|dwi|sr-?22|fr-?44)\b/.test(t)) o.driving = "dui";
@@ -890,27 +892,36 @@ export default function AIInsureGenie() {
   };
 
   // Several answers typed at once ("Texas, 2018 Camry, one ticket") fill those questions and skip them.
-  var tryFree = function(val, base) {
-    var o = parseFree(val), n = Object.keys(o).filter(function(k){ return k !== "zip"; }).length;
-    if (n < 2) return null;
-    var u = Object.assign({}, base);
-    Object.keys(o).forEach(function(k){ if (!u[k] || k === "zip" || k === "state") u[k] = o[k]; });
-    return { u: u, line: gotLine(o) };
+  var tryFree = function(val, base, stepField) {
+    var o = parseFree(val, stepField ? (STEPS[si] && STEPS[si].id) : null);
+    var keys = Object.keys(o).filter(function(k){ return k !== "zip"; });
+    var extra = keys.filter(function(k){ return k !== stepField; });
+    if (keys.length < 2 && !extra.length) return null;
+    var u = Object.assign({}, base), got = {};
+    Object.keys(o).forEach(function(k){
+      var mine = k === stepField || (stepField === "zip" && k === "state");
+      if (mine || !u[k] || u[k] === "Other") { u[k] = o[k]; got[k] = o[k]; }
+    });
+    if (!Object.keys(got).length) return null;
+    return { u: u, line: gotLine(got) };
   };
 
   var handleQ = function(val) {
     if (!val.trim()) return;
     var s = STEPS[si]; usr(val); setInp(""); setQr(null);
-    var fr = tryFree(val, pro);
+    var fr = tryFree(val, pro, s.f);
     if (fr) {
       setPro(fr.u); setTyp(true);
-      setTimeout(function(){ bot(T("Nice, that saves time! Got it: **", "¡Perfecto, así es más rápido! Tengo: **") + fr.line + T("**. I'll skip those questions.", "**. Me salto esas preguntas.")); setTyp(false); setTimeout(function(){ advQ(0, fr.u); }, 350); }, 500);
+      setTimeout(function(){ bot(fr.line.indexOf(" · ") > 0 ? T("Nice, that saves time! Got it: **", "¡Perfecto, así es más rápido! Tengo: **") + fr.line + T("**. I'll skip those questions.", "**. Me salto esas preguntas.") : T("Got it: **", "Perfecto: **") + fr.line + "**."); setTyp(false); setTimeout(function(){ advQ(0, fr.u); }, 350); }, 500);
       return;
     }
     if (isQuestion(val, "qualifying", s.id)) {
       setTyp(true);
       getAnswer(val, pro, results).then(function(a){bot(a);setTyp(false);setTimeout(function(){setTyp(true);setTimeout(function(){bot(T("Back to your quote — ", "Volvamos a su cotización: ") + s.q);setTyp(false);setQr(s.t==="qr"?s.opts:null);setIph(s.ph||T("Type...", "Escriba..."));if(s.t==="text")setTimeout(function(){inRef.current&&inRef.current.focus();},100);},400);},700);});
       return;
+    }
+    if (s.id === "vyear" && !/(19|20)\d{2}/.test(val) && (s.opts || []).indexOf(val) < 0) {
+      setTyp(true); setTimeout(function(){ bot(T("Pick a range above, or type the year, like 2019.", "Elija un rango de arriba, o escriba el año, por ejemplo 2019."), { err: true }); setTyp(false); setQr(s.opts); }, 300); return;
     }
     if (s.vl) {
       var r = s.vl(val);
