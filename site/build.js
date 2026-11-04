@@ -287,6 +287,12 @@ fs.writeFileSync(path.join(dist, 'contact', 'index.html'), head({
   title: `Contact us | ${NAME}`, description: 'Ask a question, request a call with a licensed agent, or partner with AI InsureGenie.', url: `${SITE}/contact/`,
 }) + read('src/contact.template.html').replace('{{EMAIL_CARD}}', emailCard) + tail);
 
+// ---------- Do Not Sell or Share page ----------
+fs.mkdirSync(path.join(dist, 'do-not-sell'), { recursive: true });
+fs.writeFileSync(path.join(dist, 'do-not-sell', 'index.html'), head({
+  title: `Do Not Sell or Share My Personal Information | ${NAME}`, description: 'Ask AI InsureGenie not to sell or share your personal information with insurance partners.', url: `${SITE}/do-not-sell/`,
+}) + read('src/do-not-sell.template.html') + tail);
+
 // ---------- static assets ----------
 fs.copyFileSync(path.join(root, 'src/styles.css'), path.join(dist, 'styles.css'));
 for (const f of fs.readdirSync(path.join(root, 'public'))) fs.copyFileSync(path.join(root, 'public', f), path.join(dist, f));
@@ -297,8 +303,8 @@ const META_PIXEL_ID = '';
 const pixel = META_PIXEL_ID ? `<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${META_PIXEL_ID}');fbq('track','PageView');</script>` : '';
 const US_STATES = (read('src/index.template.html').match(/<select class="select" id="state"[\s\S]*?<\/select>/)[0].match(/<option>([^<]+)<\/option>/g) || []).map((o) => o.replace(/<\/?option>/g, ''));
 const check = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>';
-const LEGAL_EN = 'AI InsureGenie is an AI assistant, not an insurance company or licensed agent. We connect you with quoting partners, who may pay us a fee. Quotes, eligibility, and final rates come from the partner or insurer. General information only, not insurance, legal, or financial advice. <a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a>';
-const LEGAL_ES = 'AI InsureGenie es un asistente de IA, no una compañía de seguros ni un agente con licencia. Le conectamos con socios de cotización, que pueden pagarnos una comisión. Las cotizaciones, la elegibilidad y las tarifas finales las da el socio o la aseguradora. Solo información general, no es asesoría de seguros, legal ni financiera. <a href="/privacy/">Privacidad</a> · <a href="/terms/">Términos</a>';
+const LEGAL_EN = 'AI InsureGenie is an AI assistant, not an insurance company or licensed agent. We connect you with quoting partners, who may pay us a fee. Quotes, eligibility, and final rates come from the partner or insurer. General information only, not insurance, legal, or financial advice. <a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a> · <a href="/do-not-sell/">Do Not Sell or Share My Personal Information</a>';
+const LEGAL_ES = 'AI InsureGenie es un asistente de IA, no una compañía de seguros ni un agente con licencia. Le conectamos con socios de cotización, que pueden pagarnos una comisión. Las cotizaciones, la elegibilidad y las tarifas finales las da el socio o la aseguradora. Solo información general, no es asesoría de seguros, legal ni financiera. <a href="/privacy/">Privacidad</a> · <a href="/terms/">Términos</a> · <a href="/do-not-sell/">No vender ni compartir mi información personal</a>';
 
 const landings = [
   {

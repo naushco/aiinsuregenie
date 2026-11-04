@@ -7,10 +7,13 @@ import chat from "./api/chat.js";
 import health from "./api/health.js";
 import leads from "./api/leads.js";
 import partners from "./api/partners.js";
+import event from "./api/event.js";
+import subscribe from "./api/subscribe.js";
+import privacy from "./api/privacy.js";
 import { migrateIfNeeded } from "./lib/migrate.js";
 
-const ROUTES = { admin, callback, chat, health, leads, partners };
-const USES_STORAGE = { admin: true, leads: true, partners: true, health: true };
+const ROUTES = { admin, callback, chat, health, leads, partners, event, subscribe, privacy };
+const USES_STORAGE = { admin: true, leads: true, partners: true, health: true, event: true, subscribe: true, privacy: true, callback: true };
 
 // Builds the Vercel-style req object the handlers expect.
 async function toReq(request, url) {

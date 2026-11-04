@@ -7,6 +7,7 @@
 const crypto = require("crypto");
 const { kv, kvConfigured } = require("../lib/kv");
 const { cors, ip } = require("../lib/http");
+const { isOptedOut } = require("./privacy.js");
 
 var hits = {};
 function rateLimited(who) {
@@ -52,7 +53,7 @@ module.exports = async function handler(req, res) {
     coverage: text(d.coverage, 20), driving_record: text(d.driving_record, 20),
     currently_insured: text(d.currently_insured, 5), current_insurer: text(d.current_insurer, 60),
     homeowner: text(d.homeowner, 5), military: text(d.military, 5), multi_car: text(d.multi_car, 5), priority: text(d.priority, 20),
-    publisher_id: text(d.publisher_id, 60) || "direct", sub_id: text(d.sub_id, 80),
+    publisher_id: text(d.publisher_id, 60) || "direct", sub_id: text(d.sub_id, 80), session_id: text(d.session_id, 32),
     utm_source: text(d.utm_source, 60), utm_medium: text(d.utm_medium, 60), utm_campaign: text(d.utm_campaign, 80),
     landing_page: text(d.landing_page, 300),
     // Consent record: the exact wording the person saw, when, and from where
@@ -60,6 +61,11 @@ module.exports = async function handler(req, res) {
     disclosed_partners: text(d.disclosed_buyers, 600),
     ip_address: who, user_agent: text(req.headers["user-agent"], 200)
   };
+
+  // Opted out of sale/sharing (Do Not Sell link, Global Privacy Control, or an earlier request):
+  // keep the record so we can honor it, but never forward it to partners.
+  lead.do_not_sell = d.do_not_sell === true;
+  try { if (!lead.do_not_sell && await isOptedOut(email, phone)) lead.do_not_sell = true; } catch (e) { console.error("opt-out check failed:", e && e.message); }
 
   try {
     // Duplicate check (same phone or email within 72 hours)
@@ -79,7 +85,7 @@ module.exports = async function handler(req, res) {
         stored = true;
       } catch (err) { console.error("store failed:", err && err.message); }
     }
-    if (webhook) {
+    if (webhook && !lead.do_not_sell) {
       try {
         var controller = new AbortController();
         var timer = setTimeout(function () { controller.abort(); }, 8000);

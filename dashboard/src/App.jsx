@@ -504,6 +504,104 @@ function ChatPreview({ partners }) {
   );
 }
 
+// ---------- Funnel, email list and privacy requests (read from the backend) ----------
+function useAdmin(token, action, days) {
+  var [data, setData] = useState(null);
+  var [err, setErr] = useState("");
+  useEffect(function () {
+    if (PREVIEW_MODE || !token) return;
+    setData(null); setErr("");
+    fetch(API_BASE + "/api/admin?action=" + action + "&days=" + (days || 30), { headers: { Authorization: "Bearer " + token } })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || "error"); return j; }); })
+      .then(setData).catch(function () { setErr("Couldn't load this data. Check that the backend is deployed."); });
+  }, [token, action, days]);
+  return [data, err];
+}
+var card = { background: "#FFF", borderRadius: 12, padding: 16, border: "1px solid #e3e6ec" };
+var h3 = { fontSize: 13, fontWeight: 700, color: "#0f1b2d", marginBottom: 12 };
+function FunnelTab({ token, partners }) {
+  var [days, setDays] = useState(30);
+  var [d, err] = useAdmin(token, "funnel", days);
+  if (PREVIEW_MODE) return <div style={card}>The funnel shows live data only on the real dashboard.</div>;
+  if (err) return <div role="alert" style={card}>{err}</div>;
+  if (!d) return <div style={card}>Loading…</div>;
+  var s = d.sessions, base = s.chat_started || 0;
+  var rows = [["Chats started", s.chat_started], ["Match shown", s.match_shown], ["Partner clicked", s.partner_click], ["Call requested", s.call_request], ["Email sign-ups", s.email_signup], ["No partner available", s.no_match]];
+  var name = function (id) { var p = partners.filter(function (x) { return x.id === id; })[0]; return p ? p.name : id; };
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={card}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div style={{ fontSize: 13, fontWeight: 700 }}>Chat funnel (unique chat sessions)</div>
+          <select value={days} onChange={function (e) { setDays(+e.target.value); }} style={{ fontFamily: "inherit", fontSize: 12, padding: "4px 6px", borderRadius: 6, border: "1px solid #c5ccd6" }}>
+            <option value={1}>Today</option><option value={7}>7 days</option><option value={30}>30 days</option><option value={90}>90 days</option>
+          </select>
+        </div>
+        {rows.map(function (r) { var pct = base ? Math.round((r[1] || 0) / base * 100) : 0; return (
+          <div key={r[0]} style={{ marginBottom: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#4a5a70", marginBottom: 4 }}><span>{r[0]}</span><span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, color: "#0f1b2d" }}>{(r[1] || 0).toLocaleString()} <span style={{ color: "#6b7a90", fontWeight: 500 }}>({pct}%)</span></span></div>
+            <div style={{ height: 8, background: "#f2f5f9", borderRadius: 4, overflow: "hidden" }}><div style={{ width: pct + "%", height: "100%", background: r[0] === "No partner available" ? "#b45309" : "#1e3a5f", borderRadius: 4 }} /></div>
+          </div>
+        ); })}
+      </div>
+      <div style={card}>
+        <div style={h3}>Clicks by partner</div>
+        {Object.keys(d.clicks_by_partner).length ? Object.keys(d.clicks_by_partner).sort(function (a, b) { return d.clicks_by_partner[b] - d.clicks_by_partner[a]; }).map(function (k) { return <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "4px 0" }}><span>{name(k)}</span><b>{d.clicks_by_partner[k]}</b></div>; }) : <div style={{ fontSize: 12, color: "#6b7a90" }}>No clicks yet.</div>}
+      </div>
+      <div style={card}>
+        <div style={h3}>By ad campaign (utm_campaign)</div>
+        <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}><thead><tr style={{ textAlign: "left", color: "#6b7a90" }}><th>Campaign</th><th>Chats</th><th>Matches</th><th>Clicks</th><th>Calls</th></tr></thead>
+          <tbody>{Object.keys(d.by_campaign).map(function (c) { var x = d.by_campaign[c]; return <tr key={c} style={{ borderTop: "1px solid #eef1f5" }}><td style={{ padding: "6px 0" }}>{c}</td><td>{x.chat_started || 0}</td><td>{x.match_shown || 0}</td><td>{x.partner_click || 0}</td><td>{x.call_request || 0}</td></tr>; })}</tbody></table>
+      </div>
+      <div style={card}>
+        <div style={h3}>States with no partner (missed visitors)</div>
+        {Object.keys(d.no_match_by_state).length ? Object.keys(d.no_match_by_state).sort(function (a, b) { return d.no_match_by_state[b] - d.no_match_by_state[a]; }).map(function (k) { return <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "4px 0" }}><span>{k}</span><b>{d.no_match_by_state[k]}</b></div>; }) : <div style={{ fontSize: 12, color: "#6b7a90" }}>None. Every visitor got a match.</div>}
+      </div>
+    </div>
+  );
+}
+function csv(rows, cols) {
+  var esc = function (v) { v = v == null ? "" : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  return [cols.join(",")].concat(rows.map(function (r) { return cols.map(function (c) { return esc(r[c]); }).join(","); })).join("\n");
+}
+function EmailsTab({ token }) {
+  var [d, err] = useAdmin(token, "subscribers");
+  if (PREVIEW_MODE) return <div style={card}>The email list shows live data only on the real dashboard.</div>;
+  if (err) return <div role="alert" style={card}>{err}</div>;
+  if (!d) return <div style={card}>Loading…</div>;
+  var cols = ["email", "created_at", "source", "state", "lang", "vehicle_year", "vehicle_make", "driving_record", "priority", "consent_timestamp", "consent_text"];
+  var download = function () {
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv(d.subscribers, cols)], { type: "text/csv" }));
+    a.download = "aiinsuregenie-email-list-" + new Date().toISOString().slice(0, 10) + ".csv"; a.click();
+  };
+  return (
+    <div style={card}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <div style={{ fontSize: 13, fontWeight: 700 }}>Email sign-ups ({d.total})</div>
+        <button onClick={download} disabled={!d.total} style={{ padding: "7px 14px", borderRadius: 8, border: "none", background: "#ffc247", color: "#3d2600", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Download CSV</button>
+      </div>
+      <div style={{ fontSize: 11.5, color: "#4a5a70", lineHeight: 1.5, marginBottom: 10 }}>People agreed to emails from AI InsureGenie only. Don't share or sell this list. Every email you send must include an unsubscribe link and your business address.</div>
+      <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}><thead><tr style={{ textAlign: "left", color: "#6b7a90" }}><th>Email</th><th>State</th><th>Source</th><th>Signed up</th></tr></thead>
+        <tbody>{d.subscribers.slice(0, 200).map(function (x) { return <tr key={x.email} style={{ borderTop: "1px solid #eef1f5" }}><td style={{ padding: "6px 0" }}>{x.email}</td><td>{x.state || "-"}</td><td>{x.source}</td><td>{(x.created_at || "").slice(0, 10)}</td></tr>; })}</tbody></table>
+    </div>
+  );
+}
+function PrivacyTab({ token }) {
+  var [d, err] = useAdmin(token, "optouts");
+  if (PREVIEW_MODE) return <div style={card}>Privacy requests show only on the real dashboard.</div>;
+  if (err) return <div role="alert" style={card}>{err}</div>;
+  if (!d) return <div style={card}>Loading…</div>;
+  return (
+    <div style={card}>
+      <div style={h3}>Do Not Sell or Share requests ({d.optouts.length})</div>
+      <div style={{ fontSize: 11.5, color: "#4a5a70", lineHeight: 1.5, marginBottom: 10 }}>New leads from these people are saved but not sent to partners. If you already shared someone's details, tell those partners to stop using them.</div>
+      <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}><thead><tr style={{ textAlign: "left", color: "#6b7a90" }}><th>Received</th><th>Email</th><th>Phone</th></tr></thead>
+        <tbody>{d.optouts.map(function (x) { return <tr key={x.id} style={{ borderTop: "1px solid #eef1f5" }}><td style={{ padding: "6px 0" }}>{(x.at || "").slice(0, 10)}</td><td>{x.email || "-"}</td><td>{x.phone || "-"}</td></tr>; })}</tbody></table>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   var [partners, setPartners] = useState(DEFAULT_PARTNERS);
   var [editing, setEditing] = useState(null);
@@ -643,7 +741,7 @@ export default function Dashboard() {
         <div style={{flex:1,display:"flex",flexDirection:"column",borderRight:"1px solid #e3e6ec",overflow:"hidden"}}>
           {/* Tabs */}
           <div style={{padding:"12px 16px",display:"flex",gap:6,borderBottom:"1px solid #e3e6ec",background:"#FFF",flexShrink:0}}>
-            {["partners","stats"].map(function(t) {
+            {["partners","stats","funnel","emails","privacy"].map(function(t) {
               return <button key={t} onClick={function(){setTab(t);}} className={tab===t?"tab-active":""} style={{padding:"7px 16px",borderRadius:8,border:"none",background:tab===t?undefined:"transparent",color:tab===t?"#FFF":"#4a5a70",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",textTransform:"capitalize",transition:"all .2s"}}>{t}</button>;
             })}
             <div style={{flex:1}} />
@@ -715,6 +813,9 @@ export default function Dashboard() {
               </div>
             )}
 
+            {tab === "funnel" && <FunnelTab token={token} partners={partners} />}
+            {tab === "emails" && <EmailsTab token={token} />}
+            {tab === "privacy" && <PrivacyTab token={token} />}
             {tab === "stats" && (
               <div style={{display:"flex",flexDirection:"column",gap:12}}>
                 <div style={{background:"#FFF",borderRadius:12,padding:16,border:"1px solid #e3e6ec"}}>

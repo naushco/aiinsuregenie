@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import MINIMUMS from "./minimums.js";
 
 var STORAGE_KEY = "aiinsuregenie-partners-v3";
 
@@ -11,6 +12,23 @@ var LANG = (function () {
   return l === "es" ? "es" : "en";
 })();
 var ES = LANG === "es";
+
+// One random ID per chat visit. It goes on every partner link (subid=...) and every event, so a click or
+// lead can be tied back to the conversation. It is not linked to a name, phone or email.
+var SESSION_ID = (function () {
+  var id = null;
+  try { id = sessionStorage.getItem("aig-sid"); } catch (e) {}
+  if (!id) {
+    id = "s" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    try { sessionStorage.setItem("aig-sid", id); } catch (e) {}
+  }
+  return id;
+})();
+// Visitor has asked not to have their data sold or shared: browser Global Privacy Control signal or our opt-out link.
+var DO_NOT_SELL = (function () {
+  if (typeof navigator !== "undefined" && navigator.globalPrivacyControl === true) return true;
+  try { return localStorage.getItem("aig-dns") === "1"; } catch (e) { return false; }
+})();
 function T(en, es) { return ES ? es : en; }
 if (typeof document !== "undefined" && ES) document.documentElement.lang = "es";
 var SHARED = true;
@@ -147,6 +165,42 @@ function isQuestion(text, phase, stepId) {
 
 // Used only when the AI can't be reached. General, number-free answers;
 // the AI handles everything else, including questions about partners.
+function fmtLimits(code) {
+  var v = MINIMUMS.limits[code]; if (!v) return "";
+  var a = v.split("/").map(function (x) { return "$" + (parseInt(x, 10) * 1000).toLocaleString("en-US"); });
+  if (code === "FL") return T("$10,000 property damage + $10,000 PIP", "$10,000 daños a la propiedad + $10,000 PIP");
+  return a[0] + "/" + a[1] + T(" bodily injury and ", " por lesiones y ") + a[2] + T(" property damage", " por daños a la propiedad");
+}
+function statesIn(text) {
+  var t = " " + text.toLowerCase().replace(/[,.;!?¿¡]/g, " ") + " ", out = [];
+  Object.keys(STATE_ABBR).sort(function (a, b) { return b.length - a.length; }).forEach(function (n) {
+    var i = t.indexOf(" " + n + " ");
+    if (i >= 0 && out.indexOf(STATE_ABBR[n]) < 0) { out.push(STATE_ABBR[n]); t = t.slice(0, i) + " " + " ".repeat(n.length) + t.slice(i + n.length + 1); }
+  });
+  (text.match(/\b[A-Z]{2}\b/g) || []).forEach(function (a) { if (MINIMUMS.limits[a] && ["OR","IN","ME","OK","HI"].indexOf(a) < 0 && out.indexOf(a) < 0) out.push(a); });
+  return out;
+}
+function minimumsAnswer(text, profile) {
+  var t = text.toLowerCase();
+  if (!/(minimum|required|requirement|at least|least amount|legal limit|by law|mínim|obligatori|requisit|exige)/.test(t)) return null;
+  if (!/(insurance|coverage|liability|limit|car|auto|seguro|cobertura|responsabilidad|límite)/.test(t)) return null;
+  var st = statesIn(text); if (!st.length && profile && profile.state) st = [profile.state];
+  var when = new Date(MINIMUMS.checked + "T12:00:00Z").toLocaleDateString(ES ? "es-US" : "en-US", { month: "short", day: "numeric", year: "numeric" });
+  if (!st.length) return T("Minimums are set by each state. Tell me which state (for example \"minimum in Texas\") and I'll give you its required liability limits.", "Cada estado fija sus mínimos. Dígame el estado (por ejemplo \"mínimo en Texas\") y le doy los límites de responsabilidad que exige.");
+  var lines = st.slice(0, 3).map(function (c) {
+    var note = MINIMUMS.notes[c] ? " " + (ES ? MINIMUMS.notes[c][1] : MINIMUMS.notes[c][0]) : "";
+    return "**" + (ABBR_STATE[c] || c) + "**: " + fmtLimits(c) + "." + note;
+  });
+  var cmp = "";
+  if (st.length === 2 && st[0] !== "FL" && st[1] !== "FL") {
+    var sum = function (c) { return MINIMUMS.limits[c].split("/").reduce(function (a, x) { return a + parseInt(x, 10); }, 0); };
+    var a = sum(st[0]), b = sum(st[1]);
+    cmp = a === b ? T(" Both states require the same minimums.", " Ambos estados exigen los mismos mínimos.") : " " + (ABBR_STATE[a > b ? st[0] : st[1]]) + T(" requires higher minimums.", " exige mínimos más altos.");
+  }
+  return T("State minimum liability limits:\n", "Límites mínimos de responsabilidad por estado:\n") + lines.join("\n") + cmp +
+    T("\nThese are legal minimums only; most drivers choose more. Last checked " + when + ". Confirm with your state DMV or insurance department.", "\nSon solo los mínimos legales; la mayoría elige más. Verificado el " + when + ". Confirme con el DMV o el departamento de seguros de su estado.");
+}
+
 function staticAnswer(text) {
   var t = text.toLowerCase();
   if (ES) {
@@ -223,6 +277,7 @@ async function aiAnswer(msg, profile, results) {
 }
 
 async function getAnswer(text, profile, results) {
+  var mins = minimumsAnswer(text, profile); if (mins) return mins;
   var answer = await aiAnswer(text, profile, results) || staticAnswer(text);
   if (!answer) {
     return T("Sorry, I couldn't answer that just now. Try asking another way, tap **Get instant quote** to find your match, or talk to a licensed agent.", "Perdón, no pude responder eso ahora. Pruebe a preguntarlo de otra forma, toque **Obtener cotización** para ver su opción, o hable con un agente con licencia.");
@@ -275,6 +330,8 @@ function fits(ins, p) {
 }
 function pickPartners(p) {
   var pool = INSURERS.filter(function (ins) { return fits(ins, p); });
+  // A partner set to other goals still beats "no partner" when it quotes in the visitor's state.
+  if (!pool.length) pool = INSURERS.filter(function (ins) { return fits(ins, Object.assign({}, p, { priority: null })); });
   if (!pool.length) return [];
   var scored = matchInsurers(p, pool);
   if (!scored.length) return [];
@@ -303,6 +360,7 @@ function buildUrl(ins, p) {
   }
   u.searchParams.set("utm_source", "aiinsuregenie");
   u.searchParams.set("utm_campaign", ins.id);
+  u.searchParams.set("subid", SESSION_ID);
   return u.toString();
 }
 
@@ -383,6 +441,24 @@ var PII_STEPS = [
 // Use your *.vercel.app backend URL until aiinsuregenie.com is connected.
 // ---------------------------------------------------------------
 var API_BASE = (typeof window !== "undefined" && window.AIG_CONFIG && window.AIG_CONFIG.apiBase) || "https://api.aiinsuregenie.com";
+
+// Privacy-friendly event log: no cookies, no names, phones or emails. Only the event, the session ID,
+// and non-personal context (state, partner, campaign). Sent with sendBeacon so it never slows the chat.
+var UTM = (function () {
+  var q = {};
+  try { var u = new URLSearchParams(window.location.search); ["utm_source","utm_medium","utm_campaign","utm_content","pub"].forEach(function (k) { if (u.get(k)) q[k] = u.get(k).slice(0, 80); }); } catch (e) {}
+  return q;
+})();
+var sentOnce = {};
+function track(type, extra, once) {
+  if (once) { if (sentOnce[type]) return; sentOnce[type] = 1; }
+  try {
+    var body = JSON.stringify(Object.assign({ type: type, session_id: SESSION_ID, lang: LANG, dns: DO_NOT_SELL }, UTM, extra || {}));
+    var url = API_BASE + "/api/event";
+    if (navigator.sendBeacon && navigator.sendBeacon(url, new Blob([body], { type: "text/plain" }))) return;
+    fetch(url, { method: "POST", headers: { "Content-Type": "text/plain" }, body: body, keepalive: true }).catch(function () {});
+  } catch (e) {}
+}
 
 function nowTime() {
   return new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
@@ -593,6 +669,14 @@ var CSS_TEXT = [
   ".cta-main:hover{filter:brightness(.97)}.cta-main:focus-visible{outline:3px solid var(--brand);outline-offset:2px}",
   ".cta-sub{font-size:12.5px;font-weight:500;opacity:.8}",
   ".cta-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cta-row .chip{text-align:center;justify-content:center}",
+  /* Email sign-up card */
+  ".ecard{box-sizing:border-box;margin:8px 0 0 34px;padding:14px;border:1px solid var(--line);border-radius:14px;background:#fff;width:calc(100% - 34px);max-width:460px;display:grid;grid-template-columns:minmax(0,1fr);gap:10px;animation:in .3s ease-out both}",
+  ".ecard.done{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--brand);font-weight:600;background:#eef3f9}",
+  ".e-lbl{font-size:13px;font-weight:600;color:var(--ink)}",
+  ".e-row{display:flex;gap:8px;min-width:0}.e-row input{flex:1 1 auto;width:100%;min-width:0;box-sizing:border-box;min-height:44px;padding:0 12px;border:1.5px solid #c5ccd6;border-radius:10px;font:inherit;font-size:16px;color:var(--ink);background:#fff}.e-row input:focus{outline:3px solid var(--sun);outline-offset:1px;border-color:var(--brand)}",
+  ".e-row .btn{flex:none;width:auto;min-height:44px;white-space:nowrap;padding:0 16px}",
+  ".e-ck{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;line-height:1.45;color:var(--ink2);min-width:0}.e-ck span{min-width:0}.e-ck input{margin-top:2px;width:18px;height:18px;flex:none}",
+  ".e-err{margin:0;font-size:13px;color:#b42318}",
   /* Tip bubble */
   ".bot .bub.hint{font-size:15px;color:var(--ink2);background:#fff8e6;border-radius:12px;padding:10px 14px;margin-left:34px;margin-top:6px;max-width:calc(92% - 34px)}",
   /* Reveal checklist */
@@ -665,7 +749,7 @@ function QuoteCard({ ins, locked, top }) {
       {feats ? <p className="q-feat">{feats}</p> : null}
       {!locked ? (
         <div>
-          <a className="btn btn-p" href={ins.rUrl || "#"} target="_blank" rel="noopener noreferrer sponsored">
+          <a className="btn btn-p" href={ins.rUrl || "#"} target="_blank" rel="noopener noreferrer sponsored" onClick={function(){ track("partner_click", { partner_id: ins.id, placement: top ? "top" : "list" }); }}>
             {ins.supportsPrefill ? T("Continue to ", "Continuar a ") + ins.n : T("Get my quote from ", "Obtener mi cotización de ") + ins.n}
           </a>
           <p className="q-note">
@@ -698,9 +782,47 @@ function OfferCard({ ins, top, tip }) {
       </div>
       {feats.length ? <ul className="o-feat">{feats.map(function (f, i) { return <li key={i}><Icon n="check" size={14} />{f}</li>; })}</ul> : null}
       {tip ? <p className="o-tip">{tip}</p> : null}
-      <a className="btn btn-p" href={ins.rUrl || "#"} target="_blank" rel="noopener noreferrer sponsored">{T("Get my quote from ", "Obtener mi cotización de ")}{ins.n}</a>
+      <a className="btn btn-p" href={ins.rUrl || "#"} target="_blank" rel="noopener noreferrer sponsored" onClick={function(){ track("partner_click", { partner_id: ins.id, placement: top ? "top" : "other" }); }}>{T("Get my quote from ", "Obtener mi cotización de ")}{ins.n}</a>
       <p className="q-note">{T("Opens " + ins.n + "'s site in a new tab. Fill in their short form to see your quotes.", "Abre el sitio de " + ins.n + " en otra pestaña. Llene su formulario corto para ver sus cotizaciones.")}</p>
     </article>
+  );
+}
+
+// ---------------------------------------------------------------
+// Optional email sign-up (our own emails only; never shared or sold)
+// ---------------------------------------------------------------
+var EMAIL_CONSENT = T("Email me my answers, tips and updates from AI InsureGenie, including when new partners cover my state. I can unsubscribe at any time. AI InsureGenie won't sell or share my email.", "Envíenme por correo mis respuestas, consejos y novedades de AI InsureGenie, incluso cuando haya nuevos socios en mi estado. Puedo darme de baja en cualquier momento. AI InsureGenie no venderá ni compartirá mi correo.");
+function EmailCard({ profile, source, onDone }) {
+  var [email, setEmail] = useState("");
+  var [agree, setAgree] = useState(false);
+  var [err, setErr] = useState("");
+  var [state, setState] = useState("idle");
+  var submit = async function () {
+    var r = vEmail(email);
+    if (!r.ok) { setErr(r.e); return; }
+    if (!agree) { setErr(T("Check the box so we can email you.", "Marque la casilla para que podamos escribirle.")); return; }
+    setErr(""); setState("sending");
+    try {
+      var res = await fetch(API_BASE + "/api/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+        email: r.v, consent_text: EMAIL_CONSENT, consent_timestamp: new Date().toISOString(), source: source, lang: LANG,
+        state: profile.state || null, zip: profile.zip || null, vehicle_year: profile.vehicleYear || null, vehicle_make: profile.vehicleMake || null,
+        driving_record: profile.driving || null, priority: profile.priority || null, session_id: SESSION_ID, landing_page: window.location.href
+      }) });
+      if (!res.ok) throw new Error("bad");
+      setState("done"); track("email_signup", { source: source, state: profile.state || null }); if (onDone) onDone();
+    } catch (e) { setState("idle"); setErr(T("We couldn't save your email. Please try again.", "No pudimos guardar su correo. Intente de nuevo.")); }
+  };
+  if (state === "done") return <div className="ecard done"><Icon n="check" size={16} /> {T("You're on the list. Check your inbox soon.", "Ya está en la lista. Revise su correo pronto.")}</div>;
+  return (
+    <div className="ecard">
+      <label className="e-lbl" htmlFor={"em-" + source}>{T("Your email", "Su correo electrónico")}</label>
+      <div className="e-row">
+        <input id={"em-" + source} type="email" inputMode="email" autoComplete="email" placeholder={T("you@email.com", "usted@correo.com")} value={email} onChange={function (e) { setEmail(e.target.value); setErr(""); }} />
+        <button type="button" className="btn btn-p" disabled={state === "sending"} onClick={submit}>{state === "sending" ? T("Saving...", "Guardando...") : T("Email me", "Enviarme")}</button>
+      </div>
+      <label className="e-ck"><input type="checkbox" checked={agree} onChange={function (e) { setAgree(e.target.checked); setErr(""); }} /><span>{EMAIL_CONSENT} <a href="https://aiinsuregenie.com/privacy/" target="_blank" rel="noopener noreferrer">{T("Privacy policy", "Política de privacidad")}</a></span></label>
+      {err ? <p className="e-err" role="alert">{err}</p> : null}
+    </div>
   );
 }
 
@@ -737,11 +859,12 @@ function CallModal({ profile, onClose, onSent }) {
           name: name.trim(), phone: r.v, preferred_time: when,
           zip: profile.zip || null, state: profile.state || null,
           consent_text: CALL_CONSENT, consent_timestamp: new Date().toISOString(),
-          landing_page: window.location.href
+          landing_page: window.location.href, session_id: SESSION_ID, do_not_sell: DO_NOT_SELL
         })
       });
       if (!res.ok) throw new Error("bad status");
       setDone(true);
+      track("call_request", { state: profile.state || null });
       if (onSent) onSent({ name: name.trim(), phone: r.v });
     } catch (e) {
       setErr(T("We couldn't send your request. Please try again in a moment.", "No pudimos enviar su solicitud. Intente de nuevo en un momento."));
@@ -806,7 +929,8 @@ export default function AIInsureGenie() {
   var [piiIdx, setPiiIdx] = useState(0);
   var [qr, setQr] = useState(null);
   var [pick, setPick] = useState(null);
-  var [form, setForm] = useState(false); // structured quote screen: only when the visitor taps "Find my match" / a plain get-quote link
+  var [form, setForm] = useState(false);
+  var [emailAsked, setEmailAsked] = useState(false); // structured quote screen: only when the visitor taps "Find my match" / a plain get-quote link
   var [iph, setIph] = useState(T("Type here...", "Escriba aquí..."));
   var [results, setResults] = useState([]);
   var [cs, setCs] = useState(0);
@@ -846,6 +970,7 @@ export default function AIInsureGenie() {
   var usr = function(text) { setMsgs(function(p){return p.concat([{role:"user",text:text,time:nowTime()}]);}); };
 
   var startQ = function(extra) {
+    track("chat_started", { mode: "quote" }, true);
     var sit = extra && extra._sit; if (extra) { extra = Object.assign({}, extra); delete extra._sit; if (!Object.keys(extra).length) extra = null; }
     var start = Object.assign({}, pro, extra || {});
     if (extra) setPro(start);
@@ -862,6 +987,7 @@ export default function AIInsureGenie() {
     setTimeout(function(){if(sit)bot(sit);bot(intro);bot(hint,{hint:true});setTyp(false);setTimeout(function(){advQ(0,start);},500);},sit?900:500);
   };
   var startChat = function() {
+    track("chat_started", { mode: "question" }, true);
     setPhase("chat"); setTyp(true);
     setTimeout(function(){bot(T("Sure, ask me anything about auto insurance: coverage types, claims, discounts, SR-22, deductibles, or how to compare insurers. When you're ready for personalized options, tap Get instant quote.", "Claro, pregúnteme lo que quiera sobre seguro de auto: tipos de cobertura, reclamos, descuentos, SR-22, deducibles o cómo comparar aseguradoras. Cuando quiera opciones para usted, toque Obtener cotización."));setTyp(false);setIph(T("Ask me anything...", "Pregunte lo que quiera..."));setTimeout(function(){inRef.current&&inRef.current.focus();},100);},500);
   };
@@ -951,10 +1077,27 @@ export default function AIInsureGenie() {
     coverage: "Consejo: compare los mismos límites y deducible en cada cotización.",
     service: "Consejo: pregunte cómo manejan los reclamos y cómo contactar a soporte."
   });
-  var showMatch = function(prof) {
+  var showMatch = async function(prof) {
     var p = Object.assign({}, prof, { coverage: prof.priority === "coverage" ? "full" : (prof.coverage || "standard") });
     setPro(p); setPhase("locked"); setQr(null);
     var stn = ABBR_STATE[p.state] || p.state || T("your state", "su estado");
+    if (!INSURERS.length) { var fresh = await loadInsurers(); if (fresh) { INSURERS = fresh; setInsurerList(fresh); } }
+    var pre = pickPartners(p);
+    if (!pre.length) {
+      setTyp(true);
+      setTimeout(function(){
+        setResults([]);
+        track("no_match", { state: p.state || null, goal: p.priority || null });
+        if (!INSURERS.length) bot(T("I couldn't load partner options just now. You can talk to a licensed agent, or try again in a minute.", "No pude cargar las opciones ahora. Puede hablar con un agente con licencia o intentarlo en un minuto."));
+        else {
+          bot(T("I don't have a quoting partner for ", "Todavía no tengo un socio de cotización para ") + stn + T(" yet. Two things I can do:", ". Puedo hacer dos cosas:"));
+          bot(T("1. Email you as soon as a partner covers ", "1. Avisarle por correo en cuanto un socio cubra ") + stn + T(", with your answers saved so you won't start over.", ", con sus respuestas guardadas para no empezar de nuevo."), { email: "no_match" });
+          bot(T("2. Have a licensed agent call you: tap **Talk to an agent**.", "2. Pedir que un agente con licencia le llame: toque **Hablar con un agente**."));
+        }
+        setTyp(false); setPhase("follow");
+      }, 900);
+      return;
+    }
     bot(T("Checking partners in ", "Buscando socios en ") + stn + "…", { scan: [
       T("Partners that quote in ", "Socios que cotizan en ") + stn,
       T("Who works with ", "Quién acepta ") + (REC[p.driving] || T("your record", "su historial")),
@@ -962,16 +1105,16 @@ export default function AIInsureGenie() {
     ] });
     setTimeout(function(){ setTyp(true); }, 2300);
     setTimeout(function(){
-      var r = pickPartners(p).map(function(ins){ return Object.assign({}, ins, { rUrl: buildUrl(ins, p) }); });
+      var r = pre.map(function(ins){ return Object.assign({}, ins, { rUrl: buildUrl(ins, p) }); });
       setResults(r);
-      if (!r.length) {
-        bot(INSURERS.length ? T("I don't have a partner for ", "Todavía no tengo un socio para ") + stn + T(" that fits just yet. A licensed agent can help you instead: tap **Talk to an agent**.", " que le convenga. Un agente con licencia le puede ayudar: toque **Hablar con un agente**.") : T("I couldn't load partner options just now. You can talk to a licensed agent, or try again in a minute.", "No pude cargar las opciones ahora. Puede hablar con un agente con licencia o intentarlo en un minuto."));
-        setTyp(false); setPhase("follow");
-        return;
-      }
+      track("match_shown", { partner_id: r[0].id, state: p.state || null, goal: p.priority || null, options: r.length });
       bot(T("Your match is ready. For ", "Su opción está lista. Para ") + (REC[p.driving] || T("your record", "su historial")) + T(" and ", " y ") + (GOAL[p.priority] || T("a good fit", "una buena opción")) + T(" in ", " en ") + stn + T(", this partner is my top pick:", ", este socio es mi mejor opción:"), { offer: r[0], tip: TIPS[p.priority] });
       setTyp(false);
-      setTimeout(function(){ setTyp(true); setTimeout(function(){ bot(T("Anything else I can help with? You can also tap your profile above to change an answer.", "¿Le ayudo con algo más? También puede tocar su perfil arriba para cambiar una respuesta.")); setTyp(false); setPhase("follow"); }, 700); }, 1200);
+      setTimeout(function(){ setTyp(true); setTimeout(function(){
+        bot(T("Anything else I can help with? You can also tap your profile above to change an answer.", "¿Le ayudo con algo más? También puede tocar su perfil arriba para cambiar una respuesta."));
+        if (!emailAsked) { setEmailAsked(true); bot(T("Want a copy of your answers and tips by email? Optional.", "¿Quiere una copia de sus respuestas y consejos por correo? Es opcional."), { email: "after_match" }); }
+        setTyp(false); setPhase("follow");
+      }, 700); }, 1200);
     }, 3000);
   };
 
@@ -980,8 +1123,12 @@ export default function AIInsureGenie() {
     usr(T("See other options", "Ver otras opciones"));
     setTyp(true);
     setTimeout(function(){
-      if (!more.length) bot(T("That's the best fit I have for you right now. You can also talk to a licensed agent.", "Esa es la mejor opción que tengo para usted ahora. También puede hablar con un agente con licencia."));
-      else bot(T("Here " + (more.length === 1 ? "is another option" : "are other options") + " that fit your answers:", (more.length === 1 ? "Aquí tiene otra opción" : "Aquí tiene otras opciones") + " según sus respuestas:"), { offers: more });
+      if (!results.length) bot(T("I don't have any partner options for your answers yet. Tap **Talk to an agent** and a licensed agent can help.", "Todavía no tengo opciones de socios para sus respuestas. Toque **Hablar con un agente** y un agente con licencia le ayudará."));
+      else if (!more.length) {
+        bot(T("Right now **" + results[0].n + "** is the only partner that fits your answers" + (pro.state ? " in " + (ABBR_STATE[pro.state] || pro.state) : "") + ". There are no other options yet.", "Por ahora **" + results[0].n + "** es el único socio que encaja con sus respuestas" + (pro.state ? " en " + (ABBR_STATE[pro.state] || pro.state) : "") + ". Todavía no hay otras opciones."));
+        if (!emailAsked) { setEmailAsked(true); bot(T("Want me to email you when more partners are available? Optional.", "¿Quiere que le avise por correo cuando haya más socios? Es opcional."), { email: "more_options" }); }
+      }
+      else bot(T("Here " + (more.length === 1 ? "is another option that fits" : "are other options that fit") + " your answers:", (more.length === 1 ? "Aquí tiene otra opción" : "Aquí tiene otras opciones") + " según sus respuestas:"), { offers: more });
       setTyp(false);
     }, 600);
   };
@@ -1041,6 +1188,8 @@ export default function AIInsureGenie() {
           disclosed_buyers: partnerNames.join(", "),
           publisher_id: urlParams.get("pub") || urlParams.get("utm_source") || "direct",
           sub_id: urlParams.get("sub_id") || urlParams.get("click_id") || null,
+          session_id: SESSION_ID,
+          do_not_sell: DO_NOT_SELL,
           utm_source: urlParams.get("utm_source") || "aiinsuregenie",
           utm_medium: urlParams.get("utm_medium") || "chatbot",
           utm_campaign: urlParams.get("utm_campaign") || null,
@@ -1086,6 +1235,7 @@ export default function AIInsureGenie() {
 
   var handleChat = function(val) {
     if (!val.trim()) return; usr(val); setInp("");
+    track("chat_started", { mode: "typed" }, true);
     var t = val.toLowerCase();
     var fr = tryFree(val, pro);
     if (fr && !isQuestion(val, "chat")) {
@@ -1230,7 +1380,7 @@ export default function AIInsureGenie() {
           <div className="trk" role="group" aria-label={T("Quote progress", "Progreso de la cotización")}>
             <div className="trk-top">
               <span className="trk-t">{doneN === 4 ? T("All set", "Todo listo") : (doneN === 3 ? T("Nearly there", "Ya casi") : T("Step ", "Paso ") + Math.min(doneN + 1, 4) + T(" of 4", " de 4"))}</span>
-              <span className="trk-r">{doneN === 4 ? T("Your match is ready", "Su opción está lista") : (4 - doneN === 1 ? T("1 step left", "Falta 1 paso") : T((4 - doneN) + " steps left", "Faltan " + (4 - doneN) + " pasos"))}</span>
+              <span className="trk-r">{doneN === 4 ? (phase === "follow" && !results.length ? T("No partner here yet", "Aún sin socio aquí") : T("Your match is ready", "Su opción está lista")) : (4 - doneN === 1 ? T("1 step left", "Falta 1 paso") : T((4 - doneN) + " steps left", "Faltan " + (4 - doneN) + " pasos"))}</span>
             </div>
             <div className="trk-bar" style={{ "--fill": (Math.max(0, doneN - (doneN === 4 ? 1 : 0)) / 3 * 100) + "%", "--fill2": (doneN === 4 ? 100 : (doneN / 3 * 100)) + "%" }}>
               <div className="trk-line"><i /></div>
@@ -1267,6 +1417,7 @@ export default function AIInsureGenie() {
               <div key={i} className={"row " + m.role + (first ? " first" : "") + (prev.ins ? " after" : "")}>
                 {m.role === "bot" && first ? <div className="who">Genie</div> : null}
                 <div className={"bub" + (m.err ? " err" : "") + (m.hint ? " hint" : "")}>{m.role === "bot" ? renderBold(m.text) : m.text}</div>
+                {m.email ? <EmailCard profile={pro} source={m.email} /> : null}
                 {m.why ? <p className="why"><span aria-hidden="true">ⓘ</span> {m.why}</p> : null}
                 {m.scan ? <ul className="scan">{m.scan.map(function(x, j){ return <li key={j} style={{ animationDelay: (0.5 + j * 0.6) + "s" }}><span className="ck" style={{ animationDelay: (0.5 + j * 0.6) + "s" }}>✓</span>{x}</li>; })}</ul> : null}
                 {basis ? <p className="basis">{basis}</p> : null}
@@ -1336,7 +1487,7 @@ export default function AIInsureGenie() {
 
           {phase === "follow" && !typ ? (
             <div className="chips">
-              {followChips.map(function(s, i) { return <button type="button" key={i} className="chip" onClick={function(){ if (i === 0) showMore(); else if (i === 2) setShowCall(true); else handleFollow(s); }}>{s}</button>; })}
+              {followChips.map(function(s, i) { if (i === 0 && !results.length) return null; return <button type="button" key={i} className="chip" onClick={function(){ if (i === 0) showMore(); else if (i === 2) setShowCall(true); else handleFollow(s); }}>{s}</button>; })}
             </div>
           ) : null}
 
@@ -1363,7 +1514,7 @@ export default function AIInsureGenie() {
           <div className="disc">
             <span>{T("AI assistant, not a licensed agent.", "Asistente de IA, no un agente con licencia.")}</span>{" "}
             <button type="button" className="disc-btn" aria-expanded={showDisc} aria-controls="disc-full" onClick={function(){ setShowDisc(!showDisc); }}>{showDisc ? T("Hide details", "Ocultar detalles") : T("Details", "Detalles")}</button>
-            {showDisc ? <p id="disc-full" className="disc-full">{T("AI InsureGenie is an AI assistant, not an insurance company or licensed agent. We recommend quoting partners, who may pay us a fee. Your quotes and final rate come from the partner or insurer. ", "AI InsureGenie es un asistente de IA, no una compañía de seguros ni un agente con licencia. Recomendamos socios de cotización, que pueden pagarnos una comisión. Sus cotizaciones y su tarifa final las da el socio o la aseguradora. ")}<a href="https://aiinsuregenie.com/privacy/" target="_blank" rel="noopener noreferrer">{T("Privacy policy", "Política de privacidad")}</a> · <a href="https://aiinsuregenie.com/terms/" target="_blank" rel="noopener noreferrer">{T("Terms of use", "Términos de uso")}</a></p> : null}
+            {showDisc ? <p id="disc-full" className="disc-full">{T("AI InsureGenie is an AI assistant, not an insurance company or licensed agent. We recommend quoting partners, who may pay us a fee. Your quotes and final rate come from the partner or insurer. ", "AI InsureGenie es un asistente de IA, no una compañía de seguros ni un agente con licencia. Recomendamos socios de cotización, que pueden pagarnos una comisión. Sus cotizaciones y su tarifa final las da el socio o la aseguradora. ")}<a href="https://aiinsuregenie.com/privacy/" target="_blank" rel="noopener noreferrer">{T("Privacy policy", "Política de privacidad")}</a> · <a href="https://aiinsuregenie.com/terms/" target="_blank" rel="noopener noreferrer">{T("Terms of use", "Términos de uso")}</a> · <a href="https://aiinsuregenie.com/do-not-sell/" target="_blank" rel="noopener noreferrer">{T("Do Not Sell or Share My Personal Information", "No vender ni compartir mi información personal")}</a></p> : null}
           </div>
         </footer>
 

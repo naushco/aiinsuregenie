@@ -7,6 +7,7 @@
 // Set the URL in Vercel as the environment variable CALLBACK_WEBHOOK_URL.
 
 const { cors } = require("../lib/http");
+const { isOptedOut } = require("./privacy.js");
 
 const hits = {};
 function rateLimited(ip) {
@@ -54,8 +55,13 @@ module.exports = async function handler(req, res) {
     ip_address: ip,
     user_agent: String(req.headers["user-agent"] || "").slice(0, 200),
     landing_page: b.landing_page ? String(b.landing_page).slice(0, 300) : null,
+    session_id: b.session_id ? String(b.session_id).slice(0, 32) : null,
+    // The person asked for this call, so it is still delivered, but must not be resold or shared further.
+    do_not_sell: b.do_not_sell === true,
     received_at: new Date().toISOString()
   };
+  try { if (!payload.do_not_sell && await isOptedOut(null, digits)) payload.do_not_sell = true; } catch (e) {}
+  if (payload.do_not_sell) payload.text += " [DO NOT SELL/SHARE]";
 
   try {
     var controller = new AbortController();

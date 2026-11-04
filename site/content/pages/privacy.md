@@ -1,7 +1,7 @@
 ---
 title: Privacy policy
 description: What AI InsureGenie collects when you use our website and chat assistant, how we use it, who we share it with, and the choices you have.
-updated: 2026-10-15
+updated: 2026-11-04
 ---
 AI InsureGenie ("we", "us") runs aiinsuregenie.com and the chat assistant at chat.aiinsuregenie.com. We help drivers find the auto insurance quoting partner or insurer that fits their needs. This policy explains what information we collect, how we use it, and the choices you have.
 
@@ -10,6 +10,10 @@ AI InsureGenie ("we", "us") runs aiinsuregenie.com and the chat assistant at cha
 **When you browse this website.** You don't need an account. The interactive tools on this site, such as the matcher, the deductible explorer, and the shop-around check, run in your browser, and your answers are not sent to us. Our hosting provider keeps standard technical logs, such as your IP address, browser type, and the pages you visit. Our fonts load from Google Fonts, which receives your IP address when the page loads.
 
 **When you use the chat.** We collect the answers you give, such as your ZIP code and state, your vehicle, your driving record, and what matters most to you. We also collect the questions you type.
+
+**When you sign up for emails.** If you choose to, we collect your email address and the answers you gave in the chat, so we can send you your answers, tips, and updates, including when a new partner covers your state. We record the consent wording you agreed to and when.
+
+**Usage events.** When you use the chat, we record simple events such as "chat started", "match shown", "partner link opened", and "call requested", with a random ID for that chat visit, your state, and the ad campaign that brought you. These events do not include your name, phone number, or email, and we don't use cookies for them. We use them to count visits and improve the service.
 
 **When you ask us to connect you or call you.** If you choose to share them, we collect your first name, phone number, email address, and preferred call time. We also record the exact consent wording you agreed to and when you agreed.
 
@@ -26,9 +30,13 @@ We do not ask for your Social Security number, driver's license number, or payme
 
 **AI provider.** We send the questions you type, along with general answers such as your state and vehicle, to an AI provider so the assistant can reply. We do not send your name, phone number, or email address to the AI provider.
 
-**Partners you choose to visit.** When you open a partner's site from our chat, the link tells the partner that you came from us. For partners that support it, the link may also include answers you gave so you don't have to type them again. After that, the partner's own privacy policy applies to what you give them.
+**Partners you choose to visit.** When you open a partner's site from our chat, the link tells the partner that you came from us and includes a random ID for your chat visit, so the partner can confirm the visit came from us. For partners that support it, the link may also include answers you gave so you don't have to type them again. After that, the partner's own privacy policy applies to what you give them.
 
 **Partners and agents you agree to share with.** If you agree to be contacted, we share your contact details and answers with the insurance companies, quoting partners, or licensed agents named when you give consent, so they can contact you about quotes.
+
+**Advertising platforms.** If we advertise on platforms such as Meta, we may tell that platform when a visit from its ads led to an event such as a partner link being opened, along with your IP address and browser type, so we can measure our ads. We don't do this if you have opted out of sale or sharing or your browser sends a Global Privacy Control signal.
+
+**Our email list.** We don't sell or share your email address if you sign up for our emails. You can unsubscribe at any time using the link in any email.
 
 **Service providers.** Companies that host and run our website and chat process information on our behalf.
 
@@ -36,7 +44,7 @@ We do not ask for your Social Security number, driver's license number, or payme
 
 ## How we're paid
 
-Our partners may pay us when you visit them, request a quote, or when we share your details with your consent. It costs you nothing. Depending on where you live, sharing your details with partners in exchange for payment may count as a "sale" or "sharing" of personal information under privacy laws. You can ask us not to share your information this way at any time.
+Our partners may pay us when you visit them, request a quote, or when we share your details with your consent. It costs you nothing. Depending on where you live, sharing your details with partners in exchange for payment may count as a "sale" or "sharing" of personal information under privacy laws. You can ask us not to share your information this way at any time on our [Do Not Sell or Share My Personal Information](/do-not-sell/) page. We also treat a Global Privacy Control (GPC) signal from your browser as a request not to sell or share.
 
 ## Calls, texts, and emails
 
@@ -44,7 +52,7 @@ We and our partners only contact you by phone, text, or email about quotes if yo
 
 ## Cookies
 
-Our website and chat do not set their own advertising or analytics cookies. Partner sites you visit may use cookies under their own policies.
+Our website and chat do not set their own advertising or analytics cookies. The chat stores a random visit ID in your browser's session storage, which is cleared when you close the tab. Partner sites you visit may use cookies under their own policies.
 
 ## How long we keep it
 
@@ -52,7 +60,7 @@ We keep chat answers and contact details only as long as we need them for the pu
 
 ## Your choices and rights
 
-You can ask us to show you, correct, or delete the personal information we hold about you, or to stop sharing it with partners. Depending on where you live, such as California, you may have additional rights under state law. We will not treat you differently for using these rights. To make a request, use the options on our [Contact page](/contact/).
+You can ask us to show you, correct, or delete the personal information we hold about you, or to stop sharing it with partners. Depending on where you live, such as California, you may have additional rights under state law. We will not treat you differently for using these rights. To stop sale or sharing, use our [Do Not Sell or Share My Personal Information](/do-not-sell/) page. For other requests, use the options on our [Contact page](/contact/).
 
 ## Children
 

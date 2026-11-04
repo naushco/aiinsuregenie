@@ -1,0 +1,58 @@
+<main>
+  <div class="page contact">
+    <div class="blog-head">
+      <span class="eyebrow">Your privacy choices</span>
+      <h1>Do Not Sell or Share My Personal Information</h1>
+      <p class="lede">You can tell us not to sell or share your personal information with our insurance partners. It's free, and we won't treat you differently for asking.</p>
+    </div>
+    <article class="article legal-page" style="max-width:640px">
+      <p>When you agree to be contacted, we may share your details with insurance partners who pay us. Under some state privacy laws, such as California's, that can count as a "sale" or "sharing" of personal information. Send this form and we will stop sharing the details you give us with partners.</p>
+      <p id="gpc-note" hidden><strong>Your browser is sending a Global Privacy Control signal.</strong> We treat it as a request not to sell or share, so the chat on this device already marks anything you send as do-not-share.</p>
+      <form id="dns-form" class="dns-form" novalidate>
+        <label for="dns-email">Email you gave us</label>
+        <input id="dns-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@email.com">
+        <label for="dns-phone">Or phone number you gave us</label>
+        <input id="dns-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="(555) 123-4567">
+        <p class="hint">Enter at least one. We only use it to find and flag your records.</p>
+        <button class="btn" type="submit">Send my request</button>
+        <p id="dns-msg" role="status" aria-live="polite"></p>
+      </form>
+      <h2>What happens next</h2>
+      <ul>
+        <li>New requests from this email or phone are kept but not sent to partners.</li>
+        <li>If we already shared your details, we'll tell those partners to stop using them.</li>
+        <li>You can still use the chat and visit partners yourself.</li>
+      </ul>
+      <p>To see, correct, or delete your information, or for any other privacy request, use our <a href="/contact/">Contact page</a>. See our <a href="/privacy/">Privacy policy</a> for details.</p>
+      <p lang="es"><strong>En español:</strong> puede pedirnos que no vendamos ni compartamos su información personal con nuestros socios. Escriba el correo o teléfono que nos dio y envíe el formulario.</p>
+    </article>
+  </div>
+</main>
+<style>
+  .dns-form{display:grid;gap:8px;margin:24px 0;padding:20px;border:1px solid var(--line,#e3e6ec);border-radius:14px;background:#fff}
+  .dns-form label{font-weight:600;font-size:15px}
+  .dns-form input{min-height:48px;padding:0 12px;border:1.5px solid #c5ccd6;border-radius:10px;font:inherit;font-size:16px}
+  .dns-form input:focus{outline:3px solid var(--sun);outline-offset:1px}
+  .dns-form .hint{font-size:14px;color:var(--muted,#4a5a70);margin:0}
+  .dns-form .btn{justify-self:start;margin-top:8px}
+  #dns-msg{margin:0;font-weight:600}
+  #dns-msg.ok{color:#0a6b50}#dns-msg.err{color:#b42318}
+</style>
+<script>
+(function () {
+  if (navigator.globalPrivacyControl === true) document.getElementById('gpc-note').hidden = false;
+  var f = document.getElementById('dns-form'), msg = document.getElementById('dns-msg');
+  f.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var email = f.email.value.trim(), phone = f.phone.value.replace(/\D/g, '');
+    if (!/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(email) && phone.replace(/^1/, '').length !== 10) {
+      msg.className = 'err'; msg.textContent = 'Enter the email or 10-digit phone number you gave us.'; return;
+    }
+    msg.className = ''; msg.textContent = 'Sending…';
+    fetch('https://api.aiinsuregenie.com/api/privacy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email || null, phone: phone || null, gpc: navigator.globalPrivacyControl === true }) })
+      .then(function (r) { if (!r.ok) throw new Error(); msg.className = 'ok'; msg.textContent = 'Done. We received your request and will stop sharing your information.'; f.reset(); try { localStorage.setItem('aig-dns', '1'); } catch (x) {} })
+      .catch(function () { msg.className = 'err'; msg.textContent = 'We couldn’t send your request. Please try again, or use our Contact page.'; });
+  });
+})();
+</script>

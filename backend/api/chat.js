@@ -3,6 +3,14 @@
 // The browser never sees it.
 
 const { cors } = require("../lib/http");
+const MINIMUMS = require("../lib/minimums.js");
+
+// Legal minimums come only from the checked table, never from the model's memory.
+function minimumsBlock() {
+  var rows = Object.keys(MINIMUMS.limits).map(function (k) { return k + " " + MINIMUMS.limits[k]; }).join(", ");
+  var notes = Object.keys(MINIMUMS.notes).map(function (k) { return k + ": " + MINIMUMS.notes[k][0]; }).join(" ");
+  return "\n\nSTATE MINIMUM LIABILITY LIMITS (checked " + MINIMUMS.checked + "; format = bodily injury per person/per accident/property damage, in $ thousands): " + rows + ". Notes: " + notes;
+}
 
 const MODEL = process.env.CHAT_MODEL || "claude-haiku-4-5-20251001"; // fast + cheap. Use "claude-sonnet-5-5" for higher quality.
 const MAX_MSG_CHARS = 600;
@@ -53,6 +61,7 @@ var SYSTEM_PROMPT =
   "- You are not a licensed agent and cannot give legal or financial advice. For policy-specific decisions, suggest confirming with the insurer or a licensed agent.\n" +
   "- Do not claim one insurer is definitively the best. Explain what each tends to be good for.\n" +
   "- If you are not sure about a specific fact (a current discount, a state rule), say so instead of guessing.\n" +
+  "- LEGAL FACTS: Never state a state's required limits, fines, penalties, filing periods or other legal requirements from memory. For minimum liability limits use ONLY the STATE MINIMUM LIABILITY LIMITS table below, and say they were last checked on its date. For any other legal requirement, say it varies by state and suggest checking the state DMV or insurance department.\n" +
   "- If asked how this service makes money: say AI InsureGenie may earn a fee from the quoting partners it recommends when users visit them or request quotes, and that it is free for the user.\n" +
   "- Do not quote specific savings amounts or percentages, and do not name specific insurance companies as cheapest or best for a group of drivers. Explain what tends to affect price instead.\n" +
   "- Never ask for or repeat personal details like phone number, email, or full address.\n" +
@@ -102,7 +111,7 @@ module.exports = async function handler(req, res) {
       cleaned.push({ role: "user", content: message });
     }
 
-    var system = SYSTEM_PROMPT + cleanProfile(body.profile) + cleanResults(body.results);
+    var system = SYSTEM_PROMPT + cleanProfile(body.profile) + cleanResults(body.results) + minimumsBlock();
     system += "\n\nSTYLE: Answer in under 120 words. No greetings like \"Great question\". If you use a number example, check the arithmetic (e.g. $3,000 damage with a $500 deductible: you pay $500, insurer pays $2,500).";
     if (body.lang === "es") system += "\n\nLANGUAGE: The user is browsing in Spanish. Always reply in clear, neutral Latin American Spanish, using \"usted\". Keep insurance terms like SR-22 as-is.";
 
