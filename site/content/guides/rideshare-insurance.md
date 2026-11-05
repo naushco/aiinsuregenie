@@ -1,5 +1,6 @@
 ---
 title: Rideshare insurance for Uber, Lyft and delivery drivers: the coverage gap explained
+seo_title: Rideshare insurance for Uber, Lyft and delivery drivers
 description: Does your personal car insurance cover you while driving for Uber, Lyft or delivery apps? The coverage gap, what the apps cover, and how to close it.
 path: rideshare-insurance
 lang: en

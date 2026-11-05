@@ -1,5 +1,6 @@
 ---
 title: Seguro de auto con licencia extranjera en EE. UU.: lo que debe saber
+seo_title: Seguro de auto con licencia extranjera en EE. UU.
 description: Sí se puede asegurar un auto con licencia extranjera o permiso internacional en Estados Unidos. Qué documentos piden, por qué cuesta más y cómo pagar menos.
 path: es/seguro-de-auto-licencia-extranjera
 lang: es

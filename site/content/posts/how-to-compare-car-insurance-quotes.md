@@ -1,5 +1,6 @@
 ---
 title: How to compare car insurance quotes (without getting misled)
+seo_title: How to compare car insurance quotes, step by step
 description: A step-by-step way to compare car insurance quotes fairly, so the price you see matches the coverage you actually need.
 date: 2026-10-14
 updated: 2026-11-06

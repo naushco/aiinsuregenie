@@ -1,5 +1,6 @@
 ---
 title: Car insurance after a ticket or accident: how much it rises and how to pay less
+seo_title: Car insurance after a ticket or accident: how to pay less
 description: How much car insurance goes up after a speeding ticket or at-fault accident, how long it lasts, and practical ways to lower your price.
 path: car-insurance-after-accident-or-ticket
 lang: en

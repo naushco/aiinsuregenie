@@ -1,5 +1,6 @@
 ---
 title: SR-22 insurance: what it is, how long you need it, and how to get it
+seo_title: SR-22 insurance: what it is, how long, how to get it
 description: A plain-words guide to SR-22 insurance. What an SR-22 is, who needs one, how long it lasts, what it costs, non-owner SR-22s, and how to find an insurer that will file it.
 path: sr22-insurance
 lang: en

@@ -1,5 +1,6 @@
 ---
 title: SR-22 insurance in Texas: requirements, how long, and costs
+seo_title: SR-22 insurance in Texas: requirements, cost and filing
 description: Who needs an SR-22 in Texas, the 30/60/25 minimum coverage, the 2-year rule, what happens if it lapses, the $100 reinstatement fee, and non-owner SR-22s.
 path: sr22-insurance/texas
 lang: en

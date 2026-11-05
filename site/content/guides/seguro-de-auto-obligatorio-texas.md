@@ -1,5 +1,6 @@
 ---
 title: Seguro de auto obligatorio en Texas: lo mínimo que pide la ley
+seo_title: Seguro de auto obligatorio en Texas: mínimos de ley
 description: El seguro mínimo en Texas es 30/60/25. Qué cubre, qué multas hay por manejar sin seguro y cómo conseguir una póliza aunque tenga licencia extranjera.
 path: es/seguro-de-auto-obligatorio-texas
 lang: es

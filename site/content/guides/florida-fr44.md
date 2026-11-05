@@ -1,5 +1,6 @@
 ---
 title: Florida FR-44 insurance: what it is, limits, and how long you need it
+seo_title: Florida FR-44 insurance: limits, cost and the 3-year rule
 description: Florida FR-44 explained in plain words. Who needs it after a DUI, the 100/300/50 liability limits, the 3-year rule, costs, and how FR-44 differs from an SR-22.
 path: fr44-insurance/florida
 lang: en

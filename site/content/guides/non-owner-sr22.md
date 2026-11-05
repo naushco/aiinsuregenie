@@ -1,5 +1,6 @@
 ---
 title: Non-owner SR-22 insurance: how it works if you don't own a car
+seo_title: Non-owner SR-22 insurance: SR-22 without a car
 description: Need an SR-22 but don't own a car? How non-owner SR-22 insurance works, what it covers and doesn't, typical costs, and how to buy one.
 path: sr22-insurance/non-owner
 lang: en

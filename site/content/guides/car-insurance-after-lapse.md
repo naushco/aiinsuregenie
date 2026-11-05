@@ -1,5 +1,6 @@
 ---
 title: Car insurance after a lapse: how to get covered again (and pay less)
+seo_title: Car insurance lapse: what happens and how to fix it
 description: What happens when car insurance lapses, how much rates rise after 30 days, state penalties, and the fastest ways to get covered again.
 path: car-insurance-after-lapse
 lang: en

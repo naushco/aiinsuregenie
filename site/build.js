@@ -177,13 +177,13 @@ for (const p of posts) {
     ],
   };
   const html = head({
-    title: `${p.title} | ${NAME}`, description: p.description, url, type: 'article',
+    title: p.seo_title || `${p.title} | ${NAME}`, description: p.description, url, type: 'article',
     extra: `<script type="application/ld+json">${JSON.stringify(ld)}</script>`,
   }) + `<main class="page">
 <article class="article">
   <p class="crumbs"><a href="/">Home</a> / <a href="/blog/">Guides</a></p>
   <h1>${esc(p.title)}</h1>
-  <p class="byline">By ${NAME} &middot; <time datetime="${p.date}">${fmtDate(p.date)}</time>${p.updated ? ` &middot; Updated <time datetime="${p.updated}">${fmtDate(p.updated)}</time>` : ''} &middot; ${Math.max(1, Math.round(words(p.body) / 220))} min read &middot; <a href="/how-we-check-facts/">How we check facts</a></p>
+  <p class="byline">By ${NAME} &middot; <time datetime="${p.date}">${fmtDate(p.date)}</time>${p.updated ? ` &middot; Updated <time datetime="${p.updated}">${fmtDate(p.updated)}</time>` : ''} &middot; ${Math.max(1, Math.round(words(p.body) / 220))} min read &middot; <a href="/how-we-check-facts/">How we check facts</a> &middot; <a href="/how-we-make-money/">How we make money</a></p>
 ${md(p.body)}
   <aside class="article-cta">
     <h2>Find the best quote for your needs</h2>
@@ -271,7 +271,7 @@ const pagesDir = path.join(root, 'content/pages');
 const simplePages = fs.existsSync(pagesDir) ? fs.readdirSync(pagesDir).filter((f) => f.endsWith('.md')).map((f) => parse(path.join(pagesDir, f))) : [];
 for (const pg of simplePages) {
   const url = `${SITE}/${pg.slug}/`;
-  const html = head({ title: `${pg.title} | ${NAME}`, description: pg.description, url }) + `<main class="page">
+  const html = head({ title: pg.seo_title || `${pg.title} | ${NAME}`, description: pg.description, url }) + `<main class="page">
 <article class="article legal-page">
   <h1>${esc(pg.title)}</h1>
   <p class="byline">Last updated <time datetime="${pg.updated || pg.date}">${fmtDate(pg.updated || pg.date)}</time></p>
@@ -458,12 +458,12 @@ for (const g of guides) {
   const cta = es
     ? `<aside class="article-cta"><h2>¿Listo para comparar?</h2><p>Genie le hace unas preguntas y le indica el socio de cotización que le conviene. Gratis y sin compromiso.</p><a class="btn btn-sun" href="#genie">Hablar con Genie</a></aside>`
     : `<aside class="article-cta"><h2>Ready to find an insurer that will file it?</h2><p>Genie asks a few quick questions and points you to the quoting partner that fits. Free, no obligation.</p><a class="btn btn-sun" href="#genie">Start with Genie</a></aside>`;
-  const html = head({ title: `${g.title} | ${NAME}`, description: g.description, url, type: 'article', lang: g.lang, hdr: es ? headerEs : null,
+  const html = head({ title: g.seo_title || `${g.title} | ${NAME}`, description: g.description, url, type: 'article', lang: g.lang, hdr: es ? headerEs : null,
     extra: `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>` }) + `<main class="page">
 <article class="article">
   <p class="crumbs">${es ? '<a href="/es/">Inicio</a>' : '<a href="/">Home</a> / <a href="/blog/">Guides</a>'}</p>
   <h1>${esc(g.title)}</h1>
-  <p class="byline">${es ? 'Por' : 'By'} ${NAME} &middot; ${es ? 'Datos verificados el' : 'Facts checked'} <time datetime="${g.updated || g.date}">${es ? new Date((g.updated || g.date) + 'T00:00:00Z').toLocaleDateString('es-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : fmtDate(g.updated || g.date)}</time> &middot; <a href="/how-we-check-facts/">${es ? 'Cómo verificamos los datos' : 'How we check facts'}</a></p>
+  <p class="byline">${es ? 'Por' : 'By'} ${NAME} &middot; ${es ? 'Datos verificados el' : 'Facts checked'} <time datetime="${g.updated || g.date}">${es ? new Date((g.updated || g.date) + 'T00:00:00Z').toLocaleDateString('es-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : fmtDate(g.updated || g.date)}</time> &middot; <a href="/how-we-check-facts/">${es ? 'Cómo verificamos los datos' : 'How we check facts'}</a>${es ? '' : ' &middot; <a href="/how-we-make-money/">How we make money</a>'}</p>
 ${body}
   ${cta}
   <p class="disclaimer">${es ? 'Solo información general, no es asesoría de seguros, legal ni financiera. Las reglas y los precios cambian según el estado y la aseguradora.' : 'General information only, not insurance, legal, or financial advice. Rules and prices vary by state and insurer; check your official notice.'}</p>
@@ -503,6 +503,7 @@ const urls = [
   { loc: SITE + '/privacy/' },
   { loc: SITE + '/terms/' },
   { loc: SITE + '/how-we-check-facts/' },
+  { loc: SITE + '/how-we-make-money/' },
   { loc: SITE + '/blog/', lastmod: posts[0] ? (posts[0].updated || posts[0].date) : undefined },
   ...posts.map((p) => ({ loc: `${SITE}/blog/${p.slug}/`, lastmod: p.updated || p.date })),
   ...guides.map((g) => ({ loc: `${SITE}/${g.path}/`, lastmod: g.updated || g.date })),

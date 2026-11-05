@@ -1,5 +1,6 @@
 ---
 title: Car insurance for new and young drivers (and adding a teen)
+seo_title: Car insurance for new and young drivers (and teens)
 description: How car insurance works for new and young drivers, when to add a teen to your policy, learner's permits, and the discounts that lower the price.
 path: new-driver-car-insurance
 lang: en
