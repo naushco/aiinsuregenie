@@ -2,7 +2,7 @@
 title: How to compare car insurance quotes (without getting misled)
 description: A step-by-step way to compare car insurance quotes fairly, so the price you see matches the coverage you actually need.
 date: 2026-10-14
-updated: 2026-11-01
+updated: 2026-11-06
 ---
 
 A low quote is only a good deal if it covers what you need. Insurers set prices differently, so the only fair way to compare is to hold everything else the same. Here is a simple process.
@@ -48,9 +48,27 @@ Once the quotes match, compare the things that don't show up in the premium:
 
 And don't cancel your current policy until the new one is in place ([Texas Department of Insurance](https://tdi.texas.gov/tips/car-insurance.html)).
 
+### Comparing accident forgiveness
+
+Accident forgiveness means the insurer agrees not to raise your price after an at-fault accident. Policy terms vary a lot, so compare these points on each quote ([NAIC](https://content.naic.org/index.php/article/consumer-insight-time-get-smart-about-accident-forgiveness-hitting-road-holidays)):
+
+- **Is it included or an add-on?** Sometimes it comes with the policy, often it costs extra.
+- **When does it start?** Some policies need up to five years of clean driving first; others apply right away.
+- **How many accidents does it cover?** Some forgive one accident, others more.
+
+It tends to matter most for drivers who already pay higher rates. An accident can raise premiums by as much as 40% ([NAIC](https://content.naic.org/index.php/article/consumer-insight-time-get-smart-about-accident-forgiveness-hitting-road-holidays)).
+
+### Comparing roadside assistance
+
+Roadside assistance covers help like towing, jump-starts or a flat tire. When comparing quotes, check what each insurer includes and the price of the add-on. You may already have similar help through an auto club, your car's warranty or a credit card, so check before paying for it twice.
+
 ## 6. Check what happens at renewal
 
 Some policies start cheap and rise later. Ask how renewal pricing works, and set a reminder to compare again each year.
+
+## If your situation is harder
+
+Some drivers have fewer insurers to choose from, so comparing matters even more. See our guides on [SR-22 insurance](/sr22-insurance/), [Florida FR-44 insurance](/fr44-insurance/florida/) and [car insurance after a lapse](/car-insurance-after-lapse/).
 
 ## A quicker way to compare
 
@@ -59,4 +77,5 @@ Repeating the same details on many websites takes time. With AI InsureGenie you 
 ## Sources
 
 - [NAIC (National Association of Insurance Commissioners): comparing online auto insurance quotes](https://content.naic.org/article/consumer-insight-comparing-online-auto-insurance-quotes)
+- [NAIC: getting smart about accident forgiveness](https://content.naic.org/index.php/article/consumer-insight-time-get-smart-about-accident-forgiveness-hitting-road-holidays)
 - [Texas Department of Insurance: car insurance tips](https://tdi.texas.gov/tips/car-insurance.html)

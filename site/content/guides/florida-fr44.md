@@ -4,8 +4,11 @@ description: Florida FR-44 explained in plain words. Who needs it after a DUI, t
 path: fr44-insurance/florida
 lang: en
 date: 2026-11-01
+updated: 2026-11-06
 genie: sr22-fl
 ---
+
+**Quick answer:** an FR-44 is a form your insurer files with Florida to prove you carry extra-high liability insurance after a DUI. You need at least **$100,000/$300,000/$50,000** in liability coverage, and you must keep it for **three years** ([FLHSMV](https://www.flhsmv.gov/driver-licenses-id-cards/education-courses/dui-and-iid/dui-faqs)).
 
 In Florida, drivers convicted of DUI must carry much higher liability limits and prove it with an **FR-44** form, filed by their insurer. Florida's motor vehicle department says you must keep the FR-44 for **three years from the date your driving privilege is reinstated** ([FLHSMV](https://www.flhsmv.gov/driver-licenses-id-cards/education-courses/dui-and-iid/dui-faqs)).
 
@@ -46,6 +49,15 @@ FR-44 limits come from [FLHSMV](https://www.flhsmv.gov/driver-licenses-id-cards/
 
 ## Common questions
 
+### What is an FR-44?
+An FR-44 is a certificate your insurance company files with the state to show you carry the higher liability limits required after a DUI. It is not a type of policy itself. Florida requires it for three years from reinstatement ([FLHSMV](https://www.flhsmv.gov/driver-licenses-id-cards/education-courses/dui-and-iid/dui-faqs)).
+
+### Which states use FR-44 insurance?
+Only Florida and Virginia use FR-44 filings. Other states use an SR-22 instead ([Progressive](https://www.progressive.com/answers/fr-44/)).
+
+### What happens if my FR-44 policy lapses or is cancelled?
+Your insurer must report the cancellation to the state, which can suspend your license and registration until you get covered again ([Florida Statutes s. 324.0221](https://flsenate.gov/Laws/Statutes/2025/324.0221)). Keep payments current for the full three years.
+
 ### Is an FR-44 the same as an SR-22?
 They do the same job, proving you carry insurance, but an FR-44 requires much higher liability limits ([NerdWallet](https://www.nerdwallet.com/blog/insurance/fr44-insurance)).
 
@@ -65,3 +77,4 @@ Official:
 Insurance publications:
 - [NerdWallet: FR-44 and SR-22 insurance in Florida](https://www.nerdwallet.com/blog/insurance/fr44-insurance)
 - [CarInsurance.com: FR-44 insurance in Virginia](https://carinsurance.com/fr-44-insurance-virginia.aspx)
+- [Progressive: what is an FR-44 form?](https://www.progressive.com/answers/fr-44/)
