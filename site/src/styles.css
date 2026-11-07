@@ -354,6 +354,11 @@ td { color: var(--muted); }
 .article-cta { display: grid; gap: var(--s3); justify-items: start; margin-top: var(--s12); padding: var(--s8); background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow), var(--edge); }
 .article-cta h2 { margin: 0; font-size: var(--text-h3); }
 .article-cta p { color: var(--muted); }
+.related { margin-top: var(--s12); padding-top: var(--s8); border-top: 1px solid var(--border); }
+.related h2 { margin: 0 0 var(--s3); font-size: var(--text-h3); }
+.related ul { margin: 0; padding-left: 1.2em; display: grid; gap: var(--s2); }
+.popular-guides { margin-top: var(--s6); color: var(--muted); font-size: var(--text-secondary); }
+.popular-guides a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .article-cta .btn { margin-top: var(--s2); }
 .article .disclaimer { margin-top: var(--s8); font-size: var(--text-meta); line-height: 1.4; color: var(--muted); }
 section.tight { padding-top: 0; }
