@@ -438,6 +438,32 @@ const GENIE = {
     ] }), sub: 'Your AI insurance guide · replies in seconds', note: 'Genie is an AI assistant. A licensed agent is one tap away.', aria: 'Chat with Genie' },
   seguro: { cfg: Object.assign({}, byPage('seguro-es'), { hello: ['¡Hola! Soy Genie \ud83d\udc4b', '¿Tiene licencia de otro país? Le ayudo a encontrar aseguradoras que trabajan con conductores como usted.', '¿En qué estado vive?'] }), sub: 'Su guía de seguros con IA · responde al instante', note: 'Genie es un asistente de IA. Algunas partes del chat están en inglés por ahora.', aria: 'Hable con Genie' },
 };
+// Related guides shown at the end of each guide (internal links between close topics).
+const RELATED = {
+  'sr22-insurance': ['sr22-insurance/texas', 'sr22-insurance/non-owner', 'fr44-insurance/florida', 'car-insurance-after-lapse'],
+  'sr22-insurance/texas': ['sr22-insurance', 'sr22-insurance/non-owner', 'car-insurance-after-lapse', 'es/seguro-de-auto-obligatorio-texas'],
+  'sr22-insurance/non-owner': ['sr22-insurance', 'sr22-insurance/texas', 'fr44-insurance/florida', 'car-insurance-after-lapse'],
+  'fr44-insurance/florida': ['sr22-insurance', 'sr22-insurance/non-owner', 'car-insurance-after-lapse', 'car-insurance-after-accident-or-ticket'],
+  'car-insurance-after-lapse': ['sr22-insurance', 'fr44-insurance/florida', 'sr22-insurance/texas', 'car-insurance-after-accident-or-ticket'],
+  'car-insurance-after-accident-or-ticket': ['sr22-insurance', 'fr44-insurance/florida', 'car-insurance-after-lapse', 'new-driver-car-insurance'],
+  'new-driver-car-insurance': ['car-insurance-after-accident-or-ticket', 'rideshare-insurance', 'car-insurance-after-lapse'],
+  'rideshare-insurance': ['new-driver-car-insurance', 'car-insurance-after-accident-or-ticket', 'car-insurance-after-lapse'],
+  'es/seguro-de-auto-obligatorio-texas': ['es/seguro-de-auto-licencia-extranjera'],
+  'es/seguro-de-auto-licencia-extranjera': ['es/seguro-de-auto-obligatorio-texas'],
+};
+
+// Link each outside source once in the body (its first mention); later mentions stay as plain-text
+// attribution. The Sources list keeps every link.
+function dedupeCitations(src) {
+  const [main, ...rest] = src.split(/^(?=## (?:Sources|Fuentes)\s*$)/m);
+  const seen = new Set();
+  const out = main.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, (m, t, u) => {
+    if (u.startsWith(SITE) || !seen.has(u)) { seen.add(u); return m; }
+    return t;
+  });
+  return [out, ...rest].join('');
+}
+
 for (const g of guides) {
   const url = `${SITE}/${g.path}/`;
   const es = g.lang === 'es';
@@ -454,10 +480,15 @@ for (const g of guides) {
     { '@type': 'BreadcrumbList', itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c[0], item: c[1] })) },
     ...(faqs.length ? [{ '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) }] : []),
   ] };
-  const body = md(g.body).replace('<p>[[genie]]</p>', box);
+  const body = md(dedupeCitations(g.body)).replace('<p>[[genie]]</p>', box);
+  // "File it" only makes sense on SR-22 / FR-44 guides.
+  const ctaHead = /sr22|fr44/.test(g.path) ? 'Ready to find an insurer that will file it?'
+    : g.path === 'car-insurance-after-lapse' ? 'Ready to get covered again?' : 'Ready to find coverage that fits?';
   const cta = es
     ? `<aside class="article-cta"><h2>¿Listo para comparar?</h2><p>Genie le hace unas preguntas y le indica el socio de cotización que le conviene. Gratis y sin compromiso.</p><a class="btn btn-sun" href="#genie">Hablar con Genie</a></aside>`
-    : `<aside class="article-cta"><h2>Ready to find an insurer that will file it?</h2><p>Genie asks a few quick questions and points you to the quoting partner that fits. Free, no obligation.</p><a class="btn btn-sun" href="#genie">Start with Genie</a></aside>`;
+    : `<aside class="article-cta"><h2>${ctaHead}</h2><p>Genie asks a few quick questions and points you to the quoting partner that fits. Free, no obligation.</p><a class="btn btn-sun" href="#genie">Start with Genie</a></aside>`;
+  const rel = (RELATED[g.path] || []).map((p) => guides.find((x) => x.path === p)).filter(Boolean);
+  const related = rel.length ? `<nav class="related" aria-label="${es ? 'Guías relacionadas' : 'Related guides'}"><h2>${es ? 'Guías relacionadas' : 'Related guides'}</h2><ul>${rel.map((r) => `<li><a href="/${r.path}/">${esc(r.title)}</a></li>`).join('')}</ul></nav>` : '';
   const html = head({ title: g.seo_title || `${g.title} | ${NAME}`, description: g.description, url, type: 'article', lang: g.lang, hdr: es ? headerEs : null,
     extra: `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>` }) + `<main class="page">
 <article class="article">
@@ -465,6 +496,7 @@ for (const g of guides) {
   <h1>${esc(g.title)}</h1>
   <p class="byline">${es ? 'Por' : 'By'} ${NAME} &middot; ${es ? 'Datos verificados el' : 'Facts checked'} <time datetime="${g.updated || g.date}">${es ? new Date((g.updated || g.date) + 'T00:00:00Z').toLocaleDateString('es-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : fmtDate(g.updated || g.date)}</time> &middot; <a href="/how-we-check-facts/">${es ? 'Cómo verificamos los datos' : 'How we check facts'}</a>${es ? '' : ' &middot; <a href="/how-we-make-money/">How we make money</a>'}</p>
 ${body}
+  ${related}
   ${cta}
   <p class="disclaimer">${es ? 'Solo información general, no es asesoría de seguros, legal ni financiera. Las reglas y los precios cambian según el estado y la aseguradora.' : 'General information only, not insurance, legal, or financial advice. Rules and prices vary by state and insurer; check your official notice.'}</p>
 </article>
