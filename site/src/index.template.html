@@ -70,42 +70,42 @@ body.home2 { --navy: #0b2a5b; --navy-2: #12397a; --gold: #ffb51e; --gold-2: #ffc
 
 /* Header */
 .h-header { background: var(--navy); border-bottom: 1px solid rgba(238,242,247,.08); }
-.h-nav { max-width: 1200px; margin: 0 auto; padding: 16px 24px; display: flex; align-items: center; gap: 24px; }
+.h-nav { max-width: 1200px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 24px; }
 .h-brand { display: flex; align-items: center; gap: 10px; white-space: nowrap; text-decoration: none; color: #eef2f7 !important; font-weight: 700; font-size: 20px; }
-.h-brand img { width: 40px; height: 40px; display: block; }
+.h-brand img { width: 36px; height: 36px; display: block; }
 .h-brand em, .h-foot .h-brand em { font-style: normal; color: var(--gold-2); }
 .h-links { display: flex; align-items: center; gap: 24px; margin-left: auto; }
 .h-links a { color: #c9d3e0; text-decoration: none; font-size: 15px; }
 .h-links a:hover { color: #fff; }
 .h-links .es { color: #eef2f7; font-weight: 600; }
-.h-links .h-btn { min-height: 48px; padding: 0 26px; font-size: 14px; color: var(--navy) !important; }
+.h-links .h-btn { min-height: 44px; padding: 0 24px; font-size: 14px; color: var(--navy) !important; }
 
 /* Hero */
-.h-hero { background: var(--navy); color: #eef2f7; overflow: hidden; }
-.h-hero .h-wrap { padding-top: 56px; display: flex; flex-wrap: wrap; gap: 48px 40px; align-items: center; }
-.h-copy { flex: 1 1 540px; min-width: 0; display: flex; flex-direction: column; gap: 22px; }
+.h-hero { --ph: clamp(400px, calc(100vh - 140px), 600px); background: var(--navy); color: #eef2f7; overflow: hidden; }
+.h-hero .h-wrap { padding-top: clamp(24px, 5vh, 56px); padding-bottom: clamp(32px, 6vh, 72px); display: flex; flex-wrap: wrap; gap: 48px 40px; align-items: center; }
+.h-copy { flex: 1 1 540px; min-width: 0; display: flex; flex-direction: column; gap: clamp(12px, 2.4vh, 22px); }
 .h-pill { margin: 0; align-self: flex-start; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,.1); color: #dbe7ff; font-size: 14px; font-weight: 600; }
-.h-hero h1 { margin: 0; font-size: clamp(36px, 5.2vw, 60px); line-height: 1.04; letter-spacing: -0.03em; color: #eef2f7; }
+.h-hero h1 { margin: 0; font-size: clamp(30px, min(4.2vw, 7.2vh), 56px); line-height: 1.04; letter-spacing: -0.03em; color: #eef2f7; }
 .h-hero h1 span { color: #9cc7ff; }
-.h-lede { margin: 0; font-size: 19px; line-height: 1.5; color: #c9d3e0; max-width: 580px !important; }
-.h-ask { display: flex; flex-direction: column; gap: 14px; margin-top: 4px; }
+.h-lede { margin: 0; font-size: clamp(16px, 2.6vh, 19px); line-height: 1.5; color: #c9d3e0; max-width: 580px !important; }
+.h-ask { display: flex; flex-direction: column; gap: clamp(10px, 1.8vh, 14px); }
 .h-ask label { font-size: 14px; font-weight: 600; color: #eef2f7; }
 .h-askbox { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; border-radius: 40px; background: #fff; box-shadow: 0 16px 40px rgba(0,0,0,.28); }
-.h-askbox input { flex: 1 1 260px; min-width: 0; min-height: 64px; padding: 0 20px; border: 0; border-radius: 999px; font: inherit; font-size: 17px; color: var(--ink2); background: transparent; }
+.h-askbox input { flex: 1 1 260px; min-width: 0; min-height: clamp(52px, 8vh, 62px); padding: 0 20px; border: 0; border-radius: 999px; font: inherit; font-size: 17px; color: var(--ink2); background: transparent; }
 .h-askbox input:focus { outline: none; }
 .h-askbox:focus-within { box-shadow: 0 16px 40px rgba(0,0,0,.28), 0 0 0 3px #9cc7ff; }
-.h-askbox .h-btn { min-height: 64px; padding: 0 34px; }
+.h-askbox .h-btn { min-height: clamp(52px, 8vh, 62px); padding: 0 30px; }
 .h-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .h-chips a { display: flex; align-items: center; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(238,242,247,.24); color: #eef2f7; text-decoration: none; font-size: 15px; }
 .h-chips a:hover { background: rgba(255,255,255,.08); }
-.h-ticks { display: flex; flex-wrap: wrap; gap: 12px 28px; padding-top: 6px; font-size: 15px; color: #c9d3e0; }
+.h-ticks { display: flex; flex-wrap: wrap; gap: 10px 28px; font-size: 15px; color: #c9d3e0; }
 .h-ticks span { display: flex; align-items: center; gap: 8px; }
 .h-stagewrap { flex: 1 1 420px; min-width: 0; display: flex; justify-content: center; }
-.h-stage { position: relative; width: 100%; max-width: 580px; height: 700px; }
-.h-photo { position: absolute; right: 0; top: 30px; width: 72%; height: 600px; object-fit: cover; object-position: 38% center; border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,.35); }
-.h-phone { position: absolute; left: 6px; top: 46px; width: 323px; height: 625px; transform: rotate(-7deg); }
-.h-phone img { display: block; width: 323px; height: 625px; filter: drop-shadow(0 40px 50px rgba(0,0,0,.55)); }
-.h-badge { position: absolute; right: 18px; display: flex; align-items: center; gap: 10px; padding: 10px 14px 10px 10px; border-radius: 14px; background: #fff; color: var(--ink2); box-shadow: 0 12px 30px rgba(0,0,0,.3); }
+.h-stage { position: relative; width: 100%; max-width: 580px; height: calc(var(--ph) + 70px); }
+.h-photo { position: absolute; right: 0; top: 30px; width: 72%; height: calc(var(--ph) - 10px); object-fit: cover; object-position: 38% center; border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,.35); }
+.h-phone { position: absolute; left: 6px; top: 40px; height: var(--ph); width: calc(var(--ph) * 0.5168); transform: rotate(-7deg); }
+.h-phone img { display: block; width: 100%; height: 100%; filter: drop-shadow(0 40px 50px rgba(0,0,0,.55)); }
+.h-badge { position: absolute; right: 10px; display: flex; align-items: center; gap: 10px; padding: 10px 14px 10px 10px; border-radius: 14px; background: #fff; color: var(--ink2); box-shadow: 0 12px 30px rgba(0,0,0,.3); }
 .h-badge i { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .h-badge b { display: block; font-size: 14px; }
 .h-badge small { display: block; font-size: 12px; color: var(--mute2); }
@@ -301,8 +301,9 @@ body.home2 { --navy: #0b2a5b; --navy-2: #12397a; --gold: #ffb51e; --gold-2: #ffc
   .h-askbox { border-radius: 24px; }
   .h-askbox .h-btn { width: 100%; }
   .h-photo, .h-badge { display: none; }
-  .h-stage { max-width: 336px; height: 640px; }
-  .h-phone { left: 6px; top: 6px; }
+  .h-hero { --ph: 560px; }
+  .h-stage { max-width: 336px; height: 600px; }
+  .h-phone { left: 14px; top: 10px; }
   .h-result { position: static; }
   .h-dedlabel output { font-size: 44px; }
   .h-tool { padding: 24px; }
