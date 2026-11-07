@@ -517,14 +517,14 @@ body.home2 { --navy: #0b2a5b; --navy-2: #12397a; --gold: #ffb51e; --gold-2: #ffc
           <p>Tick anything that applies. Nothing is saved or sent.</p>
           <fieldset class="h-opts" id="check-opts">
             <legend class="sr-only">Things that apply to you</legend>
-            <label class="h-opt"><input type="checkbox">It's been over a year since I compared</label>
-            <label class="h-opt"><input type="checkbox">My renewal price went up</label>
-            <label class="h-opt"><input type="checkbox">I moved, changed cars, or added a driver</label>
-            <label class="h-opt"><input type="checkbox">A ticket or claim has dropped off my record</label>
+            <label class="h-opt"><input type="checkbox" value="year">It's been over a year since I compared</label>
+            <label class="h-opt"><input type="checkbox" value="renewal">My renewal price went up</label>
+            <label class="h-opt"><input type="checkbox" value="changed">I moved, changed cars, or added a driver</label>
+            <label class="h-opt"><input type="checkbox" value="cleared">A ticket or claim has dropped off my record</label>
           </fieldset>
           <div class="h-meter" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
           <p class="h-verdict" id="check-h" aria-live="polite">Tick what applies to see if now is a good time.</p>
-          <a class="h-btn" href="https://chat.aiinsuregenie.com/#start=quote" rel="noopener">Get my quote →</a>
+          <a class="h-btn" id="check-go" href="https://chat.aiinsuregenie.com/#start=quote" rel="noopener">Get my quote →</a>
         </div>
       </div>
     </div>
@@ -694,6 +694,8 @@ body.home2 { --navy: #0b2a5b; --navy-2: #12397a; --gold: #ffb51e; --gold-2: #ffc
   boxes.forEach(function (b) { b.addEventListener('change', function () {
     var n = boxes.filter(function (x) { return x.checked; }).length;
     h.textContent = out[Math.min(n, 3)];
+    var picked = boxes.filter(function (x) { return x.checked; }).map(function (x) { return x.value; });
+    document.getElementById('check-go').href = CHAT + '#start=quote' + (picked.length ? '&reasons=' + picked.join(',') : '');
     bars.forEach(function (x, i) { x.classList.toggle('on', i < n); });
   }); });
 

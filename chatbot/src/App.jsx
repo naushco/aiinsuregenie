@@ -1288,6 +1288,14 @@ export default function AIInsureGenie() {
       if (st) { extra.state = st; said.push(stName); }
       if (yr) { extra.vehicleYear = yr; said.push(T("car ", "auto ") + car); }
       var S = SITUATIONS[p.get("situation") || ""], es = ES;
+      // "Should you shop around?" ticks from the website (#start=quote&reasons=renewal,year).
+      var RS = { year: ["it's been over a year since I compared", "hace más de un año que no comparo"], renewal: ["my renewal price went up", "mi renovación subió de precio"], changed: ["I moved, changed cars, or added a driver", "me mudé, cambié de auto o agregué un conductor"], cleared: ["a ticket or claim has dropped off my record", "una multa o reclamo ya salió de mi historial"] };
+      var rs = (p.get("reasons") || "").split(",").map(function(k){ return RS[k.trim()]; }).filter(Boolean);
+      if (!S && rs.length) {
+        var rl = rs.map(function(r){ return es ? r[1] : r[0]; });
+        S = { en: ["I want to compare: " + rl.join(", "), rs.length > 1 ? "Good call. With a few things changed, your current rate may be out of date, so comparing now makes sense." : "Good call. That's a common reason rates change, so it's worth comparing now."],
+              es: ["Quiero comparar: " + rl.join(", "), rs.length > 1 ? "Buena idea. Con varios cambios, su tarifa actual puede estar desactualizada, así que conviene comparar ahora." : "Buena idea. Es un motivo común de cambio de tarifa, así que vale la pena comparar ahora."] };
+      }
       if (p.get("situation") === "sr22") extra.driving = "dui";
       if (q) { setPhase("chat"); handleChat(q); }
       else if (start === "quote" && S) { var L = es ? S.es : S.en; usr(said.length ? L[0] + ", " + said.join(", ") : L[0]); startQ(Object.assign({}, extra, { _sit: L[1] })); }
