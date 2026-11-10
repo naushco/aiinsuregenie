@@ -77,6 +77,18 @@ export default {
     const url = new URL(request.url);
     // Same as Vercel's rewrite: the bare address shows the health check.
     const path = url.pathname === "/" ? "/api/health" : url.pathname.replace(/\/+$/, "");
+    // Best guess of the visitor's US state from Cloudflare's location data, for the chat's
+    // "Are you in Texas?" question. Nothing is stored or logged.
+    if (path === "/api/geo") {
+      const origin = request.headers.get("origin") || "";
+      const ok = /^https:\/\/([a-z0-9-]+\.)?aiinsuregenie\.com$/.test(origin) || /\.workers\.dev$/.test(origin);
+      const cf = request.cf || {};
+      const state = cf.country === "US" && /^[A-Z]{2}$/.test(cf.regionCode || "") ? cf.regionCode : null;
+      return new Response(JSON.stringify({ state }), {
+        status: 200,
+        headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...(ok ? { "access-control-allow-origin": origin, "vary": "Origin" } : {}) },
+      });
+    }
     const m = path.match(/^\/api\/([a-z]+)$/);
     const name = m && m[1];
     const handler = name && ROUTES[name];
