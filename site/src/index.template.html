@@ -310,6 +310,15 @@ body.home2 { --navy: #0b2a5b; --navy-2: #12397a; --gold: #ffb51e; --gold-2: #ffc
   .h-tool { padding: 24px; }
   .h-sitimg { min-height: 320px; }
 }
+
+.h-resume { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 60; max-width: 420px; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 12px; border-radius: 20px; background: #fff; box-shadow: 0 16px 40px rgba(11,42,91,.22), 0 0 0 1px #e9edf3; color: #0e1b33 !important; text-decoration: none; }
+.h-resume[hidden] { display: none; }
+.h-resume img { width: 36px; height: 36px; border-radius: 10px; }
+.h-resume .t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.h-resume b { font-size: 14.5px; font-weight: 600; }
+.h-resume small { font-size: 12.5px; color: #6b7588; }
+.h-resume .go { flex: none; padding: 10px 16px; border-radius: 12px; background: var(--gold); color: var(--navy); font-size: 14px; font-weight: 700; }
+body.home2.has-resume .mcta { display: none !important; }
 @media (prefers-reduced-motion: reduce) { .home2 * { transition: none !important; } }
 .home2 .mcta .btn { background: var(--gold); color: var(--navy); border-color: var(--gold); border-radius: 999px; font-weight: 700; }
 @media (max-width: 959.98px) { body.home2.has-mcta .h-foot { padding-bottom: 72px; } }
@@ -577,6 +586,12 @@ body.home2 { --navy: #0b2a5b; --navy-2: #12397a; --gold: #ffb51e; --gold-2: #ffc
   </section>
 </main>
 
+
+<a class="h-resume" id="h-resume" href="https://chat.aiinsuregenie.com/" hidden>
+  <img src="/logo-mark.png" alt="" width="36" height="36">
+  <span class="t"><b id="h-resume-t">Continue your match</b><small id="h-resume-s">Saved on this device</small></span>
+  <span class="go" id="h-resume-go">Continue</span>
+</a>
 <div class="mcta" id="mcta" aria-hidden="true"><small>Free. No obligation.</small><a class="btn btn-sun" href="https://chat.aiinsuregenie.com/#start=quote" rel="noopener" tabindex="-1">Get my quote →</a></div>
 
 <footer class="h-foot">
@@ -700,6 +715,17 @@ body.home2 { --navy: #0b2a5b; --navy-2: #12397a; --gold: #ffb51e; --gold-2: #ffc
     bars.forEach(function (x, i) { x.classList.toggle('on', i < n); });
   }); });
 
+
+  // ---------- "Continue your match" bar (set by the chat for 7 days) ----------
+  try {
+    var m = document.cookie.match(/(?:^|; )aig_resume=([^;]+)/);
+    if (m) {
+      var v = decodeURIComponent(m[1]).split('|'), bar = document.getElementById('h-resume');
+      if (v[0] === 'done') { document.getElementById('h-resume-t').textContent = 'Your match is ready'; document.getElementById('h-resume-s').textContent = 'All 4 steps done'; document.getElementById('h-resume-go').textContent = 'View'; }
+      else if (/^[1-4]$/.test(v[0])) document.getElementById('h-resume-s').textContent = 'Step ' + v[0] + ' of 4 · saved';
+      if (v[0] === 'done' || /^[1-4]$/.test(v[0])) { bar.hidden = false; document.body.classList.add('has-resume'); }
+    }
+  } catch (e) {}
   // ---------- Sticky mobile CTA ----------
   var mcta = document.getElementById('mcta');
   if (mcta && 'IntersectionObserver' in window) {

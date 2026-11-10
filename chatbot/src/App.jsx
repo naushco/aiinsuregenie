@@ -498,193 +498,142 @@ function basisLine(p) {
 // Styles
 // ---------------------------------------------------------------
 var CSS_TEXT = [
-  "html,body{margin:0}",
-  ".ig{--bg:#faf8f3;--surface:#ffffff;--ink:#0f1b2d;--ink2:#4a5a70;--mute:#4a5a70;--line:rgba(15,27,45,.12);--edge:rgba(15,27,45,.28);--edge-strong:rgba(15,27,45,.5);--brand:#1e3a5f;--brand-d:#16304f;--brand-t:#e8eef6;--brand-ink:#ffffff;--ring:rgba(30,58,95,.22);--sun:#ffc247;--sun-d:#ffb020;--sun-ink:#3d2600;--ok:#1e3a5f;--warn:#b42318;--warn-t:#fdecea;--warn-ink:#7a1a12;--star:#b45309;--shadow:0 1px 3px rgba(15,27,45,.06);--card:var(--surface);--bot:#f2f5f9;--pop:#ffb020;--pop-shade:#d98a00;--pop-t:#fff3d6;--pop-ink:#6b4200;--scene:#e8eef6;--road:#d5deea;--glass:#cfe0ee;--tire:#0f1b2d;--hub:#c5cfdb;--hero:#0f1b2d;--hero-ink:#eef2f7;--hero-mute:#a9b6c8;--hero-line:rgba(238,242,247,.16);--hero-acc:#ffc247;color-scheme:light}",
+  "html,body{margin:0;background:#ffffff}",
+  ".ig{--navy:#0b2a5b;--gold:#ffb51e;--gold-d:#f0a500;--blue:#1f5fd6;--ink:#0e1b33;--ink2:#33415c;--mute:#6b7588;--mute2:#8a94a6;--line:#eef1f5;--line2:#e3e8ef;--soft:#f1f4f8;--soft2:#f6f8fb;--ubub:#eef3fb;--brand:#0b2a5b;--ring:rgba(11,42,91,.12);color-scheme:light}",
   ".ig,.ig *{box-sizing:border-box}",
-  ".ig p,.ig h2{margin:0}",
-  ".ig{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:16px;display:flex;justify-content:center;-webkit-font-smoothing:antialiased}",
-  ".ig button,.ig input{font-family:inherit}",
-  ".ig-card{width:100%;max-width:520px;height:100vh;height:100dvh;display:flex;flex-direction:column;background:var(--card);position:relative}",
-  "@media (min-width:640px) and (max-width:767.98px){.ig{padding:24px;align-items:center}.ig-card{height:min(780px,calc(100dvh - 48px));border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}}",
-  ".ig button:focus-visible,.ig a:focus-visible,.ig input:focus-visible{outline:3px solid var(--brand);outline-offset:3px}",
-  ".hd{display:flex;align-items:center;gap:12px;padding:12px 16px;flex:none;background:var(--card)}",
-  ".av{width:40px;height:40px;border-radius:8px;background:var(--sun);color:var(--ink);display:grid;place-items:center;flex:none}",
-  ".hd-txt{min-width:0;flex:1}",
-  ".hd-name{font-weight:600;font-size:16px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-  ".hd-sub{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink2)}",
-  ".dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none}",
-  ".hd-btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border:1px solid var(--edge);border-radius:8px;background:var(--surface);color:var(--ink);font-size:14px;font-weight:500;cursor:pointer;flex:none}",
-  ".hd-btn:hover{border-color:var(--brand);background:var(--brand-t)}",
-  ".hd-btn .lbl-s{display:none}",
-  "@media (max-width:440px){.hd-btn .lbl-l{display:none}.hd-btn .lbl-s{display:inline}}",
-  ".prog{height:3px;background:var(--line);flex:none}.prog>div{height:100%;background:var(--brand);transition:width .4s ease}",
-  ".log{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:8px 16px 16px;display:flex;flex-direction:column}",
-  ".row{display:flex;flex-direction:column;margin-top:4px;animation:in .18s ease-out}",
-  ".row.first{margin-top:16px}.row.after{margin-top:16px}",
-  ".row.user{align-items:flex-end}.row.bot{align-items:flex-start}",
-  ".who{font-size:14px;color:var(--mute);margin:0 0 4px 2px}",
-  ".bub{max-width:86%;padding:12px 16px;border-radius:12px;font-size:16px;line-height:1.5;white-space:pre-line;overflow-wrap:anywhere}",
-  ".bot .bub{background:var(--bot);border:1px solid var(--line);border-bottom-left-radius:4px}",
-  ".user .bub{background:var(--brand);color:var(--brand-ink);border-bottom-right-radius:4px;max-width:80%}",
-  ".bub.err{background:var(--warn-t);color:var(--warn-ink);border-color:transparent}",
-  ".time{font-size:12px;color:var(--mute);margin:4px 4px 0}",
-  ".basis{font-size:14px;color:var(--mute);margin:8px 2px 0}",
-  ".typing{align-self:flex-start;display:flex;gap:4px;margin-top:8px;padding:16px;background:var(--bot);border:1px solid var(--line);border-radius:12px 12px 12px 4px}",
-  ".typing i{width:8px;height:8px;border-radius:50%;background:var(--mute);animation:blink 1.2s infinite}",
-  ".typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}",
-  ".quotes{width:100%;display:flex;flex-direction:column;gap:12px;margin-top:8px}",
-  ".quote{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--surface);box-shadow:var(--shadow)}",
-  ".q-top{display:flex;align-items:center;gap:12px}",
-  ".q-logo{width:44px;height:44px;border-radius:8px;display:grid;place-items:center;font-size:20px;font-weight:600;color:var(--ink);flex:none}",
-  ".q-logo.img{width:auto;min-width:48px;max-width:120px;height:48px;padding:8px;background:#fff;border:1px solid var(--line)}",
-  ".q-logo img{display:block;width:auto;height:auto;max-width:104px;max-height:32px;object-fit:contain}",
-  ".q-id{min-width:0;flex:1}",
-  ".q-name{font-weight:600;font-size:16px;line-height:1.25;overflow-wrap:anywhere}",
-  ".q-meta{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;font-size:14px;color:var(--ink2);margin-top:4px}",
-  ".q-rate{display:inline-flex;align-items:center;gap:4px}.q-rate svg{color:var(--pop-shade)}",
-  ".q-tag{font-size:12px;font-weight:500;line-height:1.4;padding:0 8px;border:1px solid var(--line);border-radius:4px;color:var(--ink2)}",
-  ".q-price{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;margin-top:12px}",
-  ".amt{display:inline-block;font-size:28px;line-height:1.1;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em}",
-  ".amt.blur{filter:blur(6px);user-select:none}",
-  ".per{font-size:14px;line-height:1.4;color:var(--mute)}",
-  ".q-feat{font-size:14px;line-height:1.5;color:var(--ink2);margin-top:8px}",
-  ".btn{display:flex;align-items:center;justify-content:center;min-height:48px;width:100%;padding:0 16px;border:0;border-radius:8px;font-size:16px;font-weight:500;text-decoration:none;cursor:pointer;margin-top:12px}",
-  ".btn-p{background:var(--sun);color:var(--sun-ink);font-weight:600}.btn-p:hover{background:var(--sun-d)}",
-  ".btn:disabled{background:var(--line);color:var(--mute);cursor:not-allowed}",
-  ".q-note{font-size:12px;line-height:1.4;color:var(--mute);text-align:center;margin-top:8px}",
-  ".consent{margin-top:16px;border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--surface)}",
-  ".consent label{display:flex;gap:12px;align-items:flex-start;cursor:pointer}",
-  ".consent input{width:24px;height:24px;margin:0;accent-color:var(--brand);flex:none}",
-  ".consent span{font-size:14px;line-height:1.5;color:var(--ink2)}",
-  ".consent a{color:var(--brand);text-decoration:underline}",
-  ".foot{flex:none;border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:var(--card)}",
-  ".chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}",
-  ".chip{min-height:44px;padding:0 16px;border:1px solid var(--edge);border-radius:8px;background:var(--surface);color:var(--ink);font-size:14px;font-weight:500;cursor:pointer;text-align:left}",
-  ".chip:hover{border-color:var(--brand);background:var(--brand-t)}",
-  ".chip.pri{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}.chip.pri:hover{background:var(--brand-d);border-color:var(--brand-d)}",
-  ".comp{display:flex;align-items:center;gap:8px;border:1px solid var(--edge-strong);border-radius:12px;padding:4px 4px 4px 16px;background:var(--surface)}",
-  ".comp:focus-within{border-color:var(--brand);box-shadow:0 0 0 3px var(--ring)}",
-  ".comp input{flex:1;min-width:0;height:44px;border:0;background:transparent;font-size:16px;color:var(--ink)}",
+  ".ig p,.ig h1,.ig h2{margin:0}",
+  ".ig{min-height:100vh;min-height:100dvh;background:#fff;color:var(--ink);font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:16px;display:flex;justify-content:center;-webkit-font-smoothing:antialiased}",
+  ".ig button,.ig input,.ig select{font-family:inherit}",
+  ".pj{font-family:'Plus Jakarta Sans',Inter,system-ui,sans-serif}",
+  ".ig-card{width:100%;height:100vh;height:100dvh;display:flex;flex-direction:column;background:#fff;position:relative}",
+  ".ig button:focus-visible,.ig a:focus-visible,.ig input:focus-visible,.ig select:focus-visible{outline:2px solid var(--blue);outline-offset:2px}",
+  /* Header */
+  ".hd{position:relative;display:flex;align-items:center;gap:10px;padding:12px 10px 12px 16px;border-bottom:1px solid var(--line);flex:none}",
+  ".hd-in{width:100%;max-width:760px;margin:0 auto;display:flex;align-items:center;gap:10px}",
+  ".hd-logo{width:32px;height:32px;border-radius:9px;display:block;flex:none}",
+  ".hd-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}",
+  ".hd-name{font-size:16px;font-weight:700;letter-spacing:-.01em}",
+  ".hd-sub{font-size:12.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+  ".hd-step{font-size:12.5px;font-weight:600;color:var(--navy);flex:none}",
+  ".ib{width:40px;height:40px;border:0;border-radius:50%;background:transparent;display:grid;place-items:center;color:var(--mute);cursor:pointer;flex:none;text-decoration:none}",
+  ".ib:hover{background:var(--soft)}",
+  ".ib.call{background:var(--soft);color:var(--navy);margin-left:4px}",
+  ".prog{position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--line)}.prog>i{display:block;height:2px;background:var(--navy);transition:width .35s ease}",
+  ".det{display:flex;align-items:center;gap:8px;width:100%;margin:0;padding:10px 16px;border:0;border-bottom:1px solid var(--line);background:#fafbfd;text-align:left;font-size:13px;color:var(--mute);cursor:pointer;flex:none}",
+  ".det-in{width:100%;max-width:760px;margin:0 auto;display:flex;align-items:center;gap:8px}",
+  ".det b{color:var(--ink);font-weight:600}",
+  ".det span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+  /* Conversation */
+  ".log{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column}",
+  ".log-in{margin-top:auto;width:100%;max-width:760px;margin-left:auto;margin-right:auto;padding:20px 20px 16px;display:flex;flex-direction:column;gap:18px}",
+  ".g{display:flex;gap:10px;align-items:flex-start;animation:in .28s cubic-bezier(.2,.8,.2,1)}",
+  ".ga{width:26px;height:26px;flex:none;border-radius:8px;display:block;margin-top:1px}",
+  ".gt{flex:1;min-width:0;font-size:15.5px;line-height:1.55;color:var(--ink);white-space:pre-line;overflow-wrap:anywhere}",
+  ".gt b{font-weight:600}",
+  ".gh{display:flex;gap:6px;align-items:flex-start;margin-top:4px;font-size:13.5px;line-height:1.5;color:var(--mute);white-space:normal}",
+  ".gh svg{flex:none;margin-top:2px}",
+  ".u{align-self:flex-end;max-width:78%;padding:10px 14px;border-radius:20px 20px 6px 20px;background:var(--ubub);color:var(--navy);font-size:15px;line-height:1.45;overflow-wrap:anywhere;animation:in .28s cubic-bezier(.2,.8,.2,1)}",
+  ".err{color:#b42318}",
+  ".dots{display:flex;gap:5px;padding:10px 0}.dots i{width:6px;height:6px;border-radius:50%;background:var(--mute2);animation:blink 1s infinite}.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}",
+  /* Answer buttons */
+  ".ans{display:flex;flex-wrap:wrap;gap:8px;padding-left:36px;animation:in .28s cubic-bezier(.2,.8,.2,1)}",
+  ".ans.row{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -20px;padding:2px 20px 4px 56px}.ans.row::-webkit-scrollbar{display:none}",
+  ".c{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 16px;border:0;border-radius:999px;background:var(--soft);color:var(--ink);font-size:15px;font-weight:500;white-space:nowrap;cursor:pointer;transition:background .15s}",
+  ".c:hover{background:var(--line2)}",
+  ".c.on{background:var(--navy);color:#fff}",
+  ".c.act{background:transparent;color:var(--blue);padding:0 6px}",
+  ".c.soft{background:transparent;color:var(--mute);box-shadow:inset 0 0 0 1px var(--line2)}",
+  ".lk{border:0;background:none;padding:0;color:var(--blue);font-size:14px;font-weight:600;cursor:pointer;text-decoration:none}",
+  ".back{align-self:flex-start;margin-left:36px;color:var(--mute2);font-weight:500;font-size:13.5px}",
+  ".p1{display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 22px;border:0;border-radius:14px;background:var(--gold);color:var(--navy);font-size:16px;font-weight:700;text-decoration:none;cursor:pointer}",
+  ".p1:hover{background:var(--gold-d)}",
+  ".p1[aria-disabled='true']{background:var(--soft);color:var(--mute2);cursor:not-allowed}",
+  ".p2{display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 18px;border:0;border-radius:14px;background:#fff;color:var(--navy);box-shadow:inset 0 0 0 1px #d5deeb;font-size:16px;font-weight:600;text-decoration:none;cursor:pointer}",
+  ".p2:hover{background:var(--soft2)}",
+  ".selwrap{display:flex;flex-direction:column;gap:6px;padding-left:36px;font-size:13px;color:var(--mute)}",
+  ".selwrap select{min-height:46px;padding:0 12px;border:1px solid var(--line2);border-radius:12px;background:#fff;font-size:15px;color:var(--ink);max-width:320px}",
+  ".txt{display:flex;gap:8px;padding-left:36px}.txt input{flex:1;min-width:0;max-width:280px;min-height:46px;padding:0 14px;border:1px solid var(--line2);border-radius:12px;font-size:16px;color:var(--ink)}",
+  /* Start screen */
+  ".hello{display:flex;flex-direction:column;gap:8px;padding-bottom:4px;animation:in .28s cubic-bezier(.2,.8,.2,1)}",
+  ".hello img{width:44px;height:44px;border-radius:12px;display:block}",
+  ".hello h1{font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1.15}",
+  ".hello p{font-size:15px;line-height:1.5;color:var(--mute)}",
+  ".starts{display:flex;flex-direction:column;border-top:1px solid var(--line)}",
+  ".st{display:flex;align-items:center;gap:14px;min-height:58px;padding:0 2px;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:left;color:var(--ink);cursor:pointer;font-size:15.5px;font-weight:500}",
+  ".st:hover{background:var(--soft2)}",
+  ".st-ic{width:36px;height:36px;flex:none;border-radius:10px;background:var(--soft);display:grid;place-items:center;color:var(--navy)}",
+  ".st .st-l{flex:1}.st .chev{flex:none;color:#a3acbb}",
+  /* Car card */
+  ".car{display:flex;align-items:center;gap:14px;padding:12px;border-radius:16px;background:var(--soft2);animation:in .28s cubic-bezier(.2,.8,.2,1)}",
+  ".car-pic{width:84px;height:52px;flex:none;border-radius:12px;background:#fff;display:grid;place-items:center}",
+  ".car-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.car-tx b{font-size:16px;font-weight:700}.car-tx small{font-size:13px;color:var(--mute)}",
+  /* Match cards */
+  ".mcard{border-radius:20px;border:1px solid #e9edf3;box-shadow:0 12px 32px rgba(11,42,91,.08);padding:18px;display:flex;flex-direction:column;gap:14px;background:#fff;animation:in .3s cubic-bezier(.2,.8,.2,1)}",
+  ".m-top{display:flex;justify-content:space-between;align-items:center;gap:8px}",
+  ".tag{padding:4px 10px;border-radius:999px;background:#fff6e0;color:#8a5a00;font-size:12px;font-weight:600}",
+  ".tag.g{background:var(--soft);color:var(--ink2)}",
+  ".m-lbl{font-size:11.5px;color:var(--mute2)}",
+  ".m-id{display:flex;gap:12px;align-items:center}",
+  ".m-logo{width:46px;height:46px;flex:none;border-radius:14px;display:grid;place-items:center;color:#fff;font-size:18px;font-weight:800;overflow:hidden}",
+  ".m-logo.img{background:#fff;box-shadow:inset 0 0 0 1px var(--line2);padding:6px}.m-logo img{max-width:100%;max-height:100%;object-fit:contain;display:block}",
+  ".m-name{font-size:18px;font-weight:700;letter-spacing:-.01em;line-height:1.25}",
+  ".m-why{font-size:15px;line-height:1.5;color:var(--ink2)}",
+  ".m-facts{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--mute)}.m-facts span{display:flex;align-items:center;gap:5px}.m-facts svg{color:#12a150}",
+  ".m-btns{display:flex;flex-direction:column;gap:8px}",
+  ".m-note{font-size:12px;line-height:1.45;color:var(--mute2);text-align:center}",
+  ".m-links{display:flex;justify-content:space-between;gap:12px;font-size:13.5px}",
+  ".fine{font-size:12px;line-height:1.5;color:var(--mute2);text-align:center}",
+  ".fine a{color:var(--mute)}",
+  /* Composer */
+  ".foot{flex:none;padding:10px 16px calc(12px + env(safe-area-inset-bottom));background:#fff}",
+  ".foot-in{width:100%;max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:8px}",
+  ".comp{display:flex;align-items:center;gap:8px;padding:5px 5px 5px 16px;border-radius:26px;border:1px solid var(--line2);background:#fff;box-shadow:0 4px 16px rgba(11,42,91,.06)}",
+  ".comp:focus-within{border-color:var(--navy);box-shadow:0 0 0 3px var(--ring)}",
+  ".comp input{flex:1;min-width:0;min-height:42px;border:0;background:transparent;font-size:16px;color:var(--ink);outline:none}",
   ".ig .comp input:focus-visible{outline:none}",
-  ".ig input::placeholder{color:var(--mute);opacity:1}",
-  ".send{width:44px;height:44px;border:0;border-radius:8px;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;cursor:pointer;flex:none}",
-  ".send:disabled{background:var(--line);color:var(--mute);cursor:default}",
-  ".linkbtn{display:flex;align-items:center;justify-content:center;min-height:44px;margin:4px auto 0;padding:0 8px;border:0;background:none;color:var(--brand);font-size:14px;text-decoration:underline;cursor:pointer}",
-  ".disc{font-size:12px;line-height:1.4;color:var(--mute);text-align:center;margin-top:8px}",
-  ".disc-btn{position:relative;padding:0;border:0;background:none;color:var(--brand);font-size:12px;line-height:1.4;text-decoration:underline;cursor:pointer}",
-  ".disc-btn::before{content:'';position:absolute;inset:-14px -12px}",
-  ".disc-full{margin-top:4px}.disc-full a{color:var(--brand);text-decoration:underline}",
-  ".ov{position:fixed;inset:0;background:rgba(8,16,13,.55);z-index:50;display:flex;align-items:flex-end;justify-content:center}",
-  ".dlg{background:var(--surface);color:var(--ink);border:1px solid var(--line);width:100%;max-width:440px;max-height:92vh;max-height:92dvh;overflow:auto;border-radius:12px 12px 0 0;padding:24px}",
-  "@media (min-width:640px){.ov{align-items:center}.dlg{border-radius:12px}}",
+  ".ig input::placeholder{color:var(--mute2);opacity:1}",
+  ".send{width:42px;height:42px;flex:none;border:0;border-radius:50%;background:var(--navy);display:grid;place-items:center;color:#fff;cursor:pointer}",
+  ".send:disabled{background:var(--line2);cursor:default}",
+  ".disc{margin:0;text-align:center;font-size:11px;color:#a3acbb}.disc a{color:#a3acbb}",
+  /* Leave sheet + dialogs */
+  ".ov{position:fixed;inset:0;background:rgba(14,27,51,.45);z-index:50;display:flex;align-items:flex-end;justify-content:center}",
+  ".sheet,.dlg{background:#fff;color:var(--ink);width:100%;max-width:480px;max-height:92vh;max-height:92dvh;overflow:auto;border-radius:24px 24px 0 0;padding:12px 20px 22px;animation:up .3s cubic-bezier(.2,.8,.2,1)}",
+  "@media (min-width:640px){.ov{align-items:center}.sheet,.dlg{border-radius:20px;padding:20px 24px 24px}}",
+  ".grab{width:40px;height:4px;border-radius:999px;background:#dce3ec;margin:0 auto 14px}",
+  "@media (min-width:640px){.grab{display:none}}",
+  ".sheet h2,.dlg h2{font-family:'Plus Jakarta Sans',Inter,sans-serif;font-size:20px;font-weight:800;letter-spacing:-.02em;line-height:1.25}",
+  ".sheet p{font-size:15px;line-height:1.5;color:var(--mute);margin:8px 0 16px}",
+  ".sheet .p1,.sheet .p2{width:100%;margin-bottom:8px}",
+  ".dlg .sub{font-size:14px;line-height:1.5;color:var(--mute);margin-top:4px}",
   ".dlg-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}",
-  ".dlg h2{font-size:20px;line-height:1.25;font-weight:600}",
-  ".dlg .sub{font-size:14px;line-height:1.5;color:var(--ink2);margin-top:4px}",
-  ".x{width:44px;height:44px;border:0;border-radius:8px;background:var(--bg);color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:none}",
+  ".x{width:40px;height:40px;border:0;border-radius:50%;background:var(--soft);color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:none}",
   ".fld{margin-bottom:16px}",
-  ".fld label,.fld .lbl{display:block;font-size:14px;font-weight:500;margin-bottom:8px}",
-  ".fld input{width:100%;height:48px;padding:0 16px;border:1px solid var(--edge-strong);border-radius:8px;font-size:16px;color:var(--ink);background:var(--surface)}",
-  ".fld input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--ring)}",
+  ".fld label,.fld .lbl{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:6px}",
+  ".fld input{width:100%;height:50px;padding:0 14px;border:1px solid #dfe5ee;border-radius:12px;font-size:16px;color:var(--ink);background:#fff}",
+  ".fld input:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px var(--ring)}",
   ".seg{display:flex;flex-wrap:wrap;gap:8px}",
-  ".seg button{min-height:44px;padding:0 16px;border:1px solid var(--edge);border-radius:8px;background:var(--surface);color:var(--ink);font-size:14px;font-weight:500;cursor:pointer}",
-  ".seg button[aria-pressed='true']{background:var(--brand-t);border-color:var(--brand);color:var(--brand-d)}",
-  ".agree{display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.5;color:var(--ink2);cursor:pointer;margin-bottom:12px}",
-  ".agree input{width:24px;height:24px;margin:0;accent-color:var(--brand);flex:none}",
-  ".errmsg{font-size:14px;line-height:1.4;color:var(--warn);margin-bottom:12px}",
-  ".done{text-align:center;padding:8px 0}",
-  ".tick{width:48px;height:48px;border-radius:50%;background:var(--brand-t);color:var(--brand-d);display:grid;place-items:center;margin:0 auto 12px}",
-  ".hd{background:var(--hero);color:var(--hero-ink);border-bottom:1px solid var(--hero-line)}",
-  ".hd .av{background:var(--hero-acc);color:var(--hero)}",
-  ".hd .hd-name em{font-style:normal;color:var(--hero-acc)}",
-  ".hd .hd-sub{color:var(--hero-mute)}.hd .dot{background:var(--hero-acc)}",
-  ".hd .hd-btn{background:transparent;color:var(--hero-ink);border-color:rgba(238,246,242,.34)}.hd .hd-btn:hover{background:transparent;border-color:var(--hero-acc);color:var(--hero-acc)}",
-  ".prog{background:var(--hero-line)}",
-  "@media (max-width:767.98px){.foot .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-left:-16px;margin-right:-16px;padding:0 16px}.foot .chips::-webkit-scrollbar{display:none}.foot .chip{flex:none;white-space:nowrap}}",
-  ".offer{width:min(100%,460px);margin-top:8px;border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--surface);box-shadow:var(--shadow)}",
-  ".offer.is-top{border-color:var(--brand)}",
-  ".offers{display:flex;flex-direction:column;gap:12px;width:100%}",
-  ".o-feat{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:4px;font-size:14px;color:var(--ink2)}",
-  ".o-feat li{display:flex;align-items:center;gap:8px}.o-feat svg{color:var(--brand);flex:none}",
-  ".o-tip{margin-top:12px;padding:8px 12px;border-radius:8px;background:var(--pop-t);color:var(--pop-ink);font-size:14px;line-height:1.4}",
-  ".hd-sub b{font-weight:500;color:var(--hero-ink)}",
-  ".top-pick{display:inline-flex;align-items:center;gap:4px;margin-bottom:12px;padding:2px 8px;border-radius:4px;background:var(--pop-t);color:var(--pop-ink);font-size:12px;font-weight:500;line-height:1.4}",
-  ".top-pick svg{color:var(--pop-shade)}",
-  ".quote.is-top{border-color:var(--brand)}",
-  "@media (min-width:768px){.ig{--card:var(--bg);--bot:var(--surface);padding:0;align-items:stretch}.ig-card{max-width:none;height:100vh;height:100dvh;border:0;border-radius:0;box-shadow:none;overflow:visible}.hd{padding:12px 24px}.log{padding:24px max(24px,calc((100% - 880px)/2))}.foot{padding:16px max(24px,calc((100% - 880px)/2)) calc(16px + env(safe-area-inset-bottom))}.bub{max-width:72%}.user .bub{max-width:66%}.quotes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}}",
-  "@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}",
-  "@keyframes blink{0%,60%,100%{opacity:.35}30%{opacity:1}}",
-  "@media (prefers-reduced-motion:reduce){.ig *{animation:none!important;transition:none!important}}",
-  /* Conversational look: Genie writes as plain text, the visitor gets a soft bubble */
-  ".who{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--ink);margin:0 0 6px}",
-  ".who::before{content:'';width:26px;height:26px;border-radius:50%;flex:none;background:var(--sun) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11 4l6 2.6v4.3c0 4-2.5 7.2-6 8.8-3.5-1.6-6-4.8-6-8.8V6.6z' fill='%230f1b2d'/%3E%3Cpath d='M8.6 11.6l1.8 1.8 3.4-3.5' fill='none' stroke='%23ffc247' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\") center/18px no-repeat}",
-  ".bot .bub{background:none;border:0;border-radius:0;padding:2px 0 2px 34px;font-size:17px;line-height:1.6;color:var(--ink);max-width:92%}",
-  ".bot .bub + .bub{margin-top:2px}",
-  ".bub.err{padding:12px 16px!important;border-radius:12px!important;background:var(--warn-t)!important}",
-  ".user .bub{background:#e9eef5;color:var(--ink);border-radius:20px;border-bottom-right-radius:20px;padding:10px 16px;font-size:16px}",
-  ".typing{background:none;border:0;padding:10px 0 10px 34px;margin-top:8px}",
-  ".row.bot .time{margin-left:34px}",
-  "@media (min-width:768px){.bot .bub{max-width:80%}}",
-  /* Live profile card */
-  ".pcard{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 16px;background:#f4f7fb;border-bottom:1px solid var(--line);flex:none;animation:in .3s ease-out both}",
-  ".pcard-t{font-size:12px;font-weight:600;color:var(--mute);text-transform:uppercase;letter-spacing:.04em;margin-right:4px;flex:none}",
-  ".pchip{display:inline-flex;align-items:center;gap:5px;flex:none;min-height:32px;padding:0 10px;border:1px solid #cdd6e3;border-radius:17px;background:#fff;color:var(--ink);font:inherit;font-size:13px;font-weight:500;cursor:pointer;animation:in .3s ease-out both}",
-  "@media (max-width:767.98px){.pcard-t{display:none}}",
-  ".pchip svg{color:var(--mute)}.pchip:hover{border-color:var(--brand)}.pchip:focus-visible{outline:3px solid var(--sun);outline-offset:1px}.pchip:disabled{opacity:.6;cursor:default}",
-  "@media (min-width:768px){.pcard{padding:8px max(24px,calc((100% - 880px)/2))}}",
-  /* Progress tracker: connected steps */
-  ".trk{padding:10px 16px 8px;background:#fff;border-bottom:1px solid var(--line);flex:none}",
-  ".trk-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}",
-  ".trk-t{font-size:14px;font-weight:700;color:var(--ink)}.trk-r{font-size:12.5px;color:var(--mute)}",
-  ".trk-bar{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}",
-  ".trk-line{position:absolute;left:12.5%;right:12.5%;top:13px;height:4px;border-radius:2px;background:#e3e8ef}",
-  ".trk-line i{position:absolute;left:0;top:0;bottom:0;width:var(--fill2);max-width:100%;border-radius:2px;background:linear-gradient(90deg,var(--brand),#2f5d93);transition:width .5s cubic-bezier(.2,.8,.2,1)}",
-  ".trk-s{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:0 2px;border:0;background:none;font:inherit;color:var(--mute);cursor:default}",
-  ".trk-dot{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#fff;border:2px solid #d3dae4;font-size:13px;font-weight:700;color:var(--mute);transition:all .3s}",
-  ".trk-s.done .trk-dot{background:var(--brand);border-color:var(--brand);color:#fff}",
-  ".trk-s.active .trk-dot{border-color:var(--sun);background:#fff8e6;color:#8a5a00;box-shadow:0 0 0 4px rgba(255,194,71,.25)}",
-  ".trk-l{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}",
-  ".trk-s.done .trk-l,.trk-s.active .trk-l{color:var(--ink)}",
-  ".trk-v{font-size:12.5px;font-weight:600;color:var(--brand);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:16px}",
-  ".trk-s.active .trk-v{color:#8a5a00}",
-  ".trk-s.done{cursor:pointer}.trk-s.done:hover .trk-dot{box-shadow:0 0 0 4px rgba(30,58,95,.15)}.trk-s:focus-visible{outline:3px solid var(--sun);outline-offset:2px;border-radius:8px}",
-  "@media (min-width:768px){.trk{padding:12px max(24px,calc((100% - 880px)/2)) 10px}}",
-  /* Answer cards: stacked rows with line icons and a radio */
-  ".acards{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:12px;max-height:46vh;overflow-y:auto;padding:2px}",
-  ".acard{display:flex;align-items:center;gap:12px;min-height:62px;padding:10px 14px;border:1.5px solid #d5dce6;border-radius:14px;background:#fff;color:var(--ink);font:inherit;text-align:left;cursor:pointer;animation:in .25s ease-out both;transition:border-color .15s,background .15s}",
-  ".acard:hover:not(:disabled){border-color:#9fb0c6;background:#f8fafc}.acard:focus-visible{outline:3px solid var(--sun);outline-offset:2px}.acard:disabled{cursor:default}",
-  ".acard.on{border-color:var(--brand);background:#eef3f9}",
-  ".ac-ic{width:40px;height:40px;border-radius:10px;background:#eef2f7;color:var(--brand);display:grid;place-items:center;flex:none;transition:background .15s,color .15s}",
-  ".acard.on .ac-ic{background:var(--brand);color:#fff}",
-  ".ac-tx{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}",
-  ".ac-l{font-size:16px;font-weight:600;line-height:1.25}.ac-s{font-size:14px;color:var(--mute);line-height:1.35}",
-  ".ac-rd{width:22px;height:22px;border-radius:50%;border:1.5px solid #b7c2d0;flex:none;display:grid;place-items:center;color:#fff;transition:all .15s}",
-  ".acard.on .ac-rd{background:var(--brand);border-color:var(--brand)}",
-  ".acards.compact{gap:6px}.acards.compact .acard{min-height:48px;padding:8px 14px}.acards.compact .ac-l{font-size:15.5px;font-weight:500}",
-  "@media (min-width:768px){.acards.compact{grid-template-columns:repeat(2,minmax(0,1fr))}}",
-  /* Why we ask + expectations */
-  ".row .why{margin:4px 0 0 34px;font-size:13px;color:var(--mute);line-height:1.4;max-width:calc(92% - 34px)}",
-  ".row .expect,.expect{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px 34px}.expect span{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink2);background:#f4f7fb;border:1px solid var(--line);border-radius:999px;padding:4px 10px}",
-  ".wcta{display:grid;gap:8px;margin-bottom:12px}",
-  ".cta-main{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:58px;border:0;border-radius:14px;background:var(--sun);color:#3d2600;font:inherit;font-size:17px;font-weight:700;cursor:pointer;box-shadow:0 6px 16px rgba(255,194,71,.35);animation:in .3s ease-out both}",
-  ".cta-main:hover{filter:brightness(.97)}.cta-main:focus-visible{outline:3px solid var(--brand);outline-offset:2px}",
-  ".cta-sub{font-size:12.5px;font-weight:500;opacity:.8}",
-  ".cta-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cta-row .chip{text-align:center;justify-content:center}",
-  /* Email sign-up card */
-  ".ecard{box-sizing:border-box;margin:8px 0 0 34px;padding:14px;border:1px solid var(--line);border-radius:14px;background:#fff;width:calc(100% - 34px);max-width:460px;display:grid;grid-template-columns:minmax(0,1fr);gap:10px;animation:in .3s ease-out both}",
-  ".ecard.done{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--brand);font-weight:600;background:#eef3f9}",
-  ".e-lbl{font-size:13px;font-weight:600;color:var(--ink)}",
-  ".e-row{display:flex;gap:8px;min-width:0}.e-row input{flex:1 1 auto;width:100%;min-width:0;box-sizing:border-box;min-height:44px;padding:0 12px;border:1.5px solid #c5ccd6;border-radius:10px;font:inherit;font-size:16px;color:var(--ink);background:#fff}.e-row input:focus{outline:3px solid var(--sun);outline-offset:1px;border-color:var(--brand)}",
-  ".e-row .btn{flex:none;width:auto;min-height:44px;white-space:nowrap;padding:0 16px}",
-  ".e-ck{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;line-height:1.45;color:var(--ink2);min-width:0}.e-ck span{min-width:0}.e-ck input{margin-top:2px;width:18px;height:18px;flex:none}",
+  ".seg button{min-height:44px;padding:0 16px;border:0;border-radius:999px;background:var(--soft);color:var(--ink);font-size:14px;font-weight:500;cursor:pointer}",
+  ".seg button[aria-pressed='true']{background:var(--navy);color:#fff}",
+  ".agree{display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:14px;background:var(--soft2);font-size:12.5px;line-height:1.55;color:var(--ink2);cursor:pointer;margin-bottom:12px}",
+  ".agree input{width:20px;height:20px;margin:1px 0 0;accent-color:var(--navy);flex:none}",
+  ".errmsg{font-size:13px;line-height:1.4;color:#b42318;margin-bottom:12px}",
+  ".btn{display:flex;align-items:center;justify-content:center;min-height:52px;width:100%;padding:0 16px;border:0;border-radius:14px;font-size:16px;font-weight:600;text-decoration:none;cursor:pointer;margin-top:8px}",
+  ".btn-p{background:var(--gold);color:var(--navy);font-weight:700}.btn-p:hover{background:var(--gold-d)}",
+  ".btn:disabled{background:var(--soft);color:var(--mute2);cursor:not-allowed}",
+  ".done{text-align:center;padding:8px 0}.done p{font-size:15px;line-height:1.5;color:var(--ink2)}",
+  ".tick{width:52px;height:52px;border-radius:50%;background:#e9f7ef;color:#12a150;display:grid;place-items:center;margin:0 auto 12px}",
+  /* Email card */
+  ".ecard{margin-left:36px;padding:14px;border-radius:16px;background:var(--soft2);display:grid;grid-template-columns:minmax(0,1fr);gap:10px;max-width:460px;animation:in .3s ease-out both}",
+  ".ecard.done{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--navy);font-weight:600}",
+  ".e-lbl{font-size:13px;font-weight:600;color:var(--ink2)}",
+  ".e-row{display:flex;gap:8px;min-width:0}.e-row input{flex:1 1 auto;width:100%;min-width:0;min-height:46px;padding:0 12px;border:1px solid #dfe5ee;border-radius:12px;font-size:16px;color:var(--ink);background:#fff}.e-row input:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px var(--ring)}",
+  ".e-row .btn{flex:none;width:auto;min-height:46px;margin-top:0;white-space:nowrap;padding:0 16px}",
+  ".e-ck{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;line-height:1.45;color:var(--ink2);min-width:0}.e-ck span{min-width:0}.e-ck input{margin-top:2px;width:18px;height:18px;flex:none;accent-color:var(--navy)}.e-ck a{color:var(--blue)}",
   ".e-err{margin:0;font-size:13px;color:#b42318}",
-  /* Tip bubble */
-  ".bot .bub.hint{font-size:15px;color:var(--ink2);background:#fff8e6;border-radius:12px;padding:10px 14px;margin-left:34px;margin-top:6px;max-width:calc(92% - 34px)}",
-  /* Reveal checklist */
-  ".scan{list-style:none;margin:6px 0 0 34px;padding:12px 14px;display:grid;gap:8px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:15px;color:var(--ink2);width:min(calc(100% - 34px),420px)}",
-  ".scan li{display:flex;align-items:center;gap:10px;opacity:0;animation:in .35s ease-out forwards}",
-  ".scan .ck{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;flex:none;background:var(--line);color:transparent;animation:ckon .3s ease-out forwards}",
-  "@keyframes ckon{to{background:var(--ok);color:#fff}}",
-  "@media (prefers-reduced-motion:reduce){.scan li{opacity:1}.scan .ck{background:var(--ok);color:#fff}}"
+  "@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}",
+  "@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}",
+  "@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}",
+  "@media (prefers-reduced-motion:reduce){.ig *{animation:none!important;transition:none!important}}"
 ].join("\n");
 
 // ---------------------------------------------------------------
@@ -713,78 +662,6 @@ function Icon(props) {
     <svg width={size} height={size} viewBox="0 0 24 24" fill={props.fill ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d={ICONS[props.n]} />
     </svg>
-  );
-}
-
-
-
-// ---------------------------------------------------------------
-// One insurer quote row
-// ---------------------------------------------------------------
-function QuoteCard({ ins, locked, top }) {
-  var [logoBroken, setLogoBroken] = useState(false);
-  var showLogo = !!ins.logoUrl && !logoBroken;
-  var feats = (ins.ft || []).slice(0, 3).join(", ");
-  var sponsored = !!(ins.pinned || ins.featured);
-  var tag = sponsored ? T("Sponsored", "Patrocinado") : (ins.tag || "");
-  return (
-    <article className={"quote" + (top ? " is-top" : "")} aria-label={ins.n + T(" estimate", " estimado")}>
-      {top ? <span className="top-pick"><Icon n="star" fill size={12} />{T("Top pick for you", "Mejor opción para usted")}</span> : null}
-      <div className="q-top">
-        <div className={"q-logo" + (showLogo ? " img" : "")} style={showLogo ? undefined : { background: ins.bc + "26" }} aria-hidden="true">
-          {showLogo ? <img src={ins.logoUrl} alt="" onError={function () { setLogoBroken(true); }} /> : (ins.n || "?").charAt(0)}
-        </div>
-        <div className="q-id">
-          <div className="q-name">{ins.n}</div>
-          <div className="q-meta">
-            <span className="q-rate"><Icon n="star" fill size={13} />{ins.r}</span>
-            {tag ? <span className={"q-tag" + (sponsored ? " sp" : "")}>{tag}</span> : null}
-          </div>
-        </div>
-      </div>
-      <div className="q-price">
-        <span className={"amt" + (locked ? " blur" : "")}>{"$" + ins.premium}</span>
-        <span className="per">{locked ? T("shown after you connect", "se muestra al conectarse") : T("per month, estimate", "al mes, estimado")}</span>
-      </div>
-      {feats ? <p className="q-feat">{feats}</p> : null}
-      {!locked ? (
-        <div>
-          <a className="btn btn-p" href={ins.rUrl || "#"} target="_blank" rel="noopener noreferrer sponsored" onClick={function(){ track("partner_click", { partner_id: ins.id, placement: top ? "top" : "list" }); }}>
-            {ins.supportsPrefill ? T("Continue to ", "Continuar a ") + ins.n : T("Get my quote from ", "Obtener mi cotización de ") + ins.n}
-          </a>
-          <p className="q-note">
-            {ins.supportsPrefill ? T("Your details carry over to their form.", "Sus datos pasan a su formulario.") : T("Opens in a new tab. You may need to re-enter some details.", "Se abre en otra pestaña. Puede que tenga que volver a escribir algunos datos.")}
-          </p>
-        </div>
-      ) : null}
-    </article>
-  );
-}
-
-// ---------------------------------------------------------------
-// Partner offer: one recommended quoting partner, opened on their own site
-// ---------------------------------------------------------------
-function OfferCard({ ins, top, tip }) {
-  var [logoBroken, setLogoBroken] = useState(false);
-  var showLogo = !!ins.logoUrl && !logoBroken;
-  var feats = (ins.ft || []).slice(0, 3);
-  return (
-    <article className={"offer" + (top ? " is-top" : "")} aria-label={ins.n}>
-      {top ? <span className="top-pick"><Icon n="star" fill size={12} />{T("Top pick for you", "Mejor opción para usted")}</span> : null}
-      <div className="q-top">
-        <div className={"q-logo" + (showLogo ? " img" : "")} style={showLogo ? undefined : { background: (ins.bc || "#1e3a5f") + "26" }} aria-hidden="true">
-          {showLogo ? <img src={ins.logoUrl} alt="" onError={function () { setLogoBroken(true); }} /> : (ins.n || "?").charAt(0)}
-        </div>
-        <div className="q-id">
-          <div className="q-name">{ins.n}</div>
-          <div className="q-meta"><span className="q-rate"><Icon n="star" fill size={13} />{ins.r}</span>{ins.pinned || ins.featured ? <span className="q-tag">{T("Sponsored", "Patrocinado")}</span> : null}</div>
-        </div>
-      </div>
-      {feats.length ? <ul className="o-feat">{feats.map(function (f, i) { return <li key={i}><Icon n="check" size={14} />{f}</li>; })}</ul> : null}
-      {tip ? <p className="o-tip">{tip}</p> : null}
-      <a className="btn btn-p" href={ins.rUrl || "#"} target="_blank" rel="noopener noreferrer sponsored" onClick={function(){ track("partner_click", { partner_id: ins.id, placement: top ? "top" : "other" }); }}>{T("Get my quote from ", "Obtener mi cotización de ")}{ins.n}</a>
-      <p className="q-note">{T("Opens " + ins.n + "'s site in a new tab. Fill in their short form to see your quotes.", "Abre el sitio de " + ins.n + " en otra pestaña. Llene su formulario corto para ver sus cotizaciones.")}</p>
-    </article>
   );
 }
 
@@ -919,625 +796,460 @@ function CallModal({ profile, onClose, onSent }) {
   );
 }
 
+// ---------------------------------------------------------------
+// Calm chat: 4 tap steps, questions answered anytime, one top match.
+// ---------------------------------------------------------------
+var LOGO = "/logo-mark.png";
+var SITE = ES ? "https://aiinsuregenie.com/es/" : "https://aiinsuregenie.com/";
+var POP_STATES = ["TX", "FL", "CA", "GA", "AZ", "IL"];
+var MODEL_LIST = {
+  Toyota: [["Camry", "sedan"], ["Corolla", "sedan"], ["RAV4", "suv"], ["Tacoma", "truck"]],
+  Honda: [["Civic", "sedan"], ["Accord", "sedan"], ["CR-V", "suv"], ["Pilot", "suv"]],
+  Ford: [["F-150", "truck"], ["Escape", "suv"], ["Explorer", "suv"], ["Mustang", "sedan"]],
+  Chevrolet: [["Silverado", "truck"], ["Equinox", "suv"], ["Malibu", "sedan"], ["Tahoe", "suv"]],
+  Nissan: [["Altima", "sedan"], ["Rogue", "suv"], ["Sentra", "sedan"], ["Frontier", "truck"]],
+  Hyundai: [["Elantra", "sedan"], ["Tucson", "suv"], ["Santa Fe", "suv"], ["Sonata", "sedan"]],
+  Kia: [["Forte", "sedan"], ["Sportage", "suv"], ["Sorento", "suv"], ["K5", "sedan"]],
+  Jeep: [["Grand Cherokee", "suv"], ["Wrangler", "suv"], ["Cherokee", "suv"], ["Gladiator", "truck"]]
+};
+var YEARS = ["2026", "2025", "2024", "2023", "2022", "2021", "2020", "2019", "2018", "2017", "2016"];
+var SIT = [
+  { k: "sr22", l: T("Need an SR-22", "Necesito SR-22"), s: "SR-22" },
+  { k: "dui", l: T("DUI or DWI", "DUI o DWI"), s: "DUI" },
+  { k: "record", l: T("Tickets or an accident", "Multas o un accidente"), s: T("Tickets/accident", "Multas/accidente") },
+  { k: "lapse", l: T("Gap in coverage", "Estuve sin seguro"), s: T("Lapse", "Sin seguro") },
+  { k: "new", l: T("New or young driver", "Conductor nuevo o joven"), s: T("New driver", "Conductor nuevo") },
+  { k: "ride", l: T("Rideshare or delivery", "Uber, Lyft o entregas"), s: T("Rideshare", "Plataformas") },
+  { k: "none", l: T("None of these", "Nada de esto"), s: T("Standard", "Estándar") }
+];
+var COVS = { min: T("State minimum", "Mínimo del estado"), full: T("Full coverage", "Cobertura total"), unsure: T("Not sure yet", "Todavía no sé") };
+var WHENS = { today: T("Today", "Hoy"), week: T("This week", "Esta semana"), compare: T("Just comparing", "Solo comparando") };
+var ORDER = ["start", "state", "sit", "make", "model", "year", "cov", "when", "done"];
+var SAVE_KEY = "aig-chat-v2";
+
+function stName(ab) { return ABBR_STATE[ab] || ab || ""; }
+function stepOf(stage) { return { start: 0, state: 1, sit: 2, make: 3, model: 3, year: 3, cov: 4, when: 4, done: 5 }[stage] || 0; }
+function bodyOf(make, model) { var m = (MODEL_LIST[make] || []).find(function (x) { return x[0] === model; }); return m ? m[1] : "sedan"; }
+function carName(s) { return [s.year && s.year !== "unsure" ? (s.year === "old" ? T("2015 or older", "2015 o antes") : s.year) : "", s.make, s.model && s.model !== "unsure" ? s.model : ""].filter(Boolean).join(" "); }
+function nextStage(s) {
+  if (!s.st) return "state";
+  if (!s.sitDone) return "sit";
+  if (!s.make) return "make";
+  if (!s.model && MODEL_LIST[s.make]) return "model";
+  if (!s.year) return "year";
+  if (!s.cov) return "cov";
+  if (!s.when) return "when";
+  return "done";
+}
+function toProfile(s) {
+  var sits = s.sits || [];
+  var p = { state: s.st || undefined };
+  p.driving = (sits.indexOf("sr22") >= 0 || sits.indexOf("dui") >= 0) ? "dui" : (sits.indexOf("record") >= 0 ? "major" : (s.sitDone ? "clean" : undefined));
+  if (sits.indexOf("lapse") >= 0) p.insured = "no";
+  if (sits.indexOf("new") >= 0) p.age = 22;
+  if (s.make && s.make !== "Other") p.vehicleMake = s.make;
+  if (s.year && /^\d{4}$/.test(s.year)) p.vehicleYear = s.year; else if (s.year === "old") p.vehicleYear = "2012";
+  p.coverage = s.cov === "min" ? "minimum" : (s.cov === "full" ? "full" : "standard");
+  p.priority = s.pri || (s.cov === "full" ? "coverage" : "price");
+  return p;
+}
+function setResumeCookie(s) {
+  try {
+    if (!/aiinsuregenie\.com$/.test(location.hostname)) return;
+    var step = stepOf(s.stage);
+    if (step < 2) { document.cookie = "aig_resume=; domain=.aiinsuregenie.com; path=/; max-age=0"; return; }
+    document.cookie = "aig_resume=" + (s.stage === "done" ? "done" : step) + "|" + LANG + "; domain=.aiinsuregenie.com; path=/; max-age=604800; SameSite=Lax";
+  } catch (e) {}
+}
+function Bold({ text }) {
+  var parts = String(text || "").split("**");
+  return <>{parts.map(function (t, i) { return i % 2 ? <b key={i}>{t}</b> : <span key={i}>{t}</span>; })}</>;
+}
+function Svg({ d, size, sw }) {
+  return <svg width={size || 18} height={size || 18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw || 1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>;
+}
+var I_PHONE = <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z" />;
+var I_INFO = <><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></>;
+var I_CHECK = <path d="M20 6L9 17l-5-5" />;
+var I_EDIT = <path d="M4 20h4L19 9l-4-4L4 16z" />;
+var I_CHEV = <path d="M9 6l6 6-6 6" />;
+var START_ICONS = {
+  doc: <><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5M9 13h6M9 17h4" /></>,
+  tag: <><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z" /><circle cx="7.5" cy="7.5" r="1.3" /></>,
+  car: <><path d="M5 17h14M3 13l2-5a2 2 0 0 1 1.9-1.3h10.2A2 2 0 0 1 19 8l2 5v4a1 1 0 0 1-1 1h-1M4 18a1 1 0 0 1-1-1v-4h18" /><circle cx="7.5" cy="17" r="1.6" /><circle cx="16.5" cy="17" r="1.6" /></>,
+  clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>
+};
+function CarPic({ body }) {
+  if (body === "suv") return <svg width="70" height="29" viewBox="0 0 260 108" aria-hidden="true"><path d="M16 78 L16 60 C16 54 20 50 27 49 L60 46 L80 24 C83 21 87 19 92 19 L196 19 C204 19 210 23 214 30 L228 50 C238 52 246 58 246 68 L246 80 C246 83 244 85 241 85 L21 85 C18 85 16 83 16 80 Z" fill="#0b2a5b" /><path d="M88 27 L128 27 L128 48 L70 48 Z" fill="#dbe7ff" /><path d="M134 27 L176 27 L176 48 L134 48 Z" fill="#dbe7ff" /><circle cx="70" cy="85" r="17" fill="#1f2a3d" /><circle cx="198" cy="85" r="17" fill="#1f2a3d" /></svg>;
+  if (body === "truck") return <svg width="72" height="29" viewBox="0 0 270 108" aria-hidden="true"><path d="M14 80 L14 54 L130 54 L130 80 Z" fill="#0b2a5b" /><path d="M128 80 L128 24 C128 20 131 18 135 18 L186 18 C192 18 197 21 200 26 L214 48 L244 52 C251 53 256 58 256 66 L256 82 C256 84 254 86 252 86 L18 86 C16 86 14 84 14 82 Z" fill="#0b2a5b" /><path d="M138 26 L184 26 C188 26 191 28 193 31 L204 48 L138 48 Z" fill="#dbe7ff" /><circle cx="62" cy="86" r="17" fill="#1f2a3d" /><circle cx="208" cy="86" r="17" fill="#1f2a3d" /></svg>;
+  return <svg width="70" height="27" viewBox="0 0 260 100" aria-hidden="true"><path d="M14 70 C14 61 21 57 33 55 L70 50 C85 37 105 27 132 27 L160 27 C181 27 197 37 211 49 L234 53 C244 55 248 61 248 68 L248 72 C248 75 246 77 243 77 L20 77 C16 77 14 75 14 70 Z" fill="#0b2a5b" /><path d="M82 50 C93 39 108 33 128 33 L136 33 L136 50 Z" fill="#dbe7ff" /><path d="M142 33 L158 33 C174 33 186 40 196 50 L142 50 Z" fill="#dbe7ff" /><circle cx="70" cy="77" r="16" fill="#1f2a3d" /><circle cx="70" cy="77" r="6" fill="#ffffff" /><circle cx="200" cy="77" r="16" fill="#1f2a3d" /><circle cx="200" cy="77" r="6" fill="#ffffff" /></svg>;
+}
+
+function whyLine(s) {
+  var where = T(" in ", " en ") + stName(s.st);
+  var sits = s.sits || [];
+  if (sits.indexOf("sr22") >= 0 || sits.indexOf("dui") >= 0) return T("A quoting partner that compares quotes from insurers", "Un socio de cotización que compara cotizaciones de aseguradoras") + where + T(". Mention you need an SR-22 so they can show insurers that file it.", ". Mencione que necesita una SR-22 para que le muestren aseguradoras que la presentan.");
+  if (sits.indexOf("ride") >= 0) return T("A quoting partner that compares quotes from insurers", "Un socio de cotización que compara cotizaciones de aseguradoras") + where + T(". Ask about coverage for when the rideshare app is on.", ". Pregunte por cobertura para cuando la app está encendida.");
+  if (sits.indexOf("lapse") >= 0 || sits.indexOf("record") >= 0) return T("A quoting partner that compares quotes from insurers", "Un socio de cotización que compara cotizaciones de aseguradoras") + where + T(". Share your history so your quotes are accurate.", ". Comparta su historial para que sus cotizaciones sean precisas.");
+  return T("A quoting partner that compares quotes from insurers", "Un socio de cotización que compara cotizaciones de aseguradoras") + where + T(" in one form.", " en un solo formulario.");
+}
+
+function MatchCard({ ins, s, top, onCall }) {
+  var [broken, setBroken] = useState(false);
+  var logo = ins.logoUrl && !broken;
+  var sponsored = !!(ins.pinned || ins.featured);
+  return (
+    <article className="mcard" aria-label={ins.n}>
+      <div className="m-top"><span className={"tag" + (top ? "" : " g")}>{top ? T("Matches your answers", "Coincide con sus respuestas") : T("Also fits", "También encaja")}</span><span className="m-lbl">{sponsored ? T("Sponsored partner", "Socio patrocinado") : T("Partner", "Socio")}</span></div>
+      <div className="m-id">
+        <span className={"m-logo pj" + (logo ? " img" : "")} style={logo ? undefined : { background: ins.bc || "#0f766e" }} aria-hidden="true">{logo ? <img src={ins.logoUrl} alt="" onError={function () { setBroken(true); }} /> : (ins.n || "?").charAt(0)}</span>
+        <span className="m-name pj">{ins.n}</span>
+      </div>
+      <p className="m-why">{whyLine(s)}</p>
+      <div className="m-facts">{[T("Free to compare", "Comparar es gratis"), T("No obligation", "Sin compromiso"), T("Their short form", "Su formulario corto")].map(function (f) { return <span key={f}><Svg d={I_CHECK} size={14} sw={2.4} />{f}</span>; })}</div>
+      <div className="m-btns">
+        <a className="p1" href={ins.rUrl || "#"} target="_blank" rel="noopener noreferrer sponsored" onClick={function () { track("partner_click", { partner_id: ins.id, placement: top ? "top" : "other", state: s.st || null }); }}>{T("Get my quote", "Obtener mi cotización")}</a>
+        {top ? <button type="button" className="p2" onClick={onCall}><Svg d={I_PHONE} size={17} />{T("Talk to a licensed agent", "Hablar con un agente con licencia")}</button> : null}
+      </div>
+      <p className="m-note">{T("Opens " + ins.n + "'s site in a new tab. Fill in their short form to see your quotes.", "Abre el sitio de " + ins.n + " en otra pestaña. Llene su formulario corto para ver sus cotizaciones.")}</p>
+    </article>
+  );
+}
+
+function fresh() {
+  return { stage: "start", st: "", changing: false, sits: [], sitDone: false, make: "", model: "", year: "", cov: "", when: "", pri: "", said: "", note: "", otherMake: false, qa: null, askMore: false, results: null, showAll: false, showEmail: "" };
+}
+
 export default function AIInsureGenie() {
-  var [msgs, setMsgs] = useState([]);
-  var [pro, setPro] = useState({});
-  var [inp, setInp] = useState("");
-  var [typ, setTyp] = useState(false);
-  var [si, setSi] = useState(-1);
-  var [phase, setPhase] = useState("welcome");
-  var [piiIdx, setPiiIdx] = useState(0);
-  var [qr, setQr] = useState(null);
-  var [pick, setPick] = useState(null);
-  var [form, setForm] = useState(false);
-  var [emailAsked, setEmailAsked] = useState(false); // structured quote screen: only when the visitor taps "Find my match" / a plain get-quote link
-  var [iph, setIph] = useState(T("Type here...", "Escriba aquí..."));
-  var [results, setResults] = useState([]);
-  var [cs, setCs] = useState(0);
-  var [ck, setCk] = useState(false);
-  var [showCon, setShowCon] = useState(false);
+  var [s, setS] = useState(fresh);
+  var [typing, setTyping] = useState(false);
+  var [draft, setDraft] = useState("");
+  var [geo, setGeo] = useState("");
   var [showCall, setShowCall] = useState(false);
-  var [showDisc, setShowDisc] = useState(false);
-  var [fullKb, setFullKb] = useState(false);
-  var [startTime] = useState(function(){ return nowTime(); });
-  var logRef = useRef(null);
-  var endRef = useRef(null);
-  var inRef = useRef(null);
-  var [insurerList, setInsurerList] = useState(IS_PREVIEW ? DEFAULT_INSURERS : []);
-  var partnerNames = insurerList.map(function(x){ return x.n; });
-  var consentMain = buildConsent(partnerNames);
-  var tot = MAIN_STEPS;
+  var [leave, setLeave] = useState(false);
+  var [list, setList] = useState(IS_PREVIEW ? DEFAULT_INSURERS : []);
+  var logRef = useRef(null), inRef = useRef(null), tRef = useRef(null), sRef = useRef(s);
+  sRef.current = s;
 
-  // Load partners from shared storage (set by admin dashboard)
-  useEffect(function() {
-    async function load() {
-      var loaded = await loadInsurers();
-      if (loaded) { INSURERS = loaded; setInsurerList(loaded); }
-    }
-    load();
-    // Refresh every 30 seconds in case admin changes partners
-    var interval = setInterval(load, 30000);
-    return function() { clearInterval(interval); };
+  // Partners from the dashboard (refreshed every 30 seconds).
+  useEffect(function () {
+    async function load() { var l = await loadInsurers(); if (l) { INSURERS = l; setList(l); } }
+    load(); var iv = setInterval(load, 30000);
+    return function () { clearInterval(iv); };
   }, []);
+  // Best guess of the visitor's state, from the API (Cloudflare location). Never stored.
+  useEffect(function () {
+    fetch(API_BASE + "/api/geo").then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { if (j && j.state && ABBR_STATE[j.state]) setGeo(j.state); }).catch(function () {});
+  }, []);
+  useEffect(function () {
+    var el = logRef.current; if (el) setTimeout(function () { el.scrollTo({ top: el.scrollHeight, behavior: "smooth" }); }, 40);
+  }, [s.stage, s.qa, s.askMore, s.showAll, s.showEmail, s.note, typing]);
+  // Save progress for 7 days, so a visitor who leaves can pick up where they were.
+  useEffect(function () {
+    if (s.stage === "start") return; // never overwrite saved progress with the empty welcome screen
+    try { var keep = Object.assign({}, s, { qa: null, askMore: false, results: null, showAll: false, showEmail: "" }); localStorage.setItem(SAVE_KEY, JSON.stringify({ t: Date.now(), s: keep })); } catch (e) {}
+    setResumeCookie(s);
+  }, [s]);
 
-  useEffect(function(){
-    var el = logRef.current;
-    if (el) setTimeout(function(){ el.scrollTo({ top: el.scrollHeight, behavior: "smooth" }); }, 30);
-  }, [msgs, typ, showCon]);
-  useEffect(function(){ setFullKb(false); }, [si, piiIdx, phase]);
-
-  var bot = function(text, x) { setMsgs(function(p){return p.concat([Object.assign({role:"bot",text:text,time:nowTime()},x||{})]);}); };
-  var usr = function(text) { setMsgs(function(p){return p.concat([{role:"user",text:text,time:nowTime()}]);}); };
-
-  var startQ = function(extra) {
-    track("chat_started", { mode: "quote" }, true);
-    var sit = extra && extra._sit; if (extra) { extra = Object.assign({}, extra); delete extra._sit; if (!Object.keys(extra).length) extra = null; }
-    var start = Object.assign({}, pro, extra || {});
-    if (extra) setPro(start);
-    setPhase("qualifying"); setTyp(true);
-    var got = [];
-    if (extra && extra.priority) got.push(T("your goal", "su prioridad"));
-    if (extra && extra.state) got.push(T("your state", "su estado"));
-    if (extra && extra.vehicleYear) got.push(T("your car's age", "el año de su auto"));
-    if (got.length) setCs(got.length);
-    var intro = got.length
-      ? T("Thanks! I've got ", "¡Gracias! Ya tengo ") + (got.length > 1 ? got.slice(0, -1).join(", ") + T(" and ", " y ") + got[got.length - 1] : got[0]) + T(" from the website, so I won't ask again. Just a few more quick questions.", " del sitio web, así que no se lo vuelvo a preguntar. Solo unas preguntas rápidas más.")
-      : T("Great! A few quick questions and I'll point you to the partner that fits you best. Ask me anything along the way.", "¡Perfecto! Unas preguntas rápidas y le indicaré el socio que mejor le conviene. Pregúnteme lo que quiera en cualquier momento.");
-    var hint = T("Tip: tap the buttons, or type it all at once, like *\"Texas, 2018 Camry, one ticket\"*.", "Consejo: toque las opciones, o escríbalo todo junto, como *\"Texas, Camry 2018, una multa\"*.");
-    setTimeout(function(){if(sit)bot(sit);bot(intro);bot(hint,{hint:true});setTyp(false);setTimeout(function(){advQ(0,start);},500);},sit?900:500);
+  // Every answer goes through go(): short "typing" pause, then the next question.
+  var go = function (o, quiet) {
+    var next = Object.assign({}, sRef.current, o);
+    if (!quiet) { setTyping(true); clearTimeout(tRef.current); tRef.current = setTimeout(function () { setTyping(false); }, 500); }
+    if (next.stage !== sRef.current.stage) track("step_answered", { step: sRef.current.stage, state: next.st || null });
+    if (next.stage === "done" && !next.results) next = Object.assign(next, { results: "loading" });
+    setS(next);
+    if (next.results === "loading") showMatch(next);
   };
-  var startChat = function() {
-    track("chat_started", { mode: "question" }, true);
-    setPhase("chat"); setTyp(true);
-    setTimeout(function(){bot(T("Sure, ask me anything about auto insurance: coverage types, claims, discounts, SR-22, deductibles, or how to compare insurers. When you're ready for personalized options, tap Get instant quote.", "Claro, pregúnteme lo que quiera sobre seguro de auto: tipos de cobertura, reclamos, descuentos, SR-22, deducibles o cómo comparar aseguradoras. Cuando quiera opciones para usted, toque Obtener cotización."));setTyp(false);setIph(T("Ask me anything...", "Pregunte lo que quiera..."));setTimeout(function(){inRef.current&&inRef.current.focus();},100);},500);
-  };
+  var answer = function (said, o) { var n = Object.assign({}, sRef.current, o); go(Object.assign({ said: said, note: "", otherMake: false }, o, { stage: nextStage(n) })); };
 
-  var advQ = function(idx, prof) {
-    var i = idx;
-    while (i < STEPS.length) { if (STEPS[i].cond && !STEPS[i].cond(prof)) { i++; continue; } break; }
-    if (i >= STEPS.length) { showMatch(prof); return; }
-    setSi(i); setTyp(true);
-    var s = STEPS[i];
-    setTimeout(function(){
-      var px = "";
-      if (s.id === "vmake2") px = T("No problem! ", "¡No hay problema! ");
-      bot(px + s.q, WHY[s.id] ? { why: WHY[s.id] } : null); setTyp(false);
-      setQr(s.t === "qr" ? s.opts : null); setIph(s.ph || T("Type...", "Escriba..."));
-      if (s.t === "text") setTimeout(function(){inRef.current&&inRef.current.focus();},100);
-    }, 500 + Math.random()*300);
+  var showMatch = async function (n) {
+    if (!INSURERS.length) { var l = await loadInsurers(); if (l) { INSURERS = l; setList(l); } }
+    var p = toProfile(n);
+    var r = pickPartners(p).map(function (ins) { return Object.assign({}, ins, { rUrl: buildUrl(ins, p) }); });
+    if (r.length) track("match_shown", { partner_id: r[0].id, state: p.state || null, goal: p.priority || null, options: r.length });
+    else track("no_match", { state: p.state || null, goal: p.priority || null });
+    setTimeout(function () { setS(function (cur) { return Object.assign({}, cur, { results: r }); }); }, 700);
   };
 
-  // Tap a profile chip to change that answer; everything else is kept.
-  var editItem = function(k) {
-    var u = Object.assign({}, pro), f = { loc: ["zip", "state"], car: ["vehicleYear", "vehicleMake"], drv: ["driving"], pri: ["priority"] }[k];
-    f.forEach(function(x){ delete u[x]; });
-    setPro(u); setQr(null); setPhase("qualifying");
-    usr(T("Change ", "Cambiar ") + ({ loc: T("my location", "mi ubicación"), car: T("my car", "mi auto"), drv: T("my record", "mi historial"), pri: T("my priority", "mi prioridad") })[k]);
-    setTyp(true);
-    setTimeout(function(){ bot(T("Sure, let's fix that.", "Claro, lo cambiamos.")); setTyp(false); setTimeout(function(){ advQ(0, u); }, 300); }, 400);
-  };
-
-  // Several answers typed at once ("Texas, 2018 Camry, one ticket") fill those questions and skip them.
-  var tryFree = function(val, base, stepField) {
-    var o = parseFree(val, stepField ? (STEPS[si] && STEPS[si].id) : null);
-    var keys = Object.keys(o).filter(function(k){ return k !== "zip"; });
-    var extra = keys.filter(function(k){ return k !== stepField; });
-    if (keys.length < 2 && !extra.length) return null;
-    var u = Object.assign({}, base), got = {};
-    Object.keys(o).forEach(function(k){
-      var mine = k === stepField || (stepField === "zip" && k === "state");
-      if (mine || !u[k] || u[k] === "Other") { u[k] = o[k]; got[k] = o[k]; }
-    });
-    if (!Object.keys(got).length) return null;
-    return { u: u, line: gotLine(got) };
-  };
-
-  var handleQ = function(val) {
-    if (!val.trim()) return;
-    var s = STEPS[si]; usr(val); setInp(""); setQr(null);
-    var fr = tryFree(val, pro, s.f);
-    if (fr) {
-      setPro(fr.u); setTyp(true);
-      setTimeout(function(){ bot(fr.line.indexOf(" · ") > 0 ? T("Nice, that saves time! Got it: **", "¡Perfecto, así es más rápido! Tengo: **") + fr.line + T("**. I'll skip those questions.", "**. Me salto esas preguntas.") : T("Got it: **", "Perfecto: **") + fr.line + "**."); setTyp(false); setTimeout(function(){ advQ(0, fr.u); }, 350); }, 500);
-      return;
+  // A question typed or tapped at any point: answer it, keep the match where it is.
+  var ask = function (text) {
+    var o = parseFree(text, null), cur = sRef.current, merge = {}, noted = [];
+    if (o.state && !cur.st) { merge.st = o.state; noted.push(stName(o.state)); }
+    if (o.driving === "dui" || o.driving === "major") {
+      var k = o.driving === "dui" ? "dui" : "record";
+      if (cur.sits.indexOf(k) < 0) { merge.sits = cur.sits.filter(function (x) { return x !== "none"; }).concat([k]); noted.push(k === "dui" ? "DUI" : T("an accident or ticket", "un accidente o multa")); }
     }
-    if (isQuestion(val, "qualifying", s.id)) {
-      setTyp(true);
-      getAnswer(val, pro, results).then(function(a){bot(a);setTyp(false);setTimeout(function(){setTyp(true);setTimeout(function(){bot(T("Back to your quote — ", "Volvamos a su cotización: ") + s.q);setTyp(false);setQr(s.t==="qr"?s.opts:null);setIph(s.ph||T("Type...", "Escriba..."));if(s.t==="text")setTimeout(function(){inRef.current&&inRef.current.focus();},100);},400);},700);});
-      return;
-    }
-    if (s.id === "vyear" && !/(19|20)\d{2}/.test(val) && (s.opts || []).indexOf(val) < 0) {
-      setTyp(true); setTimeout(function(){ bot(T("Pick a range above, or type the year, like 2019.", "Elija un rango de arriba, o escriba el año, por ejemplo 2019."), { err: true }); setTyp(false); setQr(s.opts); }, 300); return;
-    }
-    if (s.vl) {
-      var r = s.vl(val);
-      if (!r.ok) { setTyp(true);setTimeout(function(){bot(r.e,{err:true});setTyp(false);setQr(s.t==="qr"?s.opts:null);setIph(s.ph||T("Type...", "Escriba..."));},300);return; }
-      var v = r.v !== undefined ? r.v : (s.ps ? s.ps(val) : val.trim());
-      var u = Object.assign({}, pro); u[s.f] = v; if (r.st) u.state = r.st; setPro(u); setCs(function(c){return c+1;});
-      if (s.id === "zip" && r.st) { setTyp(true);setTimeout(function(){bot(T("Got it: **", "Perfecto: **")+(ABBR_STATE[r.st]||r.st)+"** ("+v+")."+T(" Partners and prices depend on your state, so this helps.", " Los socios y precios dependen de su estado, así que esto ayuda."));setTyp(false);setTimeout(function(){advQ(si+1,u);},300);},400);return; }
-      advQ(si+1, u);
-    } else {
-      var v2 = s.ps ? s.ps(val) : val.trim();
-      var u2 = Object.assign({}, pro); u2[s.f] = v2; setPro(u2); setCs(function(c){return c+1;});
-      var re = reaction(s.id, v2);
-      if (re) { setTyp(true); setTimeout(function(){ bot(re); setTyp(false); setTimeout(function(){ advQ(si+1, u2); }, 250); }, 450); return; }
-      advQ(si+1, u2);
-    }
-  };
-
-  // After the questions: recommend one quoting partner and send the user to their own form.
-  var GOAL = T({ price: "the lowest price", coverage: "strong coverage", service: "great service" }, { price: "el precio más bajo", coverage: "una buena cobertura", service: "un buen servicio" });
-  var REC = T({ clean: "a clean record", minor: "a couple of tickets", major: "a recent accident", dui: "a DUI or SR-22" }, { clean: "un historial limpio", minor: "un par de multas", major: "un accidente reciente", dui: "un DUI o SR-22" });
-  var TIPS = T({
-    price: "Tip: ask about safe-driver and paid-in-full discounts.",
-    coverage: "Tip: compare the same limits and deductible on every quote.",
-    service: "Tip: ask how claims are handled and how to reach support."
-  }, {
-    price: "Consejo: pregunte por descuentos de buen conductor y de pago completo.",
-    coverage: "Consejo: compare los mismos límites y deducible en cada cotización.",
-    service: "Consejo: pregunte cómo manejan los reclamos y cómo contactar a soporte."
-  });
-  var showMatch = async function(prof) {
-    var p = Object.assign({}, prof, { coverage: prof.priority === "coverage" ? "full" : (prof.coverage || "standard") });
-    setPro(p); setPhase("locked"); setQr(null);
-    var stn = ABBR_STATE[p.state] || p.state || T("your state", "su estado");
-    if (!INSURERS.length) { var fresh = await loadInsurers(); if (fresh) { INSURERS = fresh; setInsurerList(fresh); } }
-    var pre = pickPartners(p);
-    if (!pre.length) {
-      setTyp(true);
-      setTimeout(function(){
-        setResults([]);
-        track("no_match", { state: p.state || null, goal: p.priority || null });
-        if (!INSURERS.length) bot(T("I couldn't load partner options just now. You can talk to a licensed agent, or try again in a minute.", "No pude cargar las opciones ahora. Puede hablar con un agente con licencia o intentarlo en un minuto."));
-        else {
-          bot(T("I don't have a quoting partner for ", "Todavía no tengo un socio de cotización para ") + stn + T(" yet. Two things I can do:", ". Puedo hacer dos cosas:"));
-          bot(T("1. Email you as soon as a partner covers ", "1. Avisarle por correo en cuanto un socio cubra ") + stn + T(", with your answers saved so you won't start over.", ", con sus respuestas guardadas para no empezar de nuevo."), { email: "no_match" });
-          bot(T("2. Have a licensed agent call you: tap **Talk to an agent**.", "2. Pedir que un agente con licencia le llame: toque **Hablar con un agente**."));
-        }
-        setTyp(false); setPhase("follow");
-      }, 900);
-      return;
-    }
-    bot(T("Checking partners in ", "Buscando socios en ") + stn + "…", { scan: [
-      T("Partners that quote in ", "Socios que cotizan en ") + stn,
-      T("Who works with ", "Quién acepta ") + (REC[p.driving] || T("your record", "su historial")),
-      T("Ranking for ", "Ordenando por ") + (GOAL[p.priority] || T("a good fit", "la mejor opción"))
-    ] });
-    setTimeout(function(){ setTyp(true); }, 2300);
-    setTimeout(function(){
-      var r = pre.map(function(ins){ return Object.assign({}, ins, { rUrl: buildUrl(ins, p) }); });
-      setResults(r);
-      track("match_shown", { partner_id: r[0].id, state: p.state || null, goal: p.priority || null, options: r.length });
-      bot(T("Your match is ready. For ", "Su opción está lista. Para ") + (REC[p.driving] || T("your record", "su historial")) + T(" and ", " y ") + (GOAL[p.priority] || T("a good fit", "una buena opción")) + T(" in ", " en ") + stn + T(", this partner is my top pick:", ", este socio es mi mejor opción:"), { offer: r[0], tip: TIPS[p.priority] });
-      setTyp(false);
-      setTimeout(function(){ setTyp(true); setTimeout(function(){
-        bot(T("Anything else I can help with? You can also tap your profile above to change an answer.", "¿Le ayudo con algo más? También puede tocar su perfil arriba para cambiar una respuesta."));
-        if (!emailAsked) { setEmailAsked(true); bot(T("Want a copy of your answers and tips by email? Optional.", "¿Quiere una copia de sus respuestas y consejos por correo? Es opcional."), { email: "after_match" }); }
-        setTyp(false); setPhase("follow");
-      }, 700); }, 1200);
-    }, 3000);
-  };
-
-  var showMore = function() {
-    var more = results.slice(1, 3);
-    usr(T("See other options", "Ver otras opciones"));
-    setTyp(true);
-    setTimeout(function(){
-      if (!results.length) bot(T("I don't have any partner options for your answers yet. Tap **Talk to an agent** and a licensed agent can help.", "Todavía no tengo opciones de socios para sus respuestas. Toque **Hablar con un agente** y un agente con licencia le ayudará."));
-      else if (!more.length) {
-        bot(T("Right now **" + results[0].n + "** is the only partner that fits your answers" + (pro.state ? " in " + (ABBR_STATE[pro.state] || pro.state) : "") + ". There are no other options yet.", "Por ahora **" + results[0].n + "** es el único socio que encaja con sus respuestas" + (pro.state ? " en " + (ABBR_STATE[pro.state] || pro.state) : "") + ". Todavía no hay otras opciones."));
-        if (!emailAsked) { setEmailAsked(true); bot(T("Want me to email you when more partners are available? Optional.", "¿Quiere que le avise por correo cuando haya más socios? Es opcional."), { email: "more_options" }); }
-      }
-      else bot(T("Here " + (more.length === 1 ? "is another option that fits" : "are other options that fit") + " your answers:", (more.length === 1 ? "Aquí tiene otra opción" : "Aquí tiene otras opciones") + " según sus respuestas:"), { offers: more });
-      setTyp(false);
-    }, 600);
-  };
-
-  var advPII = function(idx, prof) {
-    if (idx >= PII_STEPS.length) { setPhase("consent");setShowCon(true);setTyp(true);setTimeout(function(){bot(T("Thanks ", "¡Gracias, ")+prof.firstName+T("! Please review and accept the consent below.", "! Revise y acepte el consentimiento de abajo."));setTyp(false);},400);return; }
-    setPiiIdx(idx); setTyp(true); var s = PII_STEPS[idx];
-    setTimeout(function(){var px="";if(idx===1)px=T("Thanks ", "¡Gracias, ")+prof.firstName+"! ";if(idx===2)px=T("Last step: ", "Último paso: ");bot(px+s.q);setTyp(false);setQr(null);setIph(s.ph);setTimeout(function(){inRef.current&&inRef.current.focus();},100);},400);
-  };
-
-  var handlePII = function(val) {
-    if (!val.trim()) return; var s = PII_STEPS[piiIdx]; usr(val); setInp("");
-    if (isQuestion(val, "pii", s.id)) {
-      setTyp(true);getAnswer(val,pro,results).then(function(a){bot(a);setTyp(false);setTimeout(function(){setTyp(true);setTimeout(function(){bot(T("Back to your quote — ", "Volvamos a su cotización: ")+s.q);setTyp(false);setIph(s.ph);setTimeout(function(){inRef.current&&inRef.current.focus();},100);},400);},700);});return;
-    }
-    if (s.vl) {
-      var r = s.vl(val);
-      if (!r.ok) { setTyp(true);setTimeout(function(){bot(r.e,{err:true});setTyp(false);setIph(s.ph);setTimeout(function(){inRef.current&&inRef.current.focus();},100);},300);return; }
-      var u = Object.assign({},pro); u[s.f] = r.v; setPro(u); setCs(function(c){return c+1;});
-      if (s.id==="phone"&&r.fmt){setTyp(true);setTimeout(function(){bot(T("Got it: **", "Perfecto: **")+r.fmt+"**.");setTyp(false);setTimeout(function(){advPII(piiIdx+1,u);},250);},350);return;}
-      advPII(piiIdx+1, u);
-    }
-  };
-
-  // =====================================================
-  // LEAD DISTRIBUTION — Send to ALL partners at once
-  // =====================================================
-  var BACKEND_URL = API_BASE + "/api/leads";
-
-  var submitLead = async function(profile) {
-    var consentText = consentMain + CONSENT_LINKS; // exactly what the user saw
-    var urlParams = new URLSearchParams(window.location.search);
-    try {
-      var response = await fetch(BACKEND_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          first_name: profile.firstName,
-          phone: profile.phone,
-          email: profile.email,
-          zip: profile.zip,
-          state: profile.state,
-          age: profile.age,
-          vehicle_year: profile.vehicleYear,
-          vehicle_make: profile.vehicleMake,
-          coverage: profile.coverage,
-          driving_record: profile.driving,
-          currently_insured: profile.insured,
-          current_insurer: profile.currentInsurer,
-          homeowner: profile.homeowner,
-          military: profile.military,
-          multi_car: profile.multiCar,
-          priority: profile.priority,
-          consent_text: consentText,
-          consent_timestamp: profile.consentTs,
-          consent_checked: true,
-          disclosed_buyers: partnerNames.join(", "),
-          publisher_id: urlParams.get("pub") || urlParams.get("utm_source") || "direct",
-          sub_id: urlParams.get("sub_id") || urlParams.get("click_id") || null,
-          session_id: SESSION_ID,
-          do_not_sell: DO_NOT_SELL,
-          utm_source: urlParams.get("utm_source") || "aiinsuregenie",
-          utm_medium: urlParams.get("utm_medium") || "chatbot",
-          utm_campaign: urlParams.get("utm_campaign") || null,
-          landing_page: window.location.href,
-          call_requested: profile.callRequested || false,
-          preferred_call_time: profile.callTime || null,
-        })
-      });
-      var data = await response.json();
-      return data;
-    } catch (err) {
-      console.error("Backend error:", err);
-      return null;
-    }
-  };
-
-  var handleConsent = function() {
-    if (!ck) return; setShowCon(false); usr(T("I agree", "Acepto"));
-    var u = Object.assign({},pro,{consent:true,consentTs:new Date().toISOString()}); setPro(u);
-    setPhase("unlock"); setTyp(true);
-    bot(T("Connecting you with insurers...", "Conectándole con aseguradoras..."));
-
-    // Send the lead to the backend. Matches are shown whether or not this succeeds,
-    // so a backend outage never leaves the user stuck.
-    submitLead(u).then(function(backendResult) {
-      if (backendResult && backendResult.success) {
-        console.log("Lead submitted:", backendResult.lead_id);
-      } else {
-        console.log("Backend unavailable or lead rejected; showing matches anyway.");
-      }
-      setTimeout(function() {
-        var r = results.map(function(ins){ return Object.assign({}, ins, { rUrl: buildUrl(ins, u) }); });
-        setResults(r);
-        bot(u.firstName + T(", here are your matches. Open any insurer to get your real price.", ", aquí tiene sus opciones. Abra cualquier aseguradora para ver su precio real."), { ins: r, locked: false, tags: true });
-        setTyp(false); setPhase("follow");
-        setTimeout(function(){
-          setTyp(true);
-          setTimeout(function(){ bot(T("If you have questions about any of these, ask me here. You can also talk to a licensed agent.", "Si tiene preguntas sobre alguna, pregúnteme aquí. También puede hablar con un agente con licencia.")); setTyp(false); }, 900);
-        }, 1500);
-      }, 600);
+    var qa = { q: text, a: null, noted: noted.join(T(" and ", " y ")), agent: /(dui|dwi|sr-?22|accident|ticket|rate|price|cost|raise|multa|accidente|precio)/i.test(text) };
+    setS(Object.assign({}, cur, merge, { qa: qa, askMore: false }));
+    track("question_asked", { stage: cur.stage }, false);
+    getAnswer(text, toProfile(Object.assign({}, cur, merge)), Array.isArray(cur.results) ? cur.results : []).then(function (a) {
+      setS(function (c) { return c.qa && c.qa.q === text ? Object.assign({}, c, { qa: Object.assign({}, c.qa, { a: a }) }) : c; });
     });
   };
-
-  var handleChat = function(val) {
-    if (!val.trim()) return; usr(val); setInp("");
-    track("chat_started", { mode: "typed" }, true);
-    var t = val.toLowerCase();
-    var fr = tryFree(val, pro);
-    if (fr && !isQuestion(val, "chat")) {
-      setPro(fr.u); setTyp(true);
-      setTimeout(function(){ bot(T("Got it: **", "Perfecto: **") + fr.line + T("**. Just a couple more taps and I'll find your match.", "**. Solo un par de toques más y le busco su opción.")); setTyp(false); setPhase("qualifying"); setTimeout(function(){ advQ(0, fr.u); }, 350); }, 500);
-      return;
-    }
-    var zm = val.match(/\b\d{5}\b/), zr = zm ? vZip(zm[0]) : null;
-    if (zr && zr.ok) {
-      var pz = Object.assign({}, pro, { zip: zr.v, state: zr.st }); setPro(pz); setCs(function(c){return c+1;});
-      var sad = /(went up|increase|higher|too (much|high|expensive)|renewal|subi|aument|caro|renovaci)/.test(t);
-      setTyp(true);
-      setTimeout(function(){ bot((sad ? T("Sorry to hear that. ", "Lamento oír eso. ") : "") + T("Got it: **", "Perfecto: **") + zr.v + "**, **" + zr.st + T("**. Let's find you a better fit.", "**. Vamos a buscarle una mejor opción.")); setTyp(false); setPhase("qualifying"); setTimeout(function(){ advQ(0, pz); }, 400); }, 500);
-      return;
-    }
-    if (["get my quote","get quote","start quote","compare rate","get started","find rate","i want a quote","cotiza","cotización","quiero un seguro","empezar"].some(function(w){return t.includes(w);})) {
-      setTyp(true);setTimeout(function(){bot(T("Great, let's get your quotes.", "Perfecto, vamos por sus cotizaciones."));setTyp(false);setPhase("qualifying");setTimeout(function(){advQ(0,pro);},400);},400);return;
-    }
-    setTyp(true);getAnswer(val,pro,results).then(function(a){bot(a);setTyp(false);setIph(T("Ask another question...", "Haga otra pregunta..."));});
+  var keepGoing = function () {
+    var cur = sRef.current;
+    go({ qa: null, askMore: false, stage: cur.stage === "start" ? nextStage(cur) : cur.stage, said: cur.stage === "start" ? "" : cur.said });
   };
 
-  var handleFollow = function(val) {
-    if (!val.trim()) return; usr(val); setInp(""); setTyp(true);
-    getAnswer(val,pro,results).then(function(a){bot(a);setTyp(false);});
+  // Typed text: a question gets an answer; "Texas, 2019 Camry, SR-22" fills the answers it contains.
+  var send = function () {
+    var text = draft.trim(); if (!text || typing) return; setDraft("");
+    var cur = sRef.current;
+    if (cur.stage === "make" && cur.otherMake && !isQuestion(text, "qualifying", "vmake")) { var mk = text.charAt(0).toUpperCase() + text.slice(1); answer(mk, { make: mk.slice(0, 30), model: "unsure" }); return; }
+    if (isQuestion(text, "qualifying", null)) { ask(text); return; }
+    var o = parseFree(text, null), lower = " " + text.toLowerCase() + " ", got = {}, said = [];
+    if (o.state) { got.st = o.state; said.push(stName(o.state)); }
+    var sits = cur.sits.slice();
+    if (/\bsr-?22\b/.test(lower)) sits.push("sr22");
+    if (/\b(dui|dwi)\b/.test(lower)) sits.push("dui");
+    if (/(uber|lyft|rideshare|doordash|delivery)/.test(lower)) sits.push("ride");
+    if (/(lapse|gap in|no insurance|uninsured)/.test(lower)) sits.push("lapse");
+    if (/(accident|ticket|crash)/.test(lower)) sits.push("record");
+    sits = sits.filter(function (x, i, a) { return x !== "none" && a.indexOf(x) === i; });
+    if (sits.length > cur.sits.length) { got.sits = sits; got.sitDone = true; said.push(SIT.filter(function (x) { return sits.indexOf(x.k) >= 0; }).map(function (x) { return x.s; }).join(" + ")); }
+    if (o.vehicleMake) { got.make = o.vehicleMake; }
+    Object.keys(MODEL_LIST).forEach(function (mk) { MODEL_LIST[mk].forEach(function (md) { if (lower.indexOf(" " + md[0].toLowerCase() + " ") >= 0) { got.make = mk; got.model = md[0]; } }); });
+    if (o.vehicleYear) got.year = parseInt(o.vehicleYear, 10) <= 2015 ? "old" : o.vehicleYear;
+    if (got.make) said.push(carName(Object.assign({}, cur, got)));
+    if (o.priority === "price") got.pri = "price";
+    if (!Object.keys(got).length) { ask(text); return; }
+    var n = Object.assign({}, cur, got);
+    go(Object.assign(got, { said: text, qa: null, note: T("Got it: ", "Perfecto: ") + said.filter(Boolean).join(", ") + T(". I just need the rest.", ". Solo me falta lo demás."), stage: nextStage(n) }));
   };
 
-
-  // Topics the website can open the chat with (#start=quote&situation=...&lang=es).
-  var SITUATIONS = {
-    sr22: { en: ["SR-22 / DUI", "No judgment here. Lots of drivers need an SR-22. I'll point you to partners that file SR-22s in your state."], es: ["SR-22 / DUI", "Aquí nadie le juzga. Muchos conductores necesitan una SR-22. Le indicaré socios que la presentan en su estado."] },
-    lapse: { en: ["Gap in coverage", "A lapse happens to lots of drivers. The sooner you're covered again, the better the price usually is."], es: ["Estuve sin seguro", "Le pasa a muchos conductores. Mientras antes vuelva a tener seguro, mejor suele ser el precio."] },
-    record: { en: ["Tickets or an accident", "A ticket or accident can raise your price, but some insurers are much more forgiving than others. Comparing makes a real difference."], es: ["Multas o un accidente", "Una multa o un accidente puede subir el precio, pero algunas aseguradoras son mucho más flexibles que otras. Comparar ayuda mucho."] },
-    "new-driver": { en: ["New or young driver", "First policy or adding a teen? Discounts like good grades and driver's ed can help a lot. I'll point you to the right partner."], es: ["Conductor nuevo o joven", "¿Primera póliza o agregar a un hijo? Descuentos por buenas notas o curso de manejo pueden ayudar mucho."] },
-    rideshare: { en: ["Rideshare or delivery", "Driving for Uber, Lyft or DoorDash? A personal policy often doesn't cover you while the app is on, so it's worth asking about rideshare coverage."], es: ["Uber, Lyft o entregas", "¿Maneja para Uber, Lyft o DoorDash? Una póliza personal a menudo no le cubre con la app encendida. Vale la pena preguntar por cobertura para rideshare."] }
-  };
-
-  // Open the right flow when arriving from the website (values live in the URL fragment).
-  useEffect(function() {
+  // Open the right flow when arriving from the website (#start=quote&situation=sr22&state=Texas...).
+  useEffect(function () {
     var h = (window.location.hash || "").replace(/^#/, "");
-    if (!h) return;
+    if (!h) {
+      try {
+        var saved = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
+        if (saved && saved.s && Date.now() - saved.t < 7 * 864e5 && stepOf(saved.s.stage) >= 2) {
+          setS(Object.assign(fresh(), saved.s, { said: "", note: saved.s.stage === "done" ? T("Welcome back! Your match is still here.", "¡Bienvenido de nuevo! Su opción sigue aquí.") : T("Welcome back! Let's pick up where you left off.", "¡Bienvenido de nuevo! Sigamos donde lo dejó.") }));
+          if (saved.s.stage === "done") showMatch(saved.s);
+          track("chat_resumed", { stage: saved.s.stage }, true);
+        }
+      } catch (e) {}
+      return;
+    }
     var p = new URLSearchParams(h);
-    var start = p.get("start"), q = (p.get("q") || "").trim().slice(0, 200);
     try { window.history.replaceState(null, "", window.location.pathname + window.location.search); } catch (e) {}
-    var t = setTimeout(function() {
-      var goal = p.get("goal");
-      var stName = (p.get("state") || "").trim(), st = STATE_ABBR[stName.toLowerCase()];
-      var car = (p.get("car") || "").trim(), yr = CAR_AGE_YEAR[car];
-      var extra = {}, said = [];
-      if (goal === "price" || goal === "coverage") { extra.priority = goal; said.push(goal === "price" ? T("Lowest price", "Precio más bajo") : T("Best coverage", "Mejor cobertura")); }
-      if (st) { extra.state = st; said.push(stName); }
-      if (yr) { extra.vehicleYear = yr; said.push(T("car ", "auto ") + car); }
-      var S = SITUATIONS[p.get("situation") || ""], es = ES;
-      // "Should you shop around?" ticks from the website (#start=quote&reasons=renewal,year).
-      var RS = { year: ["it's been over a year since I compared", "hace más de un año que no comparo"], renewal: ["my renewal price went up", "mi renovación subió de precio"], changed: ["I moved, changed cars, or added a driver", "me mudé, cambié de auto o agregué un conductor"], cleared: ["a ticket or claim has dropped off my record", "una multa o reclamo ya salió de mi historial"] };
-      var rs = (p.get("reasons") || "").split(",").map(function(k){ return RS[k.trim()]; }).filter(Boolean);
-      if (!S && rs.length) {
-        var rl = rs.map(function(r){ return es ? r[1] : r[0]; });
-        S = { en: ["I want to compare: " + rl.join(", "), rs.length > 1 ? "Good call. With a few things changed, your current rate may be out of date, so comparing now makes sense." : "Good call. That's a common reason rates change, so it's worth comparing now."],
-              es: ["Quiero comparar: " + rl.join(", "), rs.length > 1 ? "Buena idea. Con varios cambios, su tarifa actual puede estar desactualizada, así que conviene comparar ahora." : "Buena idea. Es un motivo común de cambio de tarifa, así que vale la pena comparar ahora."] };
+    var start = p.get("start"), q = (p.get("q") || "").trim().slice(0, 200);
+    var t = setTimeout(function () {
+      var o = Object.assign(fresh(), { stage: "start" }), said = [];
+      var stN = (p.get("state") || "").trim(), ab = STATE_ABBR[stN.toLowerCase()];
+      if (ab) { o.st = ab; said.push(stName(ab)); }
+      var goal = p.get("goal"); if (goal === "price" || goal === "coverage") o.pri = goal;
+      var car = p.get("car") || "", yr = CAR_AGE_YEAR[car]; if (yr) { o.year = parseInt(yr, 10) <= 2015 ? "old" : yr; }
+      var SITMAP = { sr22: "sr22", lapse: "lapse", record: "record", "new-driver": "new", rideshare: "ride" };
+      var sk = SITMAP[p.get("situation") || ""];
+      if (sk) { o.sits = [sk]; o.sitDone = true; said.unshift(SIT.filter(function (x) { return x.k === sk; })[0].l); }
+      var RS = { year: T("it's been over a year since I compared", "hace más de un año que no comparo"), renewal: T("my renewal price went up", "mi renovación subió de precio"), changed: T("I moved, changed cars, or added a driver", "me mudé, cambié de auto o agregué un conductor"), cleared: T("a ticket or claim has dropped off my record", "una multa o reclamo ya salió de mi historial") };
+      var rs = (p.get("reasons") || "").split(",").map(function (k) { return RS[k.trim()]; }).filter(Boolean);
+      if (q) { track("chat_started", { mode: "question" }, true); setS(o); setTimeout(function () { ask(q); }, 50); return; }
+      if (start === "agent") { track("chat_started", { mode: "agent" }, true); setS(o); setShowCall(true); return; }
+      if (start === "ask") { track("chat_started", { mode: "question" }, true); setS(Object.assign(o, { askMore: true })); setTimeout(function () { inRef.current && inRef.current.focus(); }, 300); return; }
+      if (start === "quote") {
+        track("chat_started", { mode: "quote" }, true);
+        if (rs.length) { o.said = T("I want to compare: ", "Quiero comparar: ") + rs.join(", "); o.note = rs.length > 1 ? T("Good call. With a few things changed, your current rate may be out of date, so comparing now makes sense.", "Buena idea. Con varios cambios, su tarifa actual puede estar desactualizada, así que conviene comparar ahora.") : T("Good call. That's a common reason rates change, so it's worth comparing now.", "Buena idea. Es un motivo común de cambio de tarifa, así que vale la pena comparar ahora."); }
+        else if (said.length) o.said = said.join(", ");
+        o.stage = nextStage(o);
+        setS(o);
       }
-      if (p.get("situation") === "sr22") extra.driving = "dui";
-      if (q) { setPhase("chat"); handleChat(q); }
-      else if (start === "quote" && S) { var L = es ? S.es : S.en; usr(said.length ? L[0] + ", " + said.join(", ") : L[0]); startQ(Object.assign({}, extra, { _sit: L[1] })); }
-      else if (start === "quote") { if (!said.length) setForm(true); usr(said.length ? said.join(", ") : T("Find my match", "Buscar mi opción")); startQ(said.length ? extra : null); }
-      else if (start === "ask") { usr(T("I have a question", "Tengo una pregunta")); startChat(); }
-      else if (start === "agent") { setShowCall(true); }
-    }, 350);
-    return function() { clearTimeout(t); };
+    }, 200);
+    return function () { clearTimeout(t); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  var send = function(val) {
-    var v = val || inp; if (!v.trim() || typ) return;
-    if (phase==="welcome") { setPhase("chat"); handleChat(v); }
-    else if (phase==="chat") handleChat(v);
-    else if (phase==="qualifying") handleQ(v);
-    else if (phase==="pii") handlePII(v);
-    else if (phase==="follow"||phase==="consent") handleFollow(v);
-  };
-
-  var renderBold = function(text) {
-    if (!text) return null;
-    return text.split("**").map(function(part, i) {
-      return i % 2 === 1 ? <strong key={i}>{part}</strong> : <span key={i}>{part.replace(/\*/g, "")}</span>;
-    });
-  };
-
-  // Progress through the quote flow
-  var filled = filledCount(pro), left = Math.max(1, tot - filled);
-  var pct = (phase === "welcome" || phase === "chat") ? 0 : (phase === "follow" || phase === "locked" ? 100 : Math.min(100, Math.round(filled / tot * 100)));
-  var items = profileItems(pro);
-  var showProf = form && (phase === "qualifying" || phase === "locked" || phase === "follow") && (filled > 0 || si >= 0);
-  var byK = {}; items.forEach(function(x){ byK[x.k] = x; });
-  var curStep = phase === "qualifying" && STEPS[si] ? STEPS[si].id : "";
-  var curK = { pri: "pri", zip: "loc", vyear: "car", vmake: "car", vmake2: "car", drv: "drv" }[curStep] || "";
-  var seg = [["pri", T("Goal", "Meta")], ["loc", T("Where", "Dónde")], ["car", T("Car", "Auto")], ["drv", T("Record", "Historial")]].map(function(a){
-    var it = byK[a[0]]; var done = !!it && !(a[0] === "car" && (!pro.vehicleYear || !pro.vehicleMake || pro.vehicleMake === "Other"));
-    var sv = it ? it.v.replace(/ \d{5}$/, "") : ""; if (a[0] === "car" && done) sv = pro.vehicleMake + " '" + String(pro.vehicleYear).slice(-2); if (a[0] === "pri" && pro.priority) sv = T({ price: "Price", coverage: "Coverage", service: "Service" }, { price: "Precio", coverage: "Cobertura", service: "Servicio" })[pro.priority];
-    return { k: a[0], lbl: a[1], v: sv, done: done, active: curK === a[0] };
-  });
-  var doneN = seg.filter(function(x){ return x.done; }).length;
-  var curCards = form && phase === "qualifying" && STEPS[si] && STEPS[si].t === "qr" ? CARDS[STEPS[si].id] : null;
-
-  // Which answer is the user being asked for right now? Used to pick the right mobile keyboard.
-  var cur = null;
-  if (phase === "qualifying" && si >= 0 && STEPS[si] && STEPS[si].t === "text") cur = STEPS[si].id;
-  if (phase === "pii" && PII_STEPS[piiIdx]) cur = PII_STEPS[piiIdx].id;
-  var kb = { inputMode: "text", autoComplete: "off", autoCapitalize: "sentences" };
-  if (!fullKb) {
-    if (cur === "zip") kb = { inputMode: "numeric", autoComplete: "postal-code", autoCapitalize: "off" };
-    else if (cur === "phone") kb = { inputMode: "tel", autoComplete: "tel", autoCapitalize: "off" };
-    else if (cur === "email") kb = { inputMode: "email", autoComplete: "email", autoCapitalize: "off" };
-    else if (cur === "firstName") kb = { inputMode: "text", autoComplete: "given-name", autoCapitalize: "words" };
+  // ---------- What to show for the current step ----------
+  var stage = s.stage, at = ORDER.indexOf(stage), step = stepOf(stage);
+  var guess = s.st || geo;
+  var Q = null, chips = [], extra = [], rowMode = false, multi = false;
+  var ch = function (label, fn, cls, on) { return { label: label, fn: fn, cls: "c" + (cls ? " " + cls : "") + (on ? " on" : ""), on: !!on }; };
+  if (stage === "state") {
+    if (guess && !s.changing) { Q = [T("First, are you in ", "Primero, ¿está en ") + stName(guess) + "?", T("Prices and partners depend on your state.", "Los precios y los socios dependen de su estado.")]; chips = [ch(T("Yes, ", "Sí, ") + stName(guess), function () { answer(stName(guess), { st: guess }); }), ch(T("Change state", "Cambiar estado"), function () { go({ changing: true }, true); }, "soft")]; }
+    else { Q = [T("Which state do you live in?", "¿En qué estado vive?"), T("Prices and partners depend on your state.", "Los precios y los socios dependen de su estado.")]; chips = POP_STATES.map(function (ab) { return ch(stName(ab), function () { answer(stName(ab), { st: ab }); }); }); }
+  } else if (stage === "sit") {
+    multi = true;
+    Q = [T("Anything special about your situation?", "¿Algo especial en su situación?"), T("Pick all that apply. Not every insurer handles SR-22s or rideshare.", "Elija todo lo que aplique. No todas las aseguradoras manejan SR-22 o plataformas.")];
+    chips = SIT.map(function (x) { var on = s.sits.indexOf(x.k) >= 0; return ch(x.l, function () { var n = s.sits.slice(); if (x.k === "none") n = on ? [] : ["none"]; else { n = n.filter(function (y) { return y !== "none"; }); n = on ? n.filter(function (y) { return y !== x.k; }) : n.concat([x.k]); } go({ sits: n }, true); }, "", on); });
+    if (s.sits.some(function (k) { return k === "sr22" || k === "dui"; })) chips.push(ch(T("How fast can an SR-22 be filed?", "¿Qué tan rápido se presenta una SR-22?"), function () { ask(T("How fast can an SR-22 be filed?", "¿Qué tan rápido se presenta una SR-22?")); }, "act"));
+  } else if (stage === "make") {
+    Q = s.otherMake ? [T("Type your car's make below.", "Escriba abajo la marca de su auto."), ""] : [T("What car do you drive?", "¿Qué auto maneja?"), T("Swipe for more makes, or type it below.", "Deslice para ver más marcas, o escríbala abajo.")];
+    if (!s.otherMake) { rowMode = true; chips = Object.keys(MODEL_LIST).map(function (m) { return ch(m, function () { answer(m, { make: m }); }); }); extra = [ch(T("Other make", "Otra marca"), function () { go({ otherMake: true }, true); setTimeout(function () { inRef.current && inRef.current.focus(); }, 100); }, "soft")]; }
+  } else if (stage === "model") {
+    Q = [T("Which ", "¿Qué ") + s.make + "?", ""];
+    chips = (MODEL_LIST[s.make] || []).map(function (m) { return ch(m[0], function () { answer(m[0], { model: m[0] }); }); }).concat([ch(T("I'm not sure", "No estoy seguro"), function () { answer(T("I'm not sure", "No estoy seguro"), { model: "unsure" }); }, "soft")]);
+  } else if (stage === "year") {
+    Q = [T("And the year?", "¿Y el año?"), T("It's on your registration or insurance card.", "Está en su registro o tarjeta del seguro.")];
+    rowMode = true; chips = YEARS.map(function (y) { return ch(y, function () { answer(y, { year: y }); }); }).concat([ch(T("2015 or older", "2015 o antes"), function () { answer(T("2015 or older", "2015 o antes"), { year: "old" }); })]);
+    extra = [ch(T("I'm not sure", "No estoy seguro"), function () { answer(T("I'm not sure", "No estoy seguro"), { year: "unsure" }); }, "soft")];
+  } else if (stage === "cov") {
+    Q = [T("What coverage do you need?", "¿Qué cobertura necesita?"), T("State minimum is the cheapest legal option. Full coverage also pays to fix your own car.", "El mínimo del estado es la opción legal más barata. La cobertura total también paga la reparación de su auto.")];
+    chips = [ch(COVS.min, function () { answer(COVS.min, { cov: "min" }); }), ch(COVS.full, function () { answer(COVS.full, { cov: "full" }); }), ch(T("I don't know", "No sé"), function () { answer(T("I don't know", "No sé"), { cov: "unsure" }); }, "soft"), ch(T("What's full coverage?", "¿Qué es cobertura total?"), function () { ask(T("What does full coverage include?", "¿Qué incluye la cobertura total?")); }, "act")];
+  } else if (stage === "when") {
+    Q = [T("When do you need it to start?", "¿Cuándo la necesita?"), T("This helps us sort your matches.", "Esto nos ayuda a ordenar sus opciones.")];
+    chips = Object.keys(WHENS).map(function (k) { return ch(WHENS[k], function () { answer(WHENS[k], { when: k }); }); });
   }
+  var showFlow = !s.qa && !typing;
+  var partnersHere = list.filter(function (ins) { return fits(ins, { state: s.st || null }); }).length;
+  var sub = stage === "done" && Array.isArray(s.results) ? (s.results.length ? s.results.length + T(s.results.length === 1 ? " partner fits you" : " partners fit you", s.results.length === 1 ? " socio encaja" : " socios encajan") : T("AI insurance assistant", "Asistente de seguros con IA"))
+    : (s.st && partnersHere ? partnersHere + T(partnersHere === 1 ? " partner quotes in " : " partners quote in ", partnersHere === 1 ? " socio cotiza en " : " socios cotizan en ") + stName(s.st) : T("AI insurance assistant", "Asistente de seguros con IA"));
+  var details = [s.st ? stName(s.st) : "", s.sitDone ? SIT.filter(function (x) { return s.sits.indexOf(x.k) >= 0; }).map(function (x) { return x.s; }).join(" + ") : "", at > ORDER.indexOf("year") ? carName(s) : "", s.cov ? COVS[s.cov] : ""].filter(Boolean);
+  var pct = [0, 0, 25, 50, 50, 50, 75, 90, 100][at] + "%";
+  var prev = { sit: { stage: "state", st: "", changing: false }, make: { stage: "sit", sitDone: false }, model: { stage: "make", make: "" }, year: { stage: MODEL_LIST[s.make] ? "model" : "make", model: "", make: MODEL_LIST[s.make] ? s.make : "" }, cov: { stage: "year", year: "" }, when: { stage: "cov", cov: "" } };
+  var canBack = at > 1 && stage !== "done" && showFlow;
+  var goHome = function () { track("chat_left", { stage: stage }); window.location.href = SITE; };
+  var askClose = function () { if (step >= 2 && stage !== "done") setLeave(true); else goHome(); };
+  var startOver = function () { setS(Object.assign(fresh(), { stage: "state" })); };
 
-  var onType = function(e) {
-    var v = e.target.value;
-    if (cur === "phone") v = fmtPhone(v);
-    setInp(v);
-  };
-
-  var openFullKeyboard = function() {
-    setFullKb(true);
-    if (inRef.current) inRef.current.blur();
-    setTimeout(function(){ inRef.current && inRef.current.focus(); }, 60);
-  };
-
-  var chatChips = T(["Cheapest way to insure a car", "Coverage types explained", "What is SR-22?", "How deductibles work"], ["¿Cómo pagar menos?", "Tipos de cobertura", "¿Qué es la SR-22?", "¿Cómo funciona el deducible?"]);
-  var composerPh = (phase === "locked" || phase === "unlock" || phase === "consent" || phase === "follow") ? T("Ask a question", "Haga una pregunta") : iph;
-  var followChips = T(["See other options", "How do deductibles work?", "Talk to an agent"], ["Ver otras opciones", "¿Cómo funciona el deducible?", "Hablar con un agente"]);
+  var results = Array.isArray(s.results) ? s.results : null;
+  var starters = [
+    { ic: "doc", l: T("I need an SR-22", "Necesito una SR-22"), fn: function () { track("chat_started", { mode: "starter_sr22" }, true); answer(T("I need an SR-22", "Necesito una SR-22"), { sits: ["sr22"], sitDone: true }); } },
+    { ic: "tag", l: T("Cheapest price for my car", "El precio más bajo para mi auto"), fn: function () { track("chat_started", { mode: "starter_price" }, true); answer(T("Cheapest price for my car", "El precio más bajo para mi auto"), { pri: "price" }); } },
+    { ic: "car", l: T("I'm a rideshare driver", "Manejo para Uber o Lyft"), fn: function () { track("chat_started", { mode: "starter_rideshare" }, true); answer(T("I'm a rideshare driver", "Manejo para Uber o Lyft"), { sits: ["ride"], sitDone: true }); } },
+    { ic: "clock", l: T("I need coverage today", "Necesito seguro hoy"), fn: function () { track("chat_started", { mode: "starter_today" }, true); answer(T("I need coverage today", "Necesito seguro hoy"), { when: "today" }); } }
+  ];
 
   return (
     <div className="ig">
       <style>{CSS_TEXT}</style>
       <div className="ig-card">
-
         <header className="hd">
-          <div className="av"><Icon n="shield" size={22} /></div>
-          <div className="hd-txt">
-            <div className="hd-name">AI Insure<em>Genie</em></div>
-            <div className="hd-sub"><span className="dot" />{!form && phase === "qualifying" ? <span>{T("Your quote", "Su cotización")} <b>· {left === 1 ? T("last question", "última pregunta") : T(left + " taps left", "faltan " + left)}</b></span> : T("AI insurance assistant", "Asistente de seguros con IA")}</div>
+          <div className="hd-in">
+            <img className="hd-logo" src={LOGO} alt="" />
+            <div className="hd-txt"><span className="hd-name pj">Genie</span><span className="hd-sub">{sub}</span></div>
+            {step >= 1 ? <span className="hd-step">{stage === "done" ? T("Done", "Listo") : step + " / 4"}</span> : null}
+            <button type="button" className="ib call" aria-label={T("Talk to a licensed agent", "Hablar con un agente con licencia")} onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} /></button>
+            <button type="button" className="ib" aria-label={T("Minimise chat", "Minimizar el chat")} onClick={goHome}><Svg d={<path d="M6 9l6 6 6-6" />} size={22} sw={2} /></button>
+            <button type="button" className="ib" aria-label={T("Close chat", "Cerrar el chat")} onClick={askClose}><Svg d={<path d="M6 6l12 12M18 6L6 18" />} size={20} sw={2} /></button>
           </div>
-          <button type="button" className="hd-btn" aria-label={T("Talk to an agent", "Hablar con un agente")} onClick={function(){ setShowCall(true); }}>
-            <Icon n="phone" size={16} /><span className="lbl-l">{T("Talk to an agent", "Hablar con un agente")}</span><span className="lbl-s">{T("Agent", "Agente")}</span>
-          </button>
+          {step >= 1 ? <div className="prog" aria-hidden="true"><i style={{ width: pct }} /></div> : null}
         </header>
-        {showProf ? null : <div className="prog" role="progressbar" aria-label={T("Quote progress", "Progreso de la cotización")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
-          <div style={{ width: pct + "%" }} />
-        </div>}
-        {showProf ? (
-          <div className="trk" role="group" aria-label={T("Quote progress", "Progreso de la cotización")}>
-            <div className="trk-top">
-              <span className="trk-t">{doneN === 4 ? T("All set", "Todo listo") : (doneN === 3 ? T("Nearly there", "Ya casi") : T("Step ", "Paso ") + Math.min(doneN + 1, 4) + T(" of 4", " de 4"))}</span>
-              <span className="trk-r">{doneN === 4 ? (phase === "follow" && !results.length ? T("No partner here yet", "Aún sin socio aquí") : T("Your match is ready", "Su opción está lista")) : (4 - doneN === 1 ? T("1 step left", "Falta 1 paso") : T((4 - doneN) + " steps left", "Faltan " + (4 - doneN) + " pasos"))}</span>
-            </div>
-            <div className="trk-bar" style={{ "--fill": (Math.max(0, doneN - (doneN === 4 ? 1 : 0)) / 3 * 100) + "%", "--fill2": (doneN === 4 ? 100 : (doneN / 3 * 100)) + "%" }}>
-              <div className="trk-line"><i /></div>
-              {seg.map(function(x, i){ return (
-                <button type="button" key={x.k} className={"trk-s" + (x.done ? " done" : "") + (x.active ? " active" : "")} disabled={!x.done || typ} onClick={function(){ editItem(x.k); }} aria-label={x.lbl + (x.done ? ": " + x.v + ". " + T("Tap to change", "Toque para cambiar") : (x.active ? T(" (now)", " (ahora)") : ""))}>
-                  <span className="trk-dot" aria-hidden="true">{x.done ? <Icon n="check" size={12} /> : (i + 1)}</span>
-                  <span className="trk-l">{x.lbl}</span>
-                  <span className="trk-v">{x.done ? x.v : (x.active ? T("Now", "Ahora") : "")}</span>
-                </button>
-              ); })}
-            </div>
-          </div>
+        {details.length ? (
+          <button type="button" className="det" onClick={startOver} aria-label={T("Edit your details", "Editar sus datos")}>
+            <span className="det-in"><span><b>{T("Your details", "Sus datos")}</b> · {details.join(" · ")}</span><Svg d={I_EDIT} size={14} /></span>
+          </button>
         ) : null}
 
-        <div className="log" ref={logRef} role="log" aria-live="polite" aria-label={T("Conversation", "Conversación")}>
-          <div className="row bot first">
-            <div className="who">Genie</div>
-            <div className="bub">{T("Hi! I help drivers get the best quote for their needs.", "¡Hola! Soy Genie y le ayudo a encontrar la mejor cotización de seguro de auto para usted.")}</div>
-            <div className="bub" style={{ marginTop: 4 }}>{T("Answer a few taps about you and your car, and I'll show you the partner that fits you best.", "Responda unos toques sobre usted y su auto, y le mostraré el socio que mejor le conviene.")}</div>
-            <div className="bub" style={{ marginTop: 4 }}>{T("Or just tell me in one line, for example \"Texas, 2018 Camry, one ticket\".", "O dígamelo en una línea, por ejemplo: \"Texas, Camry 2018, una multa\".")}</div>
-          </div>
-          <div className="expect" aria-label={T("What to expect", "Qué esperar")}>
-            <span><Icon n="clock" size={14} />{T("About 60 seconds", "Unos 60 segundos")}</span><span><Icon n="unlock" size={14} />{T("No account", "Sin cuenta")}</span><span><Icon n="lock" size={14} />{T("No phone number to see your match", "Sin teléfono para ver su opción")}</span>
-          </div>
-          {(msgs.length === 0 || msgs[0].role === "user") ? <div className="time" style={{ alignSelf: "flex-start" }}>{startTime}</div> : null}
+        <main className="log" ref={logRef} aria-live="polite">
+          <div className="log-in">
+            {stage === "start" && !s.qa && !s.askMore ? (
+              <>
+                <div className="hello">
+                  <img src={LOGO} alt="" />
+                  <h1 className="pj">{T("What can I help", "¿En qué le puedo")}<br />{T("you with today?", "ayudar hoy?")}</h1>
+                  <p>{T("I'll match you with the licensed quoting partner that fits, in 4 quick steps. No phone number needed to see your match.", "Le conecto con el socio de cotización con licencia que le conviene, en 4 pasos rápidos. No necesita dar su teléfono para ver su opción.")}</p>
+                </div>
+                <div className="starts">
+                  {starters.map(function (x) { return <button type="button" key={x.ic} className="st" onClick={x.fn}><span className="st-ic"><Svg d={START_ICONS[x.ic]} /></span><span className="st-l">{x.l}</span><span className="chev"><Svg d={I_CHEV} size={16} /></span></button>; })}
+                </div>
+              </>
+            ) : null}
 
-          {msgs.map(function(m, i) {
-            var prev = i === 0 ? { role: "bot" } : msgs[i - 1];
-            var next = msgs[i + 1];
-            var first = prev.role !== m.role;
-            var last = !next || next.role !== m.role;
-            var basis = m.tags ? basisLine(pro) : "";
-            return (
-              <div key={i} className={"row " + m.role + (first ? " first" : "") + (prev.ins ? " after" : "")}>
-                {m.role === "bot" && first ? <div className="who">Genie</div> : null}
-                <div className={"bub" + (m.err ? " err" : "") + (m.hint ? " hint" : "")}>{m.role === "bot" ? renderBold(m.text) : m.text}</div>
-                {m.email ? <EmailCard profile={pro} source={m.email} /> : null}
-                {m.why ? <p className="why"><span aria-hidden="true">ⓘ</span> {m.why}</p> : null}
-                {m.scan ? <ul className="scan">{m.scan.map(function(x, j){ return <li key={j} style={{ animationDelay: (0.5 + j * 0.6) + "s" }}><span className="ck" style={{ animationDelay: (0.5 + j * 0.6) + "s" }}>✓</span>{x}</li>; })}</ul> : null}
-                {basis ? <p className="basis">{basis}</p> : null}
-                {m.offer ? <OfferCard ins={m.offer} top={true} tip={m.tip} /> : null}
-                {m.offers ? <div className="offers">{m.offers.map(function(x, j){ return <OfferCard key={x.id || j} ins={x} top={false} />; })}</div> : null}
-                {m.ins ? (
-                  <div className="quotes">
-                    {m.ins.map(function(x, j) { return <QuoteCard key={x.id || j} ins={x} locked={!!m.locked} top={j === 0} />; })}
-                  </div>
-                ) : null}
-                {last && m.time ? <div className="time">{m.time}</div> : null}
+            {stage !== "start" && s.said ? <div className="u">{s.said}</div> : null}
+            {s.note ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{s.note}</div></div> : null}
+
+            {at >= ORDER.indexOf("cov") && s.make ? (
+              <div className="car">
+                <span className="car-pic"><CarPic body={bodyOf(s.make, s.model)} /></span>
+                <span className="car-tx"><b className="pj">{carName(s) || T("Your car", "Su auto")}</b><small>{({ sedan: T("Sedan", "Sedán"), suv: "SUV", truck: T("Pickup", "Camioneta") })[bodyOf(s.make, s.model)]}</small></span>
+                <button type="button" className="lk" style={{ fontSize: 13 }} onClick={function () { go({ stage: "make", make: "", model: "", year: "", said: "", note: "" }); }}>{T("Change", "Cambiar")}</button>
               </div>
-            );
-          })}
+            ) : null}
 
-          {showCon && !typ ? (
-            <div className="consent">
-              <label>
-                <input type="checkbox" checked={ck} onChange={function(e){ setCk(e.target.checked); }} />
-                <span>
-                  {consentMain} {T("I have read the ", "He leído la ")}<a href="https://aiinsuregenie.com/privacy/" target="_blank" rel="noopener noreferrer">{T("Privacy Policy", "Política de privacidad")}</a>{T(" and ", " y los ")}<a href="https://aiinsuregenie.com/terms/" target="_blank" rel="noopener noreferrer">{T("Terms of Use", "Términos de uso")}</a>.
-                </span>
+            {Q && !typing ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{Q[0]}{Q[1] ? <span className="gh"><Svg d={I_INFO} size={14} /><span>{Q[1]}</span></span> : null}</div></div> : null}
+
+            {s.qa ? (
+              <>
+                <div className="u">{s.qa.q}</div>
+                {s.qa.a == null ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="dots" aria-label={T("Genie is typing", "Genie está escribiendo")}><i /><i /><i /></div></div> : (
+                  <>
+                    <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt"><Bold text={s.qa.a} />
+                      {s.qa.agent ? <div style={{ marginTop: 10 }}><button type="button" className="c" onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} size={15} />{T("Ask a licensed agent, free", "Pregunte a un agente con licencia, gratis")}</button></div> : null}
+                    </div></div>
+                    {stage !== "done" ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt" style={{ color: "#33415c" }}>{(s.sits.indexOf("dui") >= 0 || s.sits.indexOf("sr22") >= 0) ? T("Want me to find a partner for drivers like you", "¿Quiere que le busque un socio para conductores como usted") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?" : T("Want me to find the partner that fits you", "¿Quiere que le busque el socio que le conviene") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?"}
+                      {s.qa.noted ? <span className="gh"><Svg d={I_CHECK} size={14} sw={2.2} /><span>{T("I noted ", "Anoté ") + s.qa.noted + T(" from your question, so your match is shorter now.", " de su pregunta, así su búsqueda es más corta.")}</span></span> : null}
+                    </div></div> : null}
+                    <div className="ans"><button type="button" className="c on" onClick={keepGoing}>{stage === "done" ? T("Back to my match", "Volver a mi opción") : T("Continue my match", "Seguir con mi búsqueda")}</button><button type="button" className="c" onClick={function () { go({ qa: null, askMore: true }, true); setTimeout(function () { inRef.current && inRef.current.focus(); }, 100); }}>{T("Ask another question", "Hacer otra pregunta")}</button></div>
+                  </>
+                )}
+              </>
+            ) : null}
+            {s.askMore && !s.qa ? (
+              <>
+                <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Sure, ask me anything about car insurance below. I'll keep your match where you left it.", "Claro, pregúnteme lo que quiera sobre seguro de auto abajo. Guardo su búsqueda donde la dejó.")}</div></div>
+                <div className="ans"><button type="button" className="c" onClick={keepGoing}>{stage === "start" ? T("Find my match instead", "Mejor buscar mi opción") : T("Back to my match", "Volver a mi opción")}</button></div>
+              </>
+            ) : null}
+
+            {typing ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="dots" aria-label={T("Genie is typing", "Genie está escribiendo")}><i /><i /><i /></div></div> : null}
+
+            {showFlow && chips.length ? (
+              <div className={"ans" + (rowMode ? " row" : "")} role={multi ? "group" : undefined}>
+                {chips.map(function (c) { return <button type="button" key={c.label} className={c.cls} aria-pressed={multi ? c.on : undefined} onClick={c.fn}>{c.label}</button>; })}
+              </div>
+            ) : null}
+            {showFlow && extra.length ? <div className="ans">{extra.map(function (c) { return <button type="button" key={c.label} className={c.cls} onClick={c.fn}>{c.label}</button>; })}</div> : null}
+            {showFlow && stage === "state" && (s.changing || !guess) ? (
+              <label className="selwrap">{T("Or choose from all states", "O elija entre todos los estados")}
+                <select value="" onChange={function (e) { if (e.target.value) answer(stName(e.target.value), { st: e.target.value }); }}>
+                  <option value="">{T("Choose your state", "Elija su estado")}</option>
+                  {Object.keys(ABBR_STATE).sort(function (a, b) { return stName(a).localeCompare(stName(b)); }).map(function (ab) { return <option key={ab} value={ab}>{stName(ab)}</option>; })}
+                </select>
               </label>
-              <button type="button" className="btn btn-p" disabled={!ck} onClick={handleConsent}>{T("Agree and see my matches", "Aceptar y ver mis opciones")}</button>
-            </div>
-          ) : null}
+            ) : null}
+            {showFlow && multi ? <button type="button" className="p1" style={{ marginLeft: 36 }} aria-disabled={s.sits.length ? "false" : "true"} onClick={function () { if (s.sits.length) answer(SIT.filter(function (x) { return s.sits.indexOf(x.k) >= 0; }).map(function (x) { return x.l; }).join(", "), { sitDone: true }); }}>{s.sits.length ? T("Continue", "Continuar") : T("Pick at least one", "Elija al menos una")}</button> : null}
+            {canBack ? <button type="button" className="lk back" onClick={function () { go(Object.assign({ said: "", note: "" }, prev[stage] || {}), true); }}>{T("Change my last answer", "Cambiar mi última respuesta")}</button> : null}
 
-          {typ ? (
-            <div className="typing" role="status" aria-label={T("Genie is typing", "Genie está escribiendo")}><i /><i /><i /></div>
-          ) : null}
-        </div>
+            {stage === "done" && !typing && !s.qa ? (
+              !results ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Checking partners in ", "Buscando socios en ") + stName(s.st) + "…"}<div className="dots"><i /><i /><i /></div></div></div>
+              : results.length ? (
+                <>
+                  <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Done! Here's the partner that matches your answers.", "¡Listo! Este es el socio que coincide con sus respuestas.")}</div></div>
+                  <MatchCard ins={results[0]} s={s} top onCall={function () { setShowCall(true); }} />
+                  <div className="m-links">
+                    {results.length > 1 ? <button type="button" className="lk" onClick={function () { go({ showAll: !s.showAll }, true); }}>{s.showAll ? T("Hide other matches", "Ocultar otras opciones") : T("See all " + results.length + " matches", "Ver las " + results.length + " opciones")}</button> : <span />}
+                    <button type="button" className="lk" style={{ color: "#6b7588", fontWeight: 500 }} onClick={function () { go({ showEmail: s.showEmail ? "" : "after_match" }, true); }}>{T("Email me my match", "Enviarme mi opción por correo")}</button>
+                  </div>
+                  {s.showEmail ? <EmailCard profile={toProfile(s)} source={s.showEmail} /> : null}
+                  {s.showAll ? results.slice(1, 3).map(function (ins) { return <MatchCard key={ins.id} ins={ins} s={s} onCall={function () { setShowCall(true); }} />; }) : null}
+                  <p className="fine">{T("We connect you with licensed quoting partners; quotes and policies come from the insurers they work with. Confirm coverage and price before you buy. Partners may pay us when you connect; it doesn't change your price. ", "Le conectamos con socios de cotización con licencia; las cotizaciones y pólizas vienen de las aseguradoras con las que trabajan. Confirme la cobertura y el precio antes de comprar. Los socios pueden pagarnos cuando usted se conecta; eso no cambia su precio. ")}<a href={SITE + "how-we-make-money/"} target="_blank" rel="noopener noreferrer">{T("How we make money", "Cómo ganamos dinero")}</a></p>
+                </>
+              ) : (
+                <>
+                  <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{T("I don't have a quoting partner for ", "Todavía no tengo un socio de cotización para ") + stName(s.st) + T(" yet. I can email you as soon as one covers your state, or a licensed agent can call you.", ". Puedo avisarle por correo en cuanto uno cubra su estado, o un agente con licencia puede llamarle.")}</div></div>
+                  <EmailCard profile={toProfile(s)} source="no_match" />
+                  <button type="button" className="p2" style={{ marginLeft: 36 }} onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} size={17} />{T("Talk to a licensed agent", "Hablar con un agente con licencia")}</button>
+                </>
+              )
+            ) : null}
+            {s.showEmail === "exit" && stage !== "done" ? <EmailCard profile={toProfile(s)} source="exit" /> : null}
+          </div>
+        </main>
 
         <footer className="foot">
-          {phase === "welcome" ? (
-            <div className="wcta">
-              <button type="button" className="cta-main" onClick={function(){ setForm(true); usr(T("Find my match", "Buscar mi opción")); startQ(); }}>{T("Find my match", "Buscar mi opción")}<span className="cta-sub">{T("Free · about 60 seconds", "Gratis · unos 60 segundos")}</span></button>
-              <div className="cta-row">
-                <button type="button" className="chip" onClick={function(){ usr(T("I have a question", "Tengo una pregunta")); startChat(); }}>{T("Ask a question", "Hacer una pregunta")}</button>
-                <button type="button" className="chip" onClick={function(){ setShowCall(true); }}>{T("Talk to an agent", "Hablar con un agente")}</button>
-              </div>
+          <div className="foot-in">
+            <div className="comp">
+              <label htmlFor="msg" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>{T("Message Genie", "Mensaje para Genie")}</label>
+              <input id="msg" ref={inRef} value={draft} maxLength={300} autoComplete="off" onChange={function (e) { setDraft(e.target.value); }} onKeyDown={function (e) { if (e.key === "Enter") { e.preventDefault(); send(); } }} placeholder={stage === "make" && s.otherMake ? T("e.g. Subaru", "p. ej. Subaru") : T("Ask anything about car insurance", "Pregunte lo que quiera sobre seguro de auto")} />
+              <button type="button" className="send" aria-label={T("Send", "Enviar")} disabled={!draft.trim()} onClick={send}><Svg d={<path d="M12 19V5M5 12l7-7 7 7" />} sw={2.2} /></button>
             </div>
-          ) : null}
-
-          {phase !== "welcome" && qr && !typ && curCards ? (
-            <div className={"acards" + (curCards.compact ? " compact" : "")} role="radiogroup" aria-label={T("Choose an answer", "Elija una respuesta")}>
-              {qr.map(function(o, i) { var m = curCards.items[i] || [], on = pick === i; return (
-                <button type="button" key={i} role="radio" aria-checked={on} className={"acard" + (on ? " on" : "")} style={{ animationDelay: (i * 0.04) + "s" }} disabled={pick !== null} onClick={function(){ setPick(i); setTimeout(function(){ setPick(null); send(o); }, 220); }}>
-                  {m[0] ? <span className="ac-ic" aria-hidden="true"><Icon n={m[0]} size={20} /></span> : null}
-                  <span className="ac-tx"><span className="ac-l">{o}</span>{m[1] ? <span className="ac-s">{m[1]}</span> : null}</span>
-                  <span className="ac-rd" aria-hidden="true">{on ? <Icon n="check" size={13} /> : null}</span>
-                </button>
-              ); })}
-            </div>
-          ) : null}
-          {phase !== "welcome" && qr && !typ && !curCards ? (
-            <div className="chips" role="group" aria-label={T("Quick replies", "Respuestas rápidas")}>
-              {qr.map(function(o, i) { return <button type="button" key={i} className="chip" onClick={function(){ send(o); }}>{o}</button>; })}
-            </div>
-          ) : null}
-
-          {phase === "chat" && !typ ? (
-            <div className="chips">
-              <button type="button" className="chip pri" onClick={function(){ setForm(true); usr(T("Get instant quote", "Obtener cotización")); startQ(); }}>{T("Get instant quote", "Obtener cotización")}</button>
-              {chatChips.map(function(s, i) { return <button type="button" key={i} className="chip" onClick={function(){ handleChat(s); }}>{s}</button>; })}
-            </div>
-          ) : null}
-
-          {phase === "follow" && !typ ? (
-            <div className="chips">
-              {followChips.map(function(s, i) { if (i === 0 && !results.length) return null; return <button type="button" key={i} className="chip" onClick={function(){ if (i === 0) showMore(); else if (i === 2) setShowCall(true); else handleFollow(s); }}>{s}</button>; })}
-            </div>
-          ) : null}
-
-          <div className="comp">
-            <input
-              ref={inRef}
-              value={inp}
-              onChange={onType}
-              onKeyDown={function(e){ if (e.key === "Enter") { e.preventDefault(); send(); } }}
-              placeholder={phase === "welcome" ? T("Type a message...", "Escriba un mensaje...") : composerPh}
-              aria-label={T("Type your message", "Escriba su mensaje")}
-              inputMode={kb.inputMode}
-              autoComplete={kb.autoComplete}
-              autoCapitalize={kb.autoCapitalize}
-              enterKeyHint="send"
-            />
-            <button type="button" className="send" aria-label={T("Send message", "Enviar mensaje")} onClick={function(){ send(); }} disabled={!inp.trim() || typ}>
-              <Icon n="send" size={18} />
-            </button>
-          </div>
-          {(cur === "zip" || cur === "phone") && !fullKb ? (
-            <button type="button" className="linkbtn" onClick={openFullKeyboard}>{T("Have a question instead? Show the full keyboard", "¿Tiene una pregunta? Mostrar el teclado completo")}</button>
-          ) : null}
-          <div className="disc">
-            <span>{T("AI assistant, not a licensed agent.", "Asistente de IA, no un agente con licencia.")}</span>{" "}
-            <button type="button" className="disc-btn" aria-expanded={showDisc} aria-controls="disc-full" onClick={function(){ setShowDisc(!showDisc); }}>{showDisc ? T("Hide details", "Ocultar detalles") : T("Details", "Detalles")}</button>
-            {showDisc ? <p id="disc-full" className="disc-full">{T("AI InsureGenie is an AI assistant, not an insurance company or licensed agent. We recommend quoting partners, who may pay us a fee. Your quotes and final rate come from the partner or insurer. ", "AI InsureGenie es un asistente de IA, no una compañía de seguros ni un agente con licencia. Recomendamos socios de cotización, que pueden pagarnos una comisión. Sus cotizaciones y su tarifa final las da el socio o la aseguradora. ")}<a href="https://aiinsuregenie.com/privacy/" target="_blank" rel="noopener noreferrer">{T("Privacy policy", "Política de privacidad")}</a> · <a href="https://aiinsuregenie.com/terms/" target="_blank" rel="noopener noreferrer">{T("Terms of use", "Términos de uso")}</a> · <a href="https://aiinsuregenie.com/do-not-sell/" target="_blank" rel="noopener noreferrer">{T("Do Not Sell or Share My Personal Information", "No vender ni compartir mi información personal")}</a></p> : null}
+            <p className="disc">{T("AI assistant, not a licensed agent · We only call when you ask · ", "Asistente con IA, no es agente con licencia · Solo llamamos si usted lo pide · ")}<a href={SITE + "privacy/"} target="_blank" rel="noopener noreferrer">{T("Privacy", "Privacidad")}</a></p>
           </div>
         </footer>
 
-        {showCall ? (
-          <CallModal
-            profile={pro}
-            onClose={function(){ setShowCall(false); }}
-            onSent={function(d){
-              var u = Object.assign({}, pro);
-              if (d.name && !pro.firstName) u.firstName = d.name;
-              if (d.phone && !pro.phone) u.phone = d.phone;
-              setPro(u);
-            }}
-          />
+        {leave ? (
+          <div className="ov" onClick={function (e) { if (e.target === e.currentTarget) setLeave(false); }}>
+            <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="lv-h">
+              <div className="grab" />
+              <h2 id="lv-h">{T("Leave your match?", "¿Dejar su búsqueda?")}</h2>
+              <p>{T("You're on step " + step + " of 4. We'll save your answers on this device for 7 days, so you can pick up where you left off.", "Va en el paso " + step + " de 4. Guardamos sus respuestas en este dispositivo por 7 días, para que siga donde lo dejó.")}</p>
+              <button type="button" className="p1" onClick={function () { setLeave(false); }}>{T("Keep going", "Seguir")}</button>
+              <button type="button" className="p2" onClick={function () { setLeave(false); go({ showEmail: "exit" }, true); }}>{T("Email me my answers", "Enviarme mis respuestas")}</button>
+              <button type="button" className="lk" style={{ display: "block", margin: "6px auto 0", color: "#6b7588", fontWeight: 500, padding: 8 }} onClick={goHome}>{T("Leave for now", "Salir por ahora")}</button>
+            </section>
+          </div>
         ) : null}
+        {showCall ? <CallModal profile={toProfile(s)} onClose={function () { setShowCall(false); }} /> : null}
       </div>
     </div>
   );
