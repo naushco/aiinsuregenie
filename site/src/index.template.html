@@ -139,6 +139,7 @@ body.home2 { --navy: #0b2a5b; --navy-2: #12397a; --gold: #ffb51e; --gold-2: #ffc
 .h-goal:has(input:checked) { border-color: var(--blue); background: #f5f9ff; }
 .h-goal:has(input:checked) .rad { border: 6px solid var(--blue); }
 .h-goal:has(input:focus-visible), .h-pick:has(input:focus-visible) { outline: 3px solid var(--blue); outline-offset: 2px; }
+#matcher .geo-note { margin: 8px 0 0; font-size: 13px; color: #5b6b80; }
 #matcher .select { width: 100%; min-height: 56px; padding: 0 16px; border: 1px solid rgba(15,27,45,.28); border-radius: 12px; background: #fff; font: inherit; font-size: 17px; color: var(--ink2); }
 .h-pills { display: flex; flex-wrap: wrap; gap: 10px; }
 .h-pick { position: relative; display: flex; align-items: center; min-height: 52px; padding: 0 20px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; font-size: 17px; cursor: pointer; }
@@ -405,6 +406,7 @@ body.home2.has-resume .mcta { display: none !important; }
           <div class="h-step h-card" id="m2">
             <label class="q" for="state"><span class="h-num">2</span>Which state do you live in?</label>
             <select class="select" id="state" name="state"><option value="">Choose your state</option><option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option><option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option><option>District of Columbia</option><option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option><option>Illinois</option><option>Indiana</option><option>Iowa</option><option>Kansas</option><option>Kentucky</option><option>Louisiana</option><option>Maine</option><option>Maryland</option><option>Massachusetts</option><option>Michigan</option><option>Minnesota</option><option>Mississippi</option><option>Missouri</option><option>Montana</option><option>Nebraska</option><option>Nevada</option><option>New Hampshire</option><option>New Jersey</option><option>New Mexico</option><option>New York</option><option>North Carolina</option><option>North Dakota</option><option>Ohio</option><option>Oklahoma</option><option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option><option>South Carolina</option><option>South Dakota</option><option>Tennessee</option><option>Texas</option><option>Utah</option><option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option><option>Wisconsin</option><option>Wyoming</option></select>
+            <p class="geo-note" id="geo-note" hidden>Filled in from your location. You can change it.</p>
           </div>
           <fieldset class="h-step h-card" id="m3">
             <legend><span class="h-num">3</span>How old is your car?</legend>
@@ -681,6 +683,16 @@ body.home2.has-resume .mcta { display: none !important; }
   go.addEventListener('click', function (e) { if (go.getAttribute('aria-disabled') === 'true') { e.preventDefault(); var f = form.querySelector('.h-step:not(.done) input, .h-step:not(.done) select'); if (f) f.focus(); } });
   form.addEventListener('submit', function (e) { e.preventDefault(); });
   upd();
+  (function () {
+    var AB = {AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',DC:'District of Columbia',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming'};
+    var sel = form.state, note = document.getElementById('geo-note');
+    sel.addEventListener('change', function () { if (note) note.hidden = true; });
+    fetch('https://api.aiinsuregenie.com/api/geo').then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      var name = j && AB[j.state];
+      if (!name || sel.value) return;
+      sel.value = name; upd(); if (note) note.hidden = false;
+    }).catch(function () {});
+  })();
 
   // ---------- Deductible explorer ----------
   var ded = document.getElementById('ded'), amt = document.getElementById('ded-amount'), REPAIR = 5000;
