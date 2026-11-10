@@ -24,11 +24,13 @@ module.exports = async function handler(req, res) {
       // Events from the chat, counted per unique chat session so repeats don't inflate numbers.
       var raw = (await kv(["LRANGE", "events", "0", "49999"])) || [];
       var since0 = new Date(Date.now() - days * 86400000).toISOString();
-      var steps = ["chat_started", "match_shown", "no_match", "partner_click", "call_request", "email_signup"];
+      var steps = ["chat_started", "match_shown", "no_match", "partner_click", "call_request", "email_signup", "question_asked", "chat_left"];
+      var bySteps = {};
       var sess = {}, byDay = {}, byCampaign = {}, byPartner = {}, byState = {};
       steps.forEach(function (t) { sess[t] = {}; });
       raw.forEach(function (v) {
         var e; try { e = JSON.parse(v); } catch (x) { return; }
+        if (e && e.at >= since0 && e.type === "step_answered" && e.step) { bySteps[e.step] = bySteps[e.step] || {}; bySteps[e.step][e.session_id] = 1; }
         if (!e || e.at < since0 || !sess[e.type]) return;
         sess[e.type][e.session_id] = 1;
         var d = e.at.slice(0, 10); byDay[d] = byDay[d] || {}; byDay[d][e.type] = (byDay[d][e.type] || 0) + 1;
@@ -37,7 +39,8 @@ module.exports = async function handler(req, res) {
         if (e.type === "no_match") byState[e.state || "?"] = (byState[e.state || "?"] || 0) + 1;
       });
       var totals = {}; steps.forEach(function (t) { totals[t] = Object.keys(sess[t]).length; });
-      return res.status(200).json({ period_days: days, sessions: totals, by_day: byDay, by_campaign: byCampaign, clicks_by_partner: byPartner, no_match_by_state: byState });
+      var stepTotals = {}; Object.keys(bySteps).forEach(function (k) { stepTotals[k] = Object.keys(bySteps[k]).length; });
+      return res.status(200).json({ period_days: days, sessions: totals, by_day: byDay, by_campaign: byCampaign, clicks_by_partner: byPartner, no_match_by_state: byState, steps_passed: stepTotals });
     }
     if (action === "subscribers") {
       var emails = (await kv(["LRANGE", "subscribers", "0", "9999"])) || [];

@@ -526,7 +526,8 @@ function FunnelTab({ token, partners }) {
   if (err) return <div role="alert" style={card}>{err}</div>;
   if (!d) return <div style={card}>Loading…</div>;
   var s = d.sessions, base = s.chat_started || 0;
-  var rows = [["Chats started", s.chat_started], ["Match shown", s.match_shown], ["Partner clicked", s.partner_click], ["Call requested", s.call_request], ["Email sign-ups", s.email_signup], ["No partner available", s.no_match]];
+  var sp = d.steps_passed || {};
+  var rows = [["Chats started", s.chat_started], ["Answered: state", sp.state], ["Answered: situation", sp.sit], ["Answered: car", sp.year], ["Answered: coverage", sp.cov], ["Answered: timing", sp.when], ["Match shown", s.match_shown], ["Partner clicked", s.partner_click], ["Call requested", s.call_request], ["Email sign-ups", s.email_signup], ["No partner available", s.no_match], ["Asked a question", s.question_asked], ["Closed chat mid-way", s.chat_left]];
   var name = function (id) { var p = partners.filter(function (x) { return x.id === id; })[0]; return p ? p.name : id; };
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
