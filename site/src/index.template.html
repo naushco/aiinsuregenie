@@ -85,9 +85,9 @@ body.home2 { --navy: #0b2a5b; --navy-2: #12397a; --gold: #ffb51e; --gold-2: #ffc
 .h-hero .h-wrap { padding-top: clamp(24px, 5vh, 56px); padding-bottom: clamp(32px, 6vh, 72px); display: flex; flex-wrap: wrap; gap: 48px 40px; align-items: center; }
 .h-copy { flex: 1 1 540px; min-width: 0; display: flex; flex-direction: column; gap: clamp(12px, 2.4vh, 22px); }
 .h-pill { margin: 0; align-self: flex-start; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,.1); color: #dbe7ff; font-size: 14px; font-weight: 600; }
-.h-hero h1 { margin: 0; font-size: clamp(30px, min(4.2vw, 7.2vh), 56px); line-height: 1.04; letter-spacing: -0.03em; color: #eef2f7; }
+.h-hero h1 { text-wrap: balance; margin: 0; font-size: clamp(34px, min(4.4vw, 8.6vh), 58px); line-height: 1.03; letter-spacing: -0.035em; color: #eef2f7; }
 .h-hero h1 span { color: #9cc7ff; }
-.h-lede { margin: 0; font-size: clamp(16px, 2.6vh, 19px); line-height: 1.5; color: #c9d3e0; max-width: 580px !important; }
+.h-lede { margin: 0; font-size: clamp(15px, 2.4vh, 17px); line-height: 1.55; color: #b9c6d8; max-width: 520px !important; text-wrap: pretty; }
 .h-ask { display: flex; flex-direction: column; gap: clamp(10px, 1.8vh, 14px); }
 .h-ask label { font-size: 14px; font-weight: 600; color: #eef2f7; }
 .h-askbox { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; border-radius: 40px; background: #fff; box-shadow: 0 16px 40px rgba(0,0,0,.28); }
@@ -299,6 +299,7 @@ body.home2 { --navy: #0b2a5b; --navy-2: #12397a; --gold: #ffb51e; --gold-2: #ffc
   .h-links .h-btn { min-height: 44px; padding: 0 16px; font-size: 12px; white-space: nowrap; }
   .h-hero .h-wrap { padding-top: 32px; }
   .h-askbox { border-radius: 24px; }
+  .h-lede { font-size: 16px; }
   .h-askbox .h-btn { width: 100%; }
   .h-photo, .h-badge { display: none; }
   .h-hero { --ph: 560px; }
@@ -336,7 +337,7 @@ body.home2 { --navy: #0b2a5b; --navy-2: #12397a; --gold: #ffb51e; --gold-2: #ffc
       <div class="h-copy">
         <p class="h-pill">Free AI insurance assistant · No spam calls</p>
         <h1>Get the best quote for <span>your situation</span>, from a licensed partner.</h1>
-        <p class="h-lede">SR-22, a DUI, a lapse, rideshare, or just a lower price. Tell Genie what's going on and we connect you to the licensed quoting partner best placed to quote drivers like you. One form, not ten.</p>
+        <p class="h-lede">SR-22, DUI, a lapse, rideshare, or just a lower price. Tell Genie what's going on and we'll connect you to the licensed partner that fits. One form, not ten.</p>
         <form class="h-ask" id="ask-form" action="https://chat.aiinsuregenie.com/">
           <label for="ask">What do you need help with?</label>
           <div class="h-askbox">
