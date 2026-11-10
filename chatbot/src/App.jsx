@@ -986,15 +986,36 @@ export default function AIInsureGenie() {
     setTimeout(function () { setS(function (cur) { return Object.assign({}, cur, { results: r }); }); }, 700);
   };
 
+  // Pull answers out of a sentence: "cheapest insurance for my 2019 hyundai sonata in Texas".
+  var extract = function (text, cur) {
+    var o = parseFree(text, null), lower = " " + text.toLowerCase().replace(/[^a-z0-9\- ]/g, " ") + " ", got = {}, said = [];
+    if (o.state && !cur.st) { got.st = o.state; said.push(stName(o.state)); }
+    var sits = (cur.sits || []).slice();
+    // "What is an SR-22?" is a question about it, not a sign they need one.
+    var general = /^\s*(what|how|why|does|do|is|are|can|when|which|who|que|qué|como|cómo)\b/i.test(text) && !/\b(i|i'm|im|my|me|yo|mi|tengo|necesito)\b/i.test(text);
+    if (!general && /\bsr-?22\b/.test(lower)) sits.push("sr22");
+    if (!general && /\b(dui|dwi)\b/.test(lower)) sits.push("dui");
+    if (!general && /(uber|lyft|rideshare|doordash|delivery)/.test(lower)) sits.push("ride");
+    if (!general && /(lapse|gap in|no insurance|uninsured)/.test(lower)) sits.push("lapse");
+    if (!general && /(accident|ticket|crash)/.test(lower)) sits.push("record");
+    sits = sits.filter(function (k, i, a) { return k !== "none" && a.indexOf(k) === i; });
+    if (sits.length > (cur.sits || []).filter(function (k) { return k !== "none"; }).length) { got.sits = sits; got.sitDone = true; said.push(SIT.filter(function (k) { return sits.indexOf(k.k) >= 0; }).map(function (k) { return k.s; }).join(" + ")); }
+    if (!cur.make) {
+      if (o.vehicleMake) got.make = o.vehicleMake;
+      Object.keys(MODEL_LIST).forEach(function (mk) { MODEL_LIST[mk].forEach(function (md) { if (lower.indexOf(" " + md[0].toLowerCase() + " ") >= 0) { got.make = mk; got.model = md[0]; } }); });
+      if (got.make && !got.model && !MODEL_LIST[got.make]) got.model = "unsure";
+    }
+    if (o.vehicleYear && !cur.year) got.year = parseInt(o.vehicleYear, 10) <= 2015 ? "old" : o.vehicleYear;
+    if (got.make || got.year) said.push(carName(Object.assign({}, cur, got)));
+    if ((o.priority === "price" || /\b(cheap|cheapest|lowest|low cost|affordable|save money|barato)/.test(lower)) && !cur.pri) { got.pri = "price"; said.push(T("lowest price", "precio más bajo")); }
+    if (/\bfull coverage\b/.test(lower) && !cur.cov) { got.cov = "full"; said.push(COVS.full); }
+    return { got: got, said: said };
+  };
+
   // A question typed or tapped at any point: answer it, keep the match where it is.
   var ask = function (text) {
-    var o = parseFree(text, null), cur = sRef.current, merge = {}, noted = [];
-    if (o.state && !cur.st) { merge.st = o.state; noted.push(stName(o.state)); }
-    if (o.driving === "dui" || o.driving === "major") {
-      var k = o.driving === "dui" ? "dui" : "record";
-      if (cur.sits.indexOf(k) < 0) { merge.sits = cur.sits.filter(function (x) { return x !== "none"; }).concat([k]); noted.push(k === "dui" ? "DUI" : T("an accident or ticket", "un accidente o multa")); }
-    }
-    var qa = { q: text, a: null, noted: noted.join(T(" and ", " y ")), agent: /(dui|dwi|sr-?22|accident|ticket|rate|price|cost|raise|multa|accidente|precio)/i.test(text) };
+    var cur = sRef.current, x = extract(text, cur), merge = x.got, noted = x.said.filter(Boolean);
+    var qa = { q: text, a: null, noted: noted.join(", "), agent: /(dui|dwi|sr-?22|accident|ticket|rate|price|cost|raise|multa|accidente|precio)/i.test(text) };
     setS(Object.assign({}, cur, merge, { qa: qa, askMore: false }));
     track("question_asked", { stage: cur.stage }, false);
     getAnswer(text, toProfile(Object.assign({}, cur, merge)), Array.isArray(cur.results) ? cur.results : []).then(function (a) {
@@ -1003,7 +1024,8 @@ export default function AIInsureGenie() {
   };
   var keepGoing = function () {
     var cur = sRef.current;
-    go({ qa: null, askMore: false, stage: cur.stage === "start" ? nextStage(cur) : cur.stage, said: cur.stage === "start" ? "" : cur.said });
+    var fromStart = cur.stage === "start";
+    go({ qa: null, askMore: false, stage: fromStart ? nextStage(cur) : cur.stage, said: fromStart ? (cur.qa ? cur.qa.q : "") : cur.said, note: fromStart && cur.qa && cur.qa.noted ? T("Got it: ", "Perfecto: ") + cur.qa.noted + T(". I just need the rest.", ". Solo me falta lo demás.") : "" });
   };
 
   // Typed text: a question gets an answer; "Texas, 2019 Camry, SR-22" fills the answers it contains.
@@ -1012,21 +1034,7 @@ export default function AIInsureGenie() {
     var cur = sRef.current;
     if (cur.stage === "make" && cur.otherMake && !isQuestion(text, "qualifying", "vmake")) { var mk = text.charAt(0).toUpperCase() + text.slice(1); answer(mk, { make: mk.slice(0, 30), model: "unsure" }); return; }
     if (isQuestion(text, "qualifying", null)) { ask(text); return; }
-    var o = parseFree(text, null), lower = " " + text.toLowerCase() + " ", got = {}, said = [];
-    if (o.state) { got.st = o.state; said.push(stName(o.state)); }
-    var sits = cur.sits.slice();
-    if (/\bsr-?22\b/.test(lower)) sits.push("sr22");
-    if (/\b(dui|dwi)\b/.test(lower)) sits.push("dui");
-    if (/(uber|lyft|rideshare|doordash|delivery)/.test(lower)) sits.push("ride");
-    if (/(lapse|gap in|no insurance|uninsured)/.test(lower)) sits.push("lapse");
-    if (/(accident|ticket|crash)/.test(lower)) sits.push("record");
-    sits = sits.filter(function (x, i, a) { return x !== "none" && a.indexOf(x) === i; });
-    if (sits.length > cur.sits.length) { got.sits = sits; got.sitDone = true; said.push(SIT.filter(function (x) { return sits.indexOf(x.k) >= 0; }).map(function (x) { return x.s; }).join(" + ")); }
-    if (o.vehicleMake) { got.make = o.vehicleMake; }
-    Object.keys(MODEL_LIST).forEach(function (mk) { MODEL_LIST[mk].forEach(function (md) { if (lower.indexOf(" " + md[0].toLowerCase() + " ") >= 0) { got.make = mk; got.model = md[0]; } }); });
-    if (o.vehicleYear) got.year = parseInt(o.vehicleYear, 10) <= 2015 ? "old" : o.vehicleYear;
-    if (got.make) said.push(carName(Object.assign({}, cur, got)));
-    if (o.priority === "price") got.pri = "price";
+    var x = extract(text, cur), got = x.got, said = x.said;
     if (!Object.keys(got).length) { ask(text); return; }
     var n = Object.assign({}, cur, got);
     go(Object.assign(got, { said: text, qa: null, note: T("Got it: ", "Perfecto: ") + said.filter(Boolean).join(", ") + T(". I just need the rest.", ". Solo me falta lo demás."), stage: nextStage(n) }));
