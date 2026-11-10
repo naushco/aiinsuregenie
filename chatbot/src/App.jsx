@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Fragment } from "react";
 import MINIMUMS from "./minimums.js";
 
 var STORAGE_KEY = "aiinsuregenie-partners-v3";
@@ -524,7 +524,8 @@ var CSS_TEXT = [
   ".det b{color:var(--ink);font-weight:600}",
   ".det span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
   /* Conversation */
-  ".log{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column}",
+  ".g.past .gt{color:var(--mute);font-size:14.5px}",
+  ".log{position:relative;flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column}",
   ".log-in{margin-top:auto;width:100%;max-width:760px;margin-left:auto;margin-right:auto;padding:20px 20px 16px;display:flex;flex-direction:column;gap:18px}",
   ".g{display:flex;gap:10px;align-items:flex-start;animation:in .28s cubic-bezier(.2,.8,.2,1)}",
   ".ga{width:26px;height:26px;flex:none;border-radius:8px;display:block;margin-top:1px}",
@@ -830,14 +831,21 @@ var SAVE_KEY = "aig-chat-v2";
 function stName(ab) { return ABBR_STATE[ab] || ab || ""; }
 function stepOf(stage) { return { start: 0, state: 1, sit: 2, make: 3, model: 3, year: 3, cov: 4, when: 4, done: 5 }[stage] || 0; }
 function bodyOf(make, model) { var m = (MODEL_LIST[make] || []).find(function (x) { return x[0] === model; }); return m ? m[1] : "sedan"; }
-function carName(s) { return [s.year && s.year !== "unsure" ? (s.year === "old" ? T("2015 or older", "2015 o antes") : s.year) : "", s.make, s.model && s.model !== "unsure" ? s.model : ""].filter(Boolean).join(" "); }
+function carName(s) { if (s.carAge && !s.make) return s.carAge; return [s.year && s.year !== "unsure" ? (s.year === "old" ? T("2015 or older", "2015 o antes") : s.year) : "", s.make, s.model && s.model !== "unsure" ? s.model : ""].filter(Boolean).join(" "); }
+var QH = { state: T("Which state do you live in?", "¿En qué estado vive?"), sit: T("Anything special about your situation?", "¿Algo especial en su situación?"), make: T("What car do you drive?", "¿Qué auto maneja?"), model: T("Which model?", "¿Qué modelo?"), year: T("And the year?", "¿Y el año?"), cov: T("What coverage do you need?", "¿Qué cobertura necesita?"), when: T("When do you need it to start?", "¿Cuándo la necesita?") };
+function questionsLeft(s) {
+  var FILL = { state: { st: "X" }, sit: { sitDone: true }, make: { make: "X" }, model: { model: "X" }, year: { year: "X" }, cov: { cov: "X" }, when: { when: "X" } };
+  var x = Object.assign({}, s), n = 0, st;
+  while ((st = nextStage(x)) !== "done" && n < 9) { if (!(st === "model" || st === "year")) n++; Object.assign(x, FILL[st]); }
+  return n;
+}
 function nextStage(s) {
   if (!s.st) return "state";
   if (!s.sitDone) return "sit";
-  if (!s.make) return "make";
+  if (!s.make && !s.carAge) return "make";
   if (!s.model && MODEL_LIST[s.make]) return "model";
   if (!s.year) return "year";
-  if (!s.cov) return "cov";
+  if (!s.cov && s.pri !== "price") return "cov";
   if (!s.when) return "when";
   return "done";
 }
@@ -917,7 +925,7 @@ function MatchCard({ ins, s, top, onCall }) {
 }
 
 function fresh() {
-  return { stage: "start", st: "", changing: false, sits: [], sitDone: false, make: "", model: "", year: "", cov: "", when: "", pri: "", said: "", note: "", otherMake: false, qa: null, askMore: false, results: null, showAll: false, showEmail: "" };
+  return { stage: "start", st: "", changing: false, sits: [], sitDone: false, make: "", model: "", year: "", cov: "", when: "", pri: "", carAge: "", hist: [], said: "", note: "", otherMake: false, qa: null, askMore: false, results: null, showAll: false, showEmail: "" };
 }
 
 export default function AIInsureGenie() {
@@ -942,8 +950,13 @@ export default function AIInsureGenie() {
     fetch(API_BASE + "/api/geo").then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { if (j && j.state && ABBR_STATE[j.state]) setGeo(j.state); }).catch(function () {});
   }, []);
   useEffect(function () {
-    var el = logRef.current; if (el) setTimeout(function () { el.scrollTo({ top: el.scrollHeight, behavior: "smooth" }); }, 40);
-  }, [s.stage, s.qa, s.askMore, s.showAll, s.showEmail, s.note, typing]);
+    var el = logRef.current; if (!el) return;
+    setTimeout(function () {
+      var a = el.querySelector("[data-anchor]");
+      var top = a ? Math.min(a.offsetTop - 12, el.scrollHeight) : el.scrollHeight;
+      el.scrollTo({ top: top, behavior: "smooth" });
+    }, 60);
+  }, [s.stage, s.qa, s.askMore, s.showAll, s.showEmail, s.note, typing, Array.isArray(s.results) ? s.results.length : s.results, (s.hist || []).length]);
   // Save progress for 7 days, so a visitor who leaves can pick up where they were.
   useEffect(function () {
     if (s.stage === "start") return; // never overwrite saved progress with the empty welcome screen
@@ -955,7 +968,9 @@ export default function AIInsureGenie() {
   var go = function (o, quiet) {
     var next = Object.assign({}, sRef.current, o);
     if (!quiet) { setTyping(true); clearTimeout(tRef.current); tRef.current = setTimeout(function () { setTyping(false); }, 500); }
-    if (next.stage !== sRef.current.stage) track("step_answered", { step: sRef.current.stage, state: next.st || null });
+    var cur0 = sRef.current;
+    if (next.stage !== cur0.stage) track("step_answered", { step: cur0.stage, state: next.st || null });
+    if (next.stage !== cur0.stage && o.said) next.hist = (cur0.hist || []).concat([{ q: QH[cur0.stage] || null, a: o.said }]).slice(-12);
     if (next.stage === "done" && !next.results) next = Object.assign(next, { results: "loading" });
     setS(next);
     if (next.results === "loading") showMatch(next);
@@ -1038,8 +1053,11 @@ export default function AIInsureGenie() {
       var o = Object.assign(fresh(), { stage: "start" }), said = [];
       var stN = (p.get("state") || "").trim(), ab = STATE_ABBR[stN.toLowerCase()];
       if (ab) { o.st = ab; said.push(stName(ab)); }
-      var goal = p.get("goal"); if (goal === "price" || goal === "coverage") o.pri = goal;
-      var car = p.get("car") || "", yr = CAR_AGE_YEAR[car]; if (yr) { o.year = parseInt(yr, 10) <= 2015 ? "old" : yr; }
+      var goal = p.get("goal");
+      if (goal === "price") { o.pri = "price"; said.push(T("Lowest price", "Precio más bajo")); }
+      if (goal === "coverage") { o.pri = "coverage"; o.cov = "full"; said.push(T("Be properly protected", "Buena protección")); }
+      var car = p.get("car") || "", yr = CAR_AGE_YEAR[car];
+      if (yr) { o.year = yr; o.carAge = ({ "2020 or newer": T("2020 or newer", "2020 o más nuevo"), "2015 to 2019": T("2015 to 2019", "2015 a 2019"), "2014 or older": T("2014 or older", "2014 o más antiguo") })[car] || car; said.push(o.carAge); }
       var SITMAP = { sr22: "sr22", lapse: "lapse", record: "record", "new-driver": "new", rideshare: "ride" };
       var sk = SITMAP[p.get("situation") || ""];
       if (sk) { o.sits = [sk]; o.sitDone = true; said.unshift(SIT.filter(function (x) { return x.k === sk; })[0].l); }
@@ -1051,8 +1069,10 @@ export default function AIInsureGenie() {
       if (start === "quote") {
         track("chat_started", { mode: "quote" }, true);
         if (rs.length) { o.said = T("I want to compare: ", "Quiero comparar: ") + rs.join(", "); o.note = rs.length > 1 ? T("Good call. With a few things changed, your current rate may be out of date, so comparing now makes sense.", "Buena idea. Con varios cambios, su tarifa actual puede estar desactualizada, así que conviene comparar ahora.") : T("Good call. That's a common reason rates change, so it's worth comparing now.", "Buena idea. Es un motivo común de cambio de tarifa, así que vale la pena comparar ahora."); }
-        else if (said.length) o.said = said.join(", ");
+        else if (said.length) o.said = said.join(" · ");
         o.stage = nextStage(o);
+        if (o.said) { o.hist = [{ q: null, a: o.said }]; var left = questionsLeft(o);
+          if (!rs.length && said.length > 1) o.note = T("Thanks, I've got your answers from the homepage.", "Gracias, ya tengo sus respuestas de la página principal.") + (left ? T(" Just " + left + " more " + (left === 1 ? "question" : "questions") + ".", " Solo " + left + (left === 1 ? " pregunta más." : " preguntas más.")) : ""); }
         setS(o);
       }
     }, 200);
@@ -1093,7 +1113,7 @@ export default function AIInsureGenie() {
   var partnersHere = list.filter(function (ins) { return fits(ins, { state: s.st || null }); }).length;
   var sub = stage === "done" && Array.isArray(s.results) ? (s.results.length ? s.results.length + T(s.results.length === 1 ? " partner fits you" : " partners fit you", s.results.length === 1 ? " socio encaja" : " socios encajan") : T("AI insurance assistant", "Asistente de seguros con IA"))
     : (s.st && partnersHere ? partnersHere + T(partnersHere === 1 ? " partner quotes in " : " partners quote in ", partnersHere === 1 ? " socio cotiza en " : " socios cotizan en ") + stName(s.st) : T("AI insurance assistant", "Asistente de seguros con IA"));
-  var details = [s.st ? stName(s.st) : "", s.sitDone ? SIT.filter(function (x) { return s.sits.indexOf(x.k) >= 0; }).map(function (x) { return x.s; }).join(" + ") : "", at > ORDER.indexOf("year") ? carName(s) : "", s.cov ? COVS[s.cov] : ""].filter(Boolean);
+  var details = [s.st ? stName(s.st) : "", s.sitDone ? SIT.filter(function (x) { return s.sits.indexOf(x.k) >= 0; }).map(function (x) { return x.s; }).join(" + ") : "", at > ORDER.indexOf("year") ? carName(s) : "", s.cov ? COVS[s.cov] : (s.pri === "price" ? T("Lowest price", "Precio más bajo") : "")].filter(Boolean);
   var pct = [0, 0, 25, 50, 50, 50, 75, 90, 100][at] + "%";
   var prev = { sit: { stage: "state", st: "", changing: false }, make: { stage: "sit", sitDone: false }, model: { stage: "make", make: "" }, year: { stage: MODEL_LIST[s.make] ? "model" : "make", model: "", make: MODEL_LIST[s.make] ? s.make : "" }, cov: { stage: "year", year: "" }, when: { stage: "cov", cov: "" } };
   var canBack = at > 1 && stage !== "done" && showFlow;
@@ -1145,7 +1165,12 @@ export default function AIInsureGenie() {
               </>
             ) : null}
 
-            {stage !== "start" && s.said ? <div className="u">{s.said}</div> : null}
+            {(s.hist || []).length ? s.hist.map(function (h, i) { return (
+              <Fragment key={i}>
+                {h.q ? <div className="g past"><img className="ga" src={LOGO} alt="" /><div className="gt">{h.q}</div></div> : null}
+                <div className="u">{h.a}</div>
+              </Fragment>
+            ); }) : (stage !== "start" && s.said ? <div className="u">{s.said}</div> : null)}
             {s.note ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{s.note}</div></div> : null}
 
             {at >= ORDER.indexOf("cov") && s.make ? (
@@ -1156,7 +1181,7 @@ export default function AIInsureGenie() {
               </div>
             ) : null}
 
-            {Q && !typing ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{Q[0]}{Q[1] ? <span className="gh"><Svg d={I_INFO} size={14} /><span>{Q[1]}</span></span> : null}</div></div> : null}
+            {Q && !typing ? <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{Q[0]}{Q[1] ? <span className="gh"><Svg d={I_INFO} size={14} /><span>{Q[1]}</span></span> : null}</div></div> : null}
 
             {s.qa ? (
               <>
@@ -1198,13 +1223,13 @@ export default function AIInsureGenie() {
               </label>
             ) : null}
             {showFlow && multi ? <button type="button" className="p1" style={{ marginLeft: 36 }} aria-disabled={s.sits.length ? "false" : "true"} onClick={function () { if (s.sits.length) answer(SIT.filter(function (x) { return s.sits.indexOf(x.k) >= 0; }).map(function (x) { return x.l; }).join(", "), { sitDone: true }); }}>{s.sits.length ? T("Continue", "Continuar") : T("Pick at least one", "Elija al menos una")}</button> : null}
-            {canBack ? <button type="button" className="lk back" onClick={function () { go(Object.assign({ said: "", note: "" }, prev[stage] || {}), true); }}>{T("Change my last answer", "Cambiar mi última respuesta")}</button> : null}
+            {canBack ? <button type="button" className="lk back" onClick={function () { go(Object.assign({ said: "", note: "", hist: (s.hist || []).slice(0, -1) }, prev[stage] || {}), true); }}>{T("Change my last answer", "Cambiar mi última respuesta")}</button> : null}
 
             {stage === "done" && !typing && !s.qa ? (
               !results ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Checking partners in ", "Buscando socios en ") + stName(s.st) + "…"}<div className="dots"><i /><i /><i /></div></div></div>
               : results.length ? (
                 <>
-                  <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Done! Here's the partner that matches your answers.", "¡Listo! Este es el socio que coincide con sus respuestas.")}</div></div>
+                  <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Done! Here's the partner that matches your answers.", "¡Listo! Este es el socio que coincide con sus respuestas.")}</div></div>
                   <MatchCard ins={results[0]} s={s} top onCall={function () { setShowCall(true); }} />
                   <div className="m-links">
                     {results.length > 1 ? <button type="button" className="lk" onClick={function () { go({ showAll: !s.showAll }, true); }}>{s.showAll ? T("Hide other matches", "Ocultar otras opciones") : T("See all " + results.length + " matches", "Ver las " + results.length + " opciones")}</button> : <span />}
@@ -1216,7 +1241,7 @@ export default function AIInsureGenie() {
                 </>
               ) : (
                 <>
-                  <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{T("I don't have a quoting partner for ", "Todavía no tengo un socio de cotización para ") + stName(s.st) + T(" yet. I can email you as soon as one covers your state, or a licensed agent can call you.", ". Puedo avisarle por correo en cuanto uno cubra su estado, o un agente con licencia puede llamarle.")}</div></div>
+                  <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{T("I don't have a quoting partner for ", "Todavía no tengo un socio de cotización para ") + stName(s.st) + T(" yet. I can email you as soon as one covers your state, or a licensed agent can call you.", ". Puedo avisarle por correo en cuanto uno cubra su estado, o un agente con licencia puede llamarle.")}</div></div>
                   <EmailCard profile={toProfile(s)} source="no_match" />
                   <button type="button" className="p2" style={{ marginLeft: 36 }} onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} size={17} />{T("Talk to a licensed agent", "Hablar con un agente con licencia")}</button>
                 </>
