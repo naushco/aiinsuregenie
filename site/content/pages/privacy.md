@@ -1,7 +1,7 @@
 ---
 title: Privacy policy
 description: What AI InsureGenie collects when you use our website and chat assistant, how we use it, who we share it with, and the choices you have.
-updated: 2026-11-04
+updated: 2026-11-10
 ---
 AI InsureGenie ("we", "us") runs aiinsuregenie.com and the chat assistant at chat.aiinsuregenie.com. We help drivers find the auto insurance quoting partner or insurer that fits their needs. This policy explains what information we collect, how we use it, and the choices you have.
 
@@ -11,9 +11,11 @@ AI InsureGenie ("we", "us") runs aiinsuregenie.com and the chat assistant at cha
 
 **When you use the chat.** We collect the answers you give, such as your ZIP code and state, your vehicle, your driving record, and what matters most to you. We also collect the questions you type.
 
+**Your approximate location.** When you open the chat or the matcher on our homepage, our hosting provider (Cloudflare) tells us which US state your connection appears to come from, based on your IP address. We use it only to suggest your state, which you can change. We don't store it or use your device's GPS.
+
 **When you sign up for emails.** If you choose to, we collect your email address and the answers you gave in the chat, so we can send you your answers, tips, and updates, including when a new partner covers your state. We record the consent wording you agreed to and when.
 
-**Usage events.** When you use the chat, we record simple events such as "chat started", "match shown", "partner link opened", and "call requested", with a random ID for that chat visit, your state, and the ad campaign that brought you. These events do not include your name, phone number, or email, and we don't use cookies for them. We use them to count visits and improve the service.
+**Usage events.** When you use the chat, we record simple events such as "chat started", "match shown", "question asked", "partner link opened", and "call requested", with a random ID for that chat visit, your state, and the ad campaign that brought you. These events do not include your name, phone number, or email, and we don't use cookies for them. We use them to count visits and improve the service.
 
 **When you ask us to connect you or call you.** If you choose to share them, we collect your first name, phone number, email address, and preferred call time. We also record the exact consent wording you agreed to and when you agreed.
 
@@ -52,7 +54,7 @@ We and our partners only contact you by phone, text, or email about quotes if yo
 
 ## Cookies
 
-Our website and chat do not set their own advertising or analytics cookies. The chat stores a random visit ID in your browser's session storage, which is cleared when you close the tab. Partner sites you visit may use cookies under their own policies.
+Our website and chat do not set advertising or analytics cookies. The chat stores a random visit ID in your browser's session storage, which is cleared when you close the tab. So you can pick up where you left off, the chat also saves your answers in your browser's local storage and sets one small cookie on aiinsuregenie.com that records only how far you got (for example, "step 3 of 4"). Both stay on your device, are not sent to advertisers, and expire after 7 days. You can clear them at any time in your browser settings. Partner sites you visit may use cookies under their own policies.
 
 ## How long we keep it
 

@@ -7,7 +7,7 @@
 const { kv, kvConfigured } = require("../lib/kv");
 const { cors, ip } = require("../lib/http");
 
-var TYPES = ["chat_started", "match_shown", "no_match", "partner_click", "call_request", "email_signup"];
+var TYPES = ["chat_started", "chat_resumed", "step_answered", "question_asked", "chat_left", "match_shown", "no_match", "partner_click", "call_request", "email_signup"];
 var META = { match_shown: "ViewContent", partner_click: "Lead", call_request: "Contact", email_signup: "Subscribe" };
 var hits = {};
 function rateLimited(who) {
@@ -49,7 +49,7 @@ module.exports = async function handler(req, res) {
   var ev = {
     type: b.type, session_id: String(b.session_id), at: new Date().toISOString(),
     state: clean(b.state, 2), partner_id: clean(b.partner_id, 40), goal: clean(b.goal, 20), placement: clean(b.placement, 10),
-    source: clean(b.source, 20), mode: clean(b.mode, 12), lang: b.lang === "es" ? "es" : "en", dns: b.dns === true,
+    source: clean(b.source, 20), step: clean(b.step || b.stage, 20), mode: clean(b.mode, 12), lang: b.lang === "es" ? "es" : "en", dns: b.dns === true,
     utm_source: clean(b.utm_source, 60), utm_campaign: clean(b.utm_campaign, 80), utm_content: clean(b.utm_content, 80), pub: clean(b.pub, 40)
   };
   try {
