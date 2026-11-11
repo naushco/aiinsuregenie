@@ -5,7 +5,7 @@ description: Florida FR-44 explained in plain words. Who needs it after a DUI, t
 path: fr44-insurance/florida
 lang: en
 date: 2026-11-01
-updated: 2026-11-06
+updated: 2026-11-11
 genie: sr22-fl
 ---
 
@@ -38,7 +38,18 @@ FR-44 limits come from [FLHSMV](https://www.flhsmv.gov/driver-licenses-id-cards/
 ## What it costs
 
 - **Filing fee:** often about $15 to $25 ([NerdWallet](https://www.nerdwallet.com/blog/insurance/fr44-insurance)).
-- **Premium:** one 2024 analysis found about **$1,309 a year** for minimum FR-44 coverage after a DUI, though prices vary a lot by insurer ([NerdWallet](https://www.nerdwallet.com/blog/insurance/fr44-insurance)). Some insurers ask for several months up front.
+- **Premium:** estimates vary by study. One 2026 analysis put the average FR-44 driver in Florida at about **$167 a month for liability only** and **$274 a month for full coverage**, compared with $143 and $235 for a driver with a clean record ([Insurify](https://insurify.com/car-insurance/florida/sr-22-car-insurance/)). An earlier analysis found about **$1,309 a year** for minimum FR-44 coverage after a DUI ([NerdWallet](https://www.nerdwallet.com/blog/insurance/fr44-insurance)).
+
+Prices vary a lot by insurer. In the 2026 study, the lowest monthly averages for FR-44 drivers were ([Insurify](https://insurify.com/car-insurance/florida/sr-22-car-insurance/)):
+
+| Insurer | Liability only | Full coverage |
+|---|---|---|
+| State Farm | $94 | $146 |
+| Progressive | $105 | $166 |
+| GEICO | $107 | not listed |
+| Allstate | not listed | $202 |
+
+These are estimates for a sample driver. Your quote depends on your record, car, ZIP code and insurer. Some insurers ask for several months up front.
 
 ## How to get an FR-44
 
@@ -54,7 +65,7 @@ FR-44 limits come from [FLHSMV](https://www.flhsmv.gov/driver-licenses-id-cards/
 An FR-44 is a certificate your insurance company files with the state to show you carry the higher liability limits required after a DUI. It is not a type of policy itself. Florida requires it for three years from reinstatement ([FLHSMV](https://www.flhsmv.gov/driver-licenses-id-cards/education-courses/dui-and-iid/dui-faqs)).
 
 ### Which states use FR-44 insurance?
-Only Florida and Virginia use FR-44 filings. Other states use an SR-22 instead ([Progressive](https://www.progressive.com/answers/fr-44/)).
+Only Florida and [Virginia](/fr44-insurance/virginia/) use FR-44 filings. Other states use an SR-22 instead ([Progressive](https://www.progressive.com/answers/fr-44/)).
 
 ### What happens if my FR-44 policy lapses or is cancelled?
 Your insurer must report the cancellation to the state, which can suspend your license and registration until you get covered again ([Florida Statutes s. 324.0221](https://flsenate.gov/Laws/Statutes/2025/324.0221)). Keep payments current for the full three years.
@@ -79,3 +90,4 @@ Insurance publications:
 - [NerdWallet: FR-44 and SR-22 insurance in Florida](https://www.nerdwallet.com/blog/insurance/fr44-insurance)
 - [CarInsurance.com: FR-44 insurance in Virginia](https://carinsurance.com/fr-44-insurance-virginia.aspx)
 - [Progressive: what is an FR-44 form?](https://www.progressive.com/answers/fr-44/)
+- [Insurify: SR-22 and FR-44 car insurance in Florida](https://insurify.com/car-insurance/florida/sr-22-car-insurance/)
