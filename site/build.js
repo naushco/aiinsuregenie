@@ -146,6 +146,24 @@ for (const g of guides) {
   if (!/^## (Sources|Fuentes)\s*$/m.test(g.body) || !/\]\(https?:\/\//.test(g.body)) throw new Error(`${g.path}: every guide needs a "## Sources" section with links`);
 }
 
+// Related guides shown at the end of each guide (internal links between close topics).
+const RELATED = {
+  'sr22-insurance': ['sr22-insurance/texas', 'sr22-insurance/non-owner', 'fr44-insurance/florida', 'car-insurance-after-lapse'],
+  'sr22-insurance/texas': ['sr22-insurance', 'sr22-insurance/non-owner', 'car-insurance-after-lapse', 'es/seguro-de-auto-obligatorio-texas'],
+  'sr22-insurance/non-owner': ['sr22-insurance', 'sr22-insurance/texas', 'fr44-insurance/florida', 'fr44-insurance/virginia'],
+  'fr44-insurance/florida': ['fr44-insurance/virginia', 'sr22-insurance', 'sr22-insurance/non-owner', 'car-insurance-after-lapse'],
+  'fr44-insurance/virginia': ['fr44-insurance/florida', 'sr22-insurance', 'sr22-insurance/non-owner', 'car-insurance-after-lapse'],
+  'car-insurance-after-lapse': ['late-car-insurance-payment', 'sr22-insurance', 'fr44-insurance/florida', 'car-insurance-after-accident-or-ticket'],
+  'late-car-insurance-payment': ['car-insurance-after-lapse', 'sr22-insurance', 'car-insurance-after-accident-or-ticket'],
+  'car-insurance-after-accident-or-ticket': ['sr22-insurance', 'fr44-insurance/florida', 'car-insurance-after-lapse', 'new-driver-car-insurance'],
+  'new-driver-car-insurance': ['car-insurance-learners-permit', 'car-insurance-after-accident-or-ticket', 'rideshare-insurance'],
+  'car-insurance-learners-permit': ['new-driver-car-insurance', 'car-insurance-after-accident-or-ticket', 'late-car-insurance-payment'],
+  'rideshare-insurance': ['new-driver-car-insurance', 'car-insurance-after-accident-or-ticket', 'car-insurance-after-lapse'],
+  'es/seguro-de-auto-obligatorio-texas': ['es/seguro-de-auto-licencia-extranjera'],
+  'es/seguro-de-auto-licencia-extranjera': ['es/seguro-de-auto-obligatorio-texas'],
+  'blog/how-to-compare-car-insurance-quotes': ['new-driver-car-insurance', 'car-insurance-after-accident-or-ticket', 'car-insurance-after-lapse', 'sr22-insurance'],
+};
+
 // ---------- posts ----------
 const postsDir = path.join(root, 'content/posts');
 const posts = fs.readdirSync(postsDir).filter((f) => f.endsWith('.md') && !f.startsWith('_'))
@@ -153,6 +171,13 @@ const posts = fs.readdirSync(postsDir).filter((f) => f.endsWith('.md') && !f.sta
   .map((p) => { if (!p.date) throw new Error(`${p.slug}: missing "date"`); return p; })
   .filter((p) => p.draft !== 'true')
   .sort((a, b) => b.date.localeCompare(a.date));
+
+// FAQ structured data from "### question" + answer pairs under "## Common questions".
+function postFaqs(body) {
+  const part = (body.split(/^## Common questions\s*$/m)[1] || '').split(/^## /m)[0];
+  const faqs = [...part.matchAll(/^### (.+)\n([\s\S]*?)(?=^### |(?![\s\S]))/gm)].map((m) => ({ q: m[1].trim(), a: m[2].trim().replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/\*\*/g, '') }));
+  return faqs.length ? [{ '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) }] : [];
+}
 
 const words = (s) => s.split(/\s+/).filter(Boolean).length;
 
@@ -174,8 +199,10 @@ for (const p of posts) {
           { '@type': 'ListItem', position: 3, name: p.title, item: url },
         ],
       },
+      ...postFaqs(p.body),
     ],
   };
+  const prel = (RELATED['blog/' + p.slug] || []).map((x) => guides.find((g) => g.path === x)).filter(Boolean);
   const html = head({
     title: p.seo_title || `${p.title} | ${NAME}`, description: p.description, url, type: 'article',
     extra: `<script type="application/ld+json">${JSON.stringify(ld)}</script>`,
@@ -184,7 +211,8 @@ for (const p of posts) {
   <p class="crumbs"><a href="/">Home</a> / <a href="/blog/">Guides</a></p>
   <h1>${esc(p.title)}</h1>
   <p class="byline">By ${NAME} &middot; <time datetime="${p.date}">${fmtDate(p.date)}</time>${p.updated ? ` &middot; Updated <time datetime="${p.updated}">${fmtDate(p.updated)}</time>` : ''} &middot; ${Math.max(1, Math.round(words(p.body) / 220))} min read &middot; <a href="/how-we-check-facts/">How we check facts</a> &middot; <a href="/how-we-make-money/">How we make money</a></p>
-${md(p.body)}
+${md(dedupeCitations(p.body))}
+  ${prel.length ? `<nav class="related" aria-label="Related guides"><h2>Related guides</h2><ul>${prel.map((r) => `<li><a href="/${r.path}/">${esc(r.title)}</a></li>`).join('')}</ul></nav>` : ''}
   <aside class="article-cta">
     <h2>Find the best quote for your needs</h2>
     <p>Tell our free AI assistant what matters to you and get matched with the quoting partner that fits. No obligation to buy.</p>
@@ -401,6 +429,17 @@ const GENIE = {
   'sr22-fl': { cfg: Object.assign({}, byPage('sr22'), { page: 'fr44-fl', state: 'Florida',
     hello: ['Hi, I’m Genie 👋', 'Need an FR-44 or SR-22 in Florida? I can point you to insurers that file them. No judgment.'],
     afterState: ['Has the court or FLHSMV already asked you for one?'] }), sub: 'Your AI insurance guide · replies in seconds', note: 'Genie is an AI assistant. A licensed agent is one tap away.', aria: 'Chat with Genie' },
+  'fr44-va': { cfg: Object.assign({}, byPage('sr22'), { page: 'fr44-va', state: 'Virginia',
+    hello: ['Hi, I\u2019m Genie \ud83d\udc4b', 'Need an FR-44 in Virginia? I can point you to insurers that file it with DMV. No judgment.'],
+    afterState: ['Has the court or DMV already asked you for one?'] }), sub: 'Your AI insurance guide · replies in seconds', note: 'Genie is an AI assistant. A licensed agent is one tap away.', aria: 'Chat with Genie' },
+  'late-pay': { cfg: Object.assign({}, byPage('sr22'), { page: 'late-pay',
+    hello: ['Hi, I\u2019m Genie \ud83d\udc4b', 'Missed a car insurance payment? Let\u2019s keep you covered.', 'Which state is your car registered in?'],
+    afterState: ['Got it, {state}.', 'Has your insurer cancelled the policy yet?'],
+    q2: [
+      { label: 'Not yet, just late', goal: 'price', reply: ['Good. Pay as soon as you can, and ask about a payment date that suits you.', 'If the price is the problem, I can point you to a partner that may cost less. About a minute.'] },
+      { label: 'Yes, it was cancelled', goal: 'price', reply: ['That\u2019s fixable. Getting covered again quickly keeps the price lower.', 'Let\u2019s find a partner in {state}. About a minute in the chat.'] },
+      { label: 'I\u2019d rather talk to a person', agent: true, reply: ['Of course.', 'Leave your number in the chat and a licensed agent will call you back.'] }
+    ] }), sub: 'Your AI insurance guide · replies in seconds', note: 'Genie is an AI assistant. A licensed agent is one tap away.', aria: 'Chat with Genie' },
   lapse: { cfg: Object.assign({}, byPage('sr22'), { page: 'lapse',
     hello: ['Hi, I’m Genie 👋', 'A lapse happens to lots of drivers. Let’s get you covered again, quickly.', 'Which state is your car registered in?'],
     afterState: ['Got it, {state}.', 'How long have you been without insurance?'],
@@ -437,19 +476,6 @@ const GENIE = {
       { label: 'I’d rather talk to a person', agent: true, reply: ['Of course.', 'Leave your number in the chat and a licensed agent will call you back.'] }
     ] }), sub: 'Your AI insurance guide · replies in seconds', note: 'Genie is an AI assistant. A licensed agent is one tap away.', aria: 'Chat with Genie' },
   seguro: { cfg: Object.assign({}, byPage('seguro-es'), { hello: ['¡Hola! Soy Genie \ud83d\udc4b', '¿Tiene licencia de otro país? Le ayudo a encontrar aseguradoras que trabajan con conductores como usted.', '¿En qué estado vive?'] }), sub: 'Su guía de seguros con IA · responde al instante', note: 'Genie es un asistente de IA. Algunas partes del chat están en inglés por ahora.', aria: 'Hable con Genie' },
-};
-// Related guides shown at the end of each guide (internal links between close topics).
-const RELATED = {
-  'sr22-insurance': ['sr22-insurance/texas', 'sr22-insurance/non-owner', 'fr44-insurance/florida', 'car-insurance-after-lapse'],
-  'sr22-insurance/texas': ['sr22-insurance', 'sr22-insurance/non-owner', 'car-insurance-after-lapse', 'es/seguro-de-auto-obligatorio-texas'],
-  'sr22-insurance/non-owner': ['sr22-insurance', 'sr22-insurance/texas', 'fr44-insurance/florida', 'car-insurance-after-lapse'],
-  'fr44-insurance/florida': ['sr22-insurance', 'sr22-insurance/non-owner', 'car-insurance-after-lapse', 'car-insurance-after-accident-or-ticket'],
-  'car-insurance-after-lapse': ['sr22-insurance', 'fr44-insurance/florida', 'sr22-insurance/texas', 'car-insurance-after-accident-or-ticket'],
-  'car-insurance-after-accident-or-ticket': ['sr22-insurance', 'fr44-insurance/florida', 'car-insurance-after-lapse', 'new-driver-car-insurance'],
-  'new-driver-car-insurance': ['car-insurance-after-accident-or-ticket', 'rideshare-insurance', 'car-insurance-after-lapse'],
-  'rideshare-insurance': ['new-driver-car-insurance', 'car-insurance-after-accident-or-ticket', 'car-insurance-after-lapse'],
-  'es/seguro-de-auto-obligatorio-texas': ['es/seguro-de-auto-licencia-extranjera'],
-  'es/seguro-de-auto-licencia-extranjera': ['es/seguro-de-auto-obligatorio-texas'],
 };
 
 // Link each outside source once in the body (its first mention); later mentions stay as plain-text
