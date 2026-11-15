@@ -1,10 +1,11 @@
 ---
 title: Virginia FR-44 insurance: limits, cost and how long you need it
 seo_title: Virginia FR-44 insurance: limits, cost and the 3-year rule
-description: Virginia FR-44 explained in plain words. Who needs it after a DUI, the 100/200/50 limits, the 3-year rule, what it costs, and what to do if you don't own a car.
+description: Virginia FR-44 in plain words: who needs it after a DUI, the 100/200/50 limits, the 3-year rule, what it costs, and what to do without a car.
 path: fr44-insurance/virginia
 lang: en
 date: 2026-11-11
+updated: 2026-11-15
 genie: fr44-va
 ---
 
@@ -84,6 +85,12 @@ Only Virginia and [Florida](/fr44-insurance/florida/). Other states use an SR-22
 
 ### How much does FR-44 insurance cost in Virginia?
 About $337 a month on average for full coverage after one DUI in one 2026 study, with some insurers far cheaper ([ValuePenguin](https://valuepenguin.com/car-insurance/sr22-fr44-virginia)).
+
+### Can I get an FR-44 in Virginia without a car?
+Yes. If you don't own a vehicle, the DMV requires an operator's policy, which covers you when you drive other cars ([Virginia DMV](https://www.dmv.virginia.gov/sites/default/files/forms/dmv292.pdf)).
+
+### What happens if my Virginia FR-44 lapses?
+Your insurer tells the DMV, and your driving privilege is suspended or revoked again until a new FR-44 is filed ([Virginia DMV](https://www.dmv.virginia.gov/sites/default/files/forms/dmv292.pdf)).
 
 ## Sources
 

@@ -5,6 +5,7 @@ description: Missed a car insurance payment? How grace periods work, how much no
 path: late-car-insurance-payment
 lang: en
 date: 2026-11-11
+updated: 2026-11-15
 genie: late-pay
 ---
 
@@ -67,6 +68,12 @@ Many insurers will change your due date or set up a payment plan if you call bef
 
 ### Will one late payment hurt my insurance?
 A single late payment you fix within the grace period usually just costs a late fee. A cancellation is more serious, because the gap can raise your future price.
+
+### How many days late can a car insurance payment be in Florida or Texas?
+Insurers must give at least 10 days' written notice before cancelling for nonpayment in Florida, and Texas uses a 10-day general cancellation notice ([Policygenius](https://www.policygenius.com/auto-insurance/car-insurance-cancellation-laws-by-state/)). Your notice shows the exact cancellation date.
+
+### What if I can't afford my car insurance payment at all?
+Call your insurer before the cancellation date. Ask about a later due date or payment plan, a higher deductible or fewer coverages to cut the price, or compare quotes for a cheaper policy that starts before the old one ends. See [10 ways to lower your car insurance](/lower-car-insurance-after-rate-increase/).
 
 ## Sources
 
