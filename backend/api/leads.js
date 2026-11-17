@@ -17,6 +17,11 @@ function rateLimited(who) {
   hits[who].push(now);
   return false;
 }
+// Accept only real TrustedForm certificate URLs.
+function tfUrl(v) {
+  var u = v == null ? "" : String(v).trim().slice(0, 200);
+  return /^https:\/\/cert\.trustedform\.com\/[A-Za-z0-9]+$/.test(u) ? u : null;
+}
 function text(v, n) { return v == null ? null : String(v).trim().slice(0, n); }
 
 module.exports = async function handler(req, res) {
@@ -59,6 +64,7 @@ module.exports = async function handler(req, res) {
     // Consent record: the exact wording the person saw, when, and from where
     consent_text: text(d.consent_text, 1200), consent_timestamp: text(d.consent_timestamp, 40),
     disclosed_partners: text(d.disclosed_buyers, 600),
+    trustedform_cert_url: tfUrl(d.trustedform_cert_url),
     ip_address: who, user_agent: text(req.headers["user-agent"], 200)
   };
 

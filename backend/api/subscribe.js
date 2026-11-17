@@ -15,6 +15,11 @@ function rateLimited(who) {
 }
 function text(v, n) { return v == null ? null : String(v).trim().slice(0, n) || null; }
 
+// Accept only real TrustedForm certificate URLs.
+function tfUrl(v) {
+  var u = v == null ? "" : String(v).trim().slice(0, 200);
+  return /^https:\/\/cert\.trustedform\.com\/[A-Za-z0-9]+$/.test(u) ? u : null;
+}
 module.exports = async function handler(req, res) {
   cors(req, res, "POST, OPTIONS");
   if (req.method === "OPTIONS") return res.status(200).end();
@@ -39,6 +44,7 @@ module.exports = async function handler(req, res) {
     state: text(b.state, 2), zip: text(b.zip, 5), vehicle_year: text(b.vehicle_year, 10), vehicle_make: text(b.vehicle_make, 40),
     driving_record: text(b.driving_record, 20), priority: text(b.priority, 20), session_id: text(b.session_id, 32),
     consent_text: text(b.consent_text, 600), consent_timestamp: text(b.consent_timestamp, 40),
+    trustedform_cert_url: tfUrl(b.trustedform_cert_url),
     landing_page: text(b.landing_page, 300), ip_address: who, user_agent: text(req.headers["user-agent"], 200),
     unsubscribed: false, unsub_token: prev && prev.unsub_token ? prev.unsub_token : crypto.randomBytes(12).toString("hex")
   };

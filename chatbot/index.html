@@ -17,5 +17,19 @@
     <div id="root"></div>
     <script src="/config.js"></script>
     <script type="module" src="/src/main.jsx"></script>
+    <!-- TrustedForm: the SDK fills this field with the certificate URL; App.jsx reads it on submit -->
+    <form id="tf-cert" aria-hidden="true" style="display:none"><input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl" /></form>
+    <script type="text/javascript">
+      (function() {
+        var tf = document.createElement('script');
+        tf.type = 'text/javascript';
+        tf.async = true;
+        tf.src = 'https://api.trustedform.com/trustedform.js?field=xxTrustedFormCertUrl&use_tagged_consent=true&l=' +
+          new Date().getTime() + Math.random();
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(tf, s);
+      })();
+    </script>
+    <noscript><img src="https://api.trustedform.com/ns.gif" alt="" /></noscript>
+    <!-- End TrustedForm -->
   </body>
 </html>
