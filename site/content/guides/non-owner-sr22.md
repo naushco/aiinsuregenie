@@ -1,10 +1,11 @@
 ---
 title: Non-owner SR-22 insurance: how it works if you don't own a car
-seo_title: Non-owner SR-22 insurance: SR-22 without a car
-description: Need an SR-22 but don't own a car? How non-owner SR-22 insurance works, what it covers and doesn't, typical costs, and how to buy one.
+seo_title: Non-owner SR-22 insurance: costs from $28/month, how to buy
+description: Need an SR-22 without a car? What non-owner SR-22 insurance covers, 2026 prices from about $28 a month, the cheapest insurers, and how to buy one.
 path: sr22-insurance/non-owner
 lang: en
 date: 2026-11-01
+updated: 2026-11-17
 genie: sr22
 ---
 
@@ -38,7 +39,20 @@ Per [Insurance.com](https://insurance.com/auto-insurance/non-owner-car-insurance
 
 ## What it costs
 
-One analysis puts a non-owner SR-22 at about **$380 a year** on average for a clean record, ranging from about $179 in Iowa to $668 in Florida, and much higher after a DUI ([Insurance.com](https://insurance.com/auto-insurance/non-owner-car-insurance/non-owner-sr22-insurance)). The filing fee itself is typically about $15 to $50 ([CarInsurance.com](https://www.carinsurance.com/kb/how-to-get-sr22-without-valid-license)).
+Non-owner SR-22 policies are usually much cheaper than SR-22 coverage on a car you own, because they don't insure a vehicle. Average monthly prices for minimum coverage from the cheapest insurers in one 2026 analysis ([MoneyGeek](https://www.moneygeek.com/insurance/auto/cheapest-sr-22-insurance)):
+
+| Insurer | Non-owner SR-22, monthly |
+|---|---|
+| USAA (military families only) | $28 |
+| State Farm | $33 |
+| Kemper | $33 |
+| Travelers | $40 |
+
+For comparison, the cheapest **standard** SR-22 policy in the same study averaged $114 a month (Erie), and $136 to $169 at GEICO, Travelers, State Farm and Progressive. Another analysis puts a non-owner SR-22 at about **$380 a year** on average for a clean record, ranging from about $179 in Iowa to $668 in Florida, and much higher after a DUI ([Insurance.com](https://insurance.com/auto-insurance/non-owner-car-insurance/non-owner-sr22-insurance)). The filing fee itself is typically about $15 to $50 ([CarInsurance.com](https://www.carinsurance.com/kb/how-to-get-sr22-without-valid-license)).
+
+## Non-owner SR-22 in Texas
+
+Texas DPS accepts an SR-22 on a non-owner policy for drivers who don't own a vehicle ([Texas DPS](https://www.dps.texas.gov/node/676)). It must meet Texas's 30/60/25 minimum limits and stay on file for the full period, usually two years. See our [Texas SR-22 guide](/sr22-insurance/texas/) and [cheapest SR-22 insurance in Texas](/cheapest-sr22-insurance-texas/).
 
 ## How to get one
 
@@ -59,6 +73,15 @@ It can give you liability coverage, but typically not damage to the rental car i
 ### What if I buy a car later?
 Tell your insurer right away. You'll need a standard policy on that car with the SR-22 on it, and no gap in coverage.
 
+### How much is non-owner SR-22 insurance per month?
+Often about $28 to $40 a month for minimum coverage at the cheapest insurers, depending on your record and state ([MoneyGeek](https://www.moneygeek.com/insurance/auto/cheapest-sr-22-insurance)).
+
+### Who has the cheapest non-owner SR-22 insurance?
+In one 2026 study, USAA ($28 a month, military families only), State Farm ($33) and Kemper ($33) were cheapest ([MoneyGeek](https://www.moneygeek.com/insurance/auto/cheapest-sr-22-insurance)).
+
+### Can I get a non-owner SR-22 in Texas?
+Yes. Texas DPS accepts an SR-22 on a non-owner policy if you don't own a car ([Texas DPS](https://www.dps.texas.gov/node/676)).
+
 ## Sources
 
 Official:
@@ -68,3 +91,4 @@ Insurance publications:
 - [Insurance.com: non-owner SR-22 insurance](https://insurance.com/auto-insurance/non-owner-car-insurance/non-owner-sr22-insurance)
 - [InsuranceQuotes: non-owner car insurance guide](https://www.insurancequotes.com/auto/non-owner-car-insurance-guide)
 - [CarInsurance.com: SR-22 without a valid license](https://www.carinsurance.com/kb/how-to-get-sr22-without-valid-license)
+- [MoneyGeek: cheapest SR-22 insurance (updated November 2026)](https://www.moneygeek.com/insurance/auto/cheapest-sr-22-insurance)
