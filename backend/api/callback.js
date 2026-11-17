@@ -1,12 +1,13 @@
 // api/callback.js: receives "Talk to an agent" requests from the chatbot.
 //
-// Nothing is stored on this server (Vercel's disk is temporary). Instead each request is
-// forwarded to a webhook YOU control, so it lands somewhere durable and somebody sees it:
-//   - Slack:  create an "Incoming Webhook" and paste its URL
-//   - Zapier / Make: create a "Catch Hook" and route to email, SMS, Google Sheets, your CRM...
-// Set the URL in Vercel as the environment variable CALLBACK_WEBHOOK_URL.
+// Each request is saved in storage (D1 on Cloudflare): record "cb:<id>", newest-first list "callbacks".
+// Optionally it is also forwarded to a webhook YOU control (Slack, Zapier, Make, a CRM...):
+// set CALLBACK_WEBHOOK_URL (or LEAD_WEBHOOK_URL) on the API Worker. A failed webhook never loses a
+// request once it is stored. The request is refused only if neither storage nor a webhook is set up.
 
+const crypto = require("crypto");
 const { cors } = require("../lib/http");
+const { kv, kvConfigured } = require("../lib/kv");
 const { isOptedOut } = require("./privacy.js");
 
 const hits = {};
@@ -29,7 +30,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   var hook = process.env.CALLBACK_WEBHOOK_URL || process.env.LEAD_WEBHOOK_URL;
-  if (!hook) return res.status(503).json({ error: "Callback requests are not configured." });
+  if (!hook && !kvConfigured()) return res.status(503).json({ error: "Callback requests are not configured." });
 
   var ip = (req.headers["x-forwarded-for"] || "unknown").split(",")[0].trim();
   if (rateLimited(ip)) return res.status(429).json({ error: "Too many requests. Please try again later." });
@@ -46,6 +47,7 @@ module.exports = async function handler(req, res) {
   var formatted = "(" + digits.slice(0, 3) + ") " + digits.slice(3, 6) + "-" + digits.slice(6);
 
   var payload = {
+    id: crypto.randomUUID(),
     // "text" makes this display nicely if the webhook is a Slack Incoming Webhook
     text: "New callback request: " + name + ", " + formatted + ", best time: " + when +
       (b.state ? ", " + b.state : "") + (b.zip ? " " + String(b.zip).slice(0, 5) : ""),
@@ -69,23 +71,30 @@ module.exports = async function handler(req, res) {
   try { if (!payload.do_not_sell && await isOptedOut(null, digits)) payload.do_not_sell = true; } catch (e) {}
   if (payload.do_not_sell) payload.text += " [DO NOT SELL/SHARE]";
 
-  try {
-    var controller = new AbortController();
-    var timer = setTimeout(function () { controller.abort(); }, 8000);
-    var r = await fetch(hook, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      signal: controller.signal
-    });
-    clearTimeout(timer);
-    if (!r.ok) {
-      console.error("Webhook responded", r.status);
-      return res.status(502).json({ error: "Could not deliver the request." });
-    }
-    return res.status(200).json({ ok: true });
-  } catch (err) {
-    console.error("Webhook error:", err && err.message);
-    return res.status(502).json({ error: "Could not deliver the request." });
+  var stored = false, forwarded = false;
+  if (kvConfigured()) {
+    try {
+      await kv(["SET", "cb:" + payload.id, JSON.stringify(payload)]);
+      await kv(["LPUSH", "callbacks", payload.id]);
+      await kv(["LTRIM", "callbacks", "0", "4999"]);
+      stored = true;
+    } catch (err) { console.error("callback store failed:", err && err.message); }
   }
+  if (hook) {
+    try {
+      var controller = new AbortController();
+      var timer = setTimeout(function () { controller.abort(); }, 8000);
+      var r = await fetch(hook, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+      clearTimeout(timer);
+      forwarded = r.ok;
+      if (!r.ok) console.error("Webhook responded", r.status);
+    } catch (err) { console.error("Webhook error:", err && err.message); }
+  }
+  if (!stored && !forwarded) return res.status(502).json({ error: "Could not save the request." });
+  return res.status(200).json({ ok: true, id: payload.id });
 };
