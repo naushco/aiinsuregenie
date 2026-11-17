@@ -18,6 +18,11 @@ function rateLimited(ip) {
   return false;
 }
 
+// Accept only real TrustedForm certificate URLs.
+function tfUrl(v) {
+  var u = v == null ? "" : String(v).trim().slice(0, 200);
+  return /^https:\/\/cert\.trustedform\.com\/[A-Za-z0-9]+$/.test(u) ? u : null;
+}
 module.exports = async function handler(req, res) {
   cors(req, res, "POST, OPTIONS");
   if (req.method === "OPTIONS") return res.status(200).end();
@@ -52,6 +57,7 @@ module.exports = async function handler(req, res) {
     state: b.state ? String(b.state).slice(0, 2) : null,
     consent_text: String(b.consent_text).slice(0, 600),
     consent_timestamp: String(b.consent_timestamp).slice(0, 40),
+    trustedform_cert_url: tfUrl(b.trustedform_cert_url),
     ip_address: ip,
     user_agent: String(req.headers["user-agent"] || "").slice(0, 200),
     landing_page: b.landing_page ? String(b.landing_page).slice(0, 300) : null,

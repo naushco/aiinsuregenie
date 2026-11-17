@@ -483,6 +483,11 @@ function buildConsent(names) {
   return "I agree that AI InsureGenie and its insurance partners" + list + " may contact me by phone, text message, and email about insurance quotes, including with automated technology. Consent is not required to buy anything, and I can withdraw it at any time.";
 }
 var CONSENT_LINKS = T(" I have read the Privacy Policy and Terms of Use.", " He leído la Política de privacidad y los Términos de uso.");
+// TrustedForm certificate URL (filled by the SDK loaded in index.html); null if blocked or not loaded yet.
+function tfCert() {
+  var el = document.getElementById("xxTrustedFormCertUrl");
+  return el && el.value ? el.value : null;
+}
 var CALL_CONSENT = T("I agree that a licensed insurance agent may call me at this number about insurance quotes. Consent is not required to buy anything.", "Acepto que un agente de seguros con licencia me llame a este número sobre cotizaciones de seguros. No es necesario dar este consentimiento para comprar nada.");
 
 function basisLine(p) {
@@ -682,7 +687,7 @@ function EmailCard({ profile, source, onDone }) {
     setErr(""); setState("sending");
     try {
       var res = await fetch(API_BASE + "/api/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
-        email: r.v, consent_text: EMAIL_CONSENT, consent_timestamp: new Date().toISOString(), source: source, lang: LANG,
+        email: r.v, consent_text: EMAIL_CONSENT, consent_timestamp: new Date().toISOString(), trustedform_cert_url: tfCert(), source: source, lang: LANG,
         state: profile.state || null, zip: profile.zip || null, vehicle_year: profile.vehicleYear || null, vehicle_make: profile.vehicleMake || null,
         driving_record: profile.driving || null, priority: profile.priority || null, session_id: SESSION_ID, landing_page: window.location.href
       }) });
@@ -737,6 +742,7 @@ function CallModal({ profile, onClose, onSent }) {
           name: name.trim(), phone: r.v, preferred_time: when,
           zip: profile.zip || null, state: profile.state || null,
           consent_text: CALL_CONSENT, consent_timestamp: new Date().toISOString(),
+          trustedform_cert_url: tfCert(),
           landing_page: window.location.href, session_id: SESSION_ID, do_not_sell: DO_NOT_SELL
         })
       });
@@ -785,11 +791,11 @@ function CallModal({ profile, onClose, onSent }) {
               </div>
             </div>
             <label className="agree">
-              <input type="checkbox" checked={agree} onChange={function (e) { setAgree(e.target.checked); }} />
-              <span>{CALL_CONSENT}</span>
+              <input type="checkbox" data-tf-element-role="consent-opt-in" checked={agree} onChange={function (e) { setAgree(e.target.checked); }} />
+              <span data-tf-element-role="consent-language">{CALL_CONSENT}</span>
             </label>
             {err ? <p className="errmsg" role="alert">{err}</p> : null}
-            <button type="button" className="btn btn-p" onClick={submit} disabled={sending}>{sending ? T("Sending...", "Enviando...") : T("Request a call", "Pedir una llamada")}</button>
+            <button type="button" className="btn btn-p" data-tf-element-role="submit" onClick={submit} disabled={sending}>{sending ? T("Sending...", "Enviando...") : T("Request a call", "Pedir una llamada")}</button>
           </div>
         )}
       </div>
