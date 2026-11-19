@@ -148,7 +148,14 @@ for (const g of guides) {
 
 // Related guides shown at the end of each guide (internal links between close topics).
 const RELATED = {
-  'sr22-insurance': ['car-insurance-requirements-by-state', 'sr22-insurance/texas', 'sr22-insurance/non-owner', 'fr44-insurance/florida', 'car-insurance-after-lapse'],
+  'sr22-insurance/california': ['sr22-insurance', 'sr22-insurance/non-owner', 'car-insurance-requirements-by-state', 'sr22-insurance/arizona'],
+  'sr22-insurance/illinois': ['sr22-insurance', 'sr22-insurance/non-owner', 'car-insurance-requirements-by-state', 'sr22-insurance/ohio'],
+  'sr22-insurance/ohio': ['sr22-insurance', 'sr22-insurance/non-owner', 'car-insurance-requirements-by-state', 'sr22-insurance/illinois'],
+  'sr22-insurance/arizona': ['sr22-insurance', 'sr22-insurance/non-owner', 'car-insurance-requirements-by-state', 'sr22-insurance/california'],
+  'sr22-insurance/georgia': ['sr22-insurance', 'sr22-insurance/non-owner', 'car-insurance-requirements-by-state', 'fr44-insurance/florida'],
+  'cost-of-adding-teen-to-car-insurance': ['good-student-discount-car-insurance', 'new-driver-car-insurance', 'car-insurance-learners-permit', 'blog/how-to-compare-car-insurance-quotes'],
+  'good-student-discount-car-insurance': ['cost-of-adding-teen-to-car-insurance', 'new-driver-car-insurance', 'car-insurance-learners-permit'],
+  'sr22-insurance': ['sr22-insurance/non-owner', 'sr22-insurance/california', 'sr22-insurance/illinois', 'sr22-insurance/ohio', 'sr22-insurance/arizona', 'sr22-insurance/georgia', 'car-insurance-requirements-by-state', 'sr22-insurance/texas', 'sr22-insurance/non-owner', 'fr44-insurance/florida', 'car-insurance-after-lapse'],
   'sr22-insurance/texas': ['cheapest-sr22-insurance-texas', 'sr22-insurance', 'sr22-insurance/non-owner', 'car-insurance-after-lapse', 'es/seguro-de-auto-obligatorio-texas'],
   'sr22-insurance/non-owner': ['sr22-insurance', 'sr22-insurance/texas', 'fr44-insurance/florida', 'fr44-insurance/virginia'],
   'fr44-insurance/florida': ['fr44-insurance/virginia', 'sr22-insurance', 'sr22-insurance/non-owner', 'car-insurance-after-lapse'],
@@ -159,12 +166,12 @@ const RELATED = {
   'cheapest-sr22-insurance-texas': ['sr22-insurance/texas', 'sr22-insurance/non-owner', 'sr22-insurance', 'car-insurance-requirements-by-state'],
   'lower-car-insurance-after-rate-increase': ['blog/how-to-compare-car-insurance-quotes', 'car-insurance-after-accident-or-ticket', 'late-car-insurance-payment', 'new-driver-car-insurance'],
   'car-insurance-after-accident-or-ticket': ['lower-car-insurance-after-rate-increase', 'sr22-insurance', 'car-insurance-after-lapse', 'new-driver-car-insurance'],
-  'new-driver-car-insurance': ['car-insurance-learners-permit', 'car-insurance-after-accident-or-ticket', 'rideshare-insurance'],
-  'car-insurance-learners-permit': ['new-driver-car-insurance', 'car-insurance-after-accident-or-ticket', 'late-car-insurance-payment'],
+  'new-driver-car-insurance': ['cost-of-adding-teen-to-car-insurance', 'good-student-discount-car-insurance', 'car-insurance-learners-permit', 'car-insurance-after-accident-or-ticket', 'rideshare-insurance'],
+  'car-insurance-learners-permit': ['cost-of-adding-teen-to-car-insurance', 'new-driver-car-insurance', 'car-insurance-after-accident-or-ticket', 'late-car-insurance-payment'],
   'rideshare-insurance': ['new-driver-car-insurance', 'car-insurance-after-accident-or-ticket', 'car-insurance-after-lapse'],
   'es/seguro-de-auto-obligatorio-texas': ['es/seguro-de-auto-licencia-extranjera'],
   'es/seguro-de-auto-licencia-extranjera': ['es/seguro-de-auto-obligatorio-texas'],
-  'blog/how-to-compare-car-insurance-quotes': ['new-driver-car-insurance', 'car-insurance-after-accident-or-ticket', 'car-insurance-after-lapse', 'sr22-insurance'],
+  'blog/how-to-compare-car-insurance-quotes': ['cost-of-adding-teen-to-car-insurance', 'rideshare-insurance', 'new-driver-car-insurance', 'car-insurance-after-accident-or-ticket', 'car-insurance-after-lapse', 'sr22-insurance'],
 };
 
 // ---------- posts ----------
