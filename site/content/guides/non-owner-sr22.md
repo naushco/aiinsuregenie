@@ -1,11 +1,11 @@
 ---
 title: Non-owner SR-22 insurance: how it works if you don't own a car
-seo_title: Non-owner SR-22 insurance: costs from $28/month, how to buy
-description: Need an SR-22 without a car? What non-owner SR-22 insurance covers, 2026 prices from about $28 a month, the cheapest insurers, and how to buy one.
+seo_title: Non-owner SR-22 insurance: costs from $33/month, how to buy
+description: Need an SR-22 without a car? What non-owner SR-22 insurance covers, 2026 prices from about $33 a month, the cheapest insurers, and how to buy one.
 path: sr22-insurance/non-owner
 lang: en
 date: 2026-11-01
-updated: 2026-11-17
+updated: 2026-11-19
 genie: sr22
 ---
 
@@ -74,7 +74,7 @@ It can give you liability coverage, but typically not damage to the rental car i
 Tell your insurer right away. You'll need a standard policy on that car with the SR-22 on it, and no gap in coverage.
 
 ### How much is non-owner SR-22 insurance per month?
-Often about $28 to $40 a month for minimum coverage at the cheapest insurers, depending on your record and state ([MoneyGeek](https://www.moneygeek.com/insurance/auto/cheapest-sr-22-insurance)).
+Often about $33 to $40 a month for minimum coverage at the cheapest insurers ($28 at USAA, for military families only), depending on your record and state ([MoneyGeek](https://www.moneygeek.com/insurance/auto/cheapest-sr-22-insurance)).
 
 ### Who has the cheapest non-owner SR-22 insurance?
 In one 2026 study, USAA ($28 a month, military families only), State Farm ($33) and Kemper ($33) were cheapest ([MoneyGeek](https://www.moneygeek.com/insurance/auto/cheapest-sr-22-insurance)).
