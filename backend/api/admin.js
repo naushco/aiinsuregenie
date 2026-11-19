@@ -34,11 +34,14 @@ module.exports = async function handler(req, res) {
         if (!e || e.at < since0 || !sess[e.type]) return;
         sess[e.type][e.session_id] = 1;
         var d = e.at.slice(0, 10); byDay[d] = byDay[d] || {}; byDay[d][e.type] = (byDay[d][e.type] || 0) + 1;
-        var c = e.utm_campaign || "(none)"; byCampaign[c] = byCampaign[c] || {}; byCampaign[c][e.type] = (byCampaign[c][e.type] || 0) + 1;
-        if (e.type === "partner_click" && e.partner_id) byPartner[e.partner_id] = (byPartner[e.partner_id] || 0) + 1;
+        // Count unique chat sessions (not raw events) so these match the funnel totals.
+        var c = e.utm_campaign || "(none)"; byCampaign[c] = byCampaign[c] || {}; byCampaign[c][e.type] = byCampaign[c][e.type] || {}; byCampaign[c][e.type][e.session_id] = 1;
+        if (e.type === "partner_click" && e.partner_id) { byPartner[e.partner_id] = byPartner[e.partner_id] || {}; byPartner[e.partner_id][e.session_id] = 1; }
         if (e.type === "no_match") byState[e.state || "?"] = (byState[e.state || "?"] || 0) + 1;
       });
       var totals = {}; steps.forEach(function (t) { totals[t] = Object.keys(sess[t]).length; });
+      Object.keys(byCampaign).forEach(function (c) { Object.keys(byCampaign[c]).forEach(function (t) { byCampaign[c][t] = Object.keys(byCampaign[c][t]).length; }); });
+      Object.keys(byPartner).forEach(function (k) { byPartner[k] = Object.keys(byPartner[k]).length; });
       var stepTotals = {}; Object.keys(bySteps).forEach(function (k) { stepTotals[k] = Object.keys(bySteps[k]).length; });
       return res.status(200).json({ period_days: days, sessions: totals, by_day: byDay, by_campaign: byCampaign, clicks_by_partner: byPartner, no_match_by_state: byState, steps_passed: stepTotals });
     }
