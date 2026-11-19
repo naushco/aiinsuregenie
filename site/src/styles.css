@@ -774,3 +774,10 @@ section.cream .mstep, section.cream .match-card, section.cream .hard { backgroun
   .article .table-wrap th, .article .table-wrap td { display: table-cell; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 15px; }
   .article .table-wrap tr:last-child td { border-bottom: 0; }
 }
+
+.social { display: flex !important; flex-direction: row !important; flex-wrap: wrap; gap: 4px !important; list-style: none; margin: 0; padding: 0; }
+.social a { display: inline-flex !important; align-items: center; justify-content: center; width: 44px; height: 44px; min-height: 44px; border-radius: 8px; color: inherit; transition: background-color .15s ease, color .15s ease; }
+.social a:hover { background: rgba(127,127,127,.15); }
+.social a:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.social svg { display: block; }
+@media (max-width: 767.98px) { .foot-grid > div:has(.social) { grid-column: 1 / -1; } }
