@@ -840,7 +840,7 @@ export default function Dashboard() {
                   <div style={{fontSize:13,fontWeight:700,color:"#0f1b2d",marginBottom:8}}>Quick Stats</div>
                   <div style={{fontSize:12,color:"#4a5a70",lineHeight:2}}>
                     Avg CPL: <span style={{color:"#0a6b50",fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>${totalLeads>0?(totalRevenue/totalLeads).toFixed(2):"0.00"}</span><br/>
-                    Best Partner: <span style={{color:"#0f1b2d",fontWeight:600}}>{partners.reduce(function(a,b){return a.revenue>b.revenue?a:b;}).name}</span><br/>
+                    Best Partner: <span style={{color:"#0f1b2d",fontWeight:600}}>{(function(){var live=partners.filter(function(p){return p.enabled&&(p.revenue||0)>0;});return live.length?live.reduce(function(a,b){return a.revenue>b.revenue?a:b;}).name:"None yet";})()}</span><br/>
                     Avg Conv Rate: <span style={{color:"#1e3a5f",fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>{(partners.reduce(function(s,p){return s+p.cr;},0)/partners.length).toFixed(1)}%</span>
                   </div>
                 </div>
