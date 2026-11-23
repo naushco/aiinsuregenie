@@ -14,6 +14,14 @@
     // Run the Worker on every request so agent visits are logged.
     "run_worker_first": true
   },
+  // Same D1 database as the API. The site only writes to the agent_visits table.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "aiinsuregenie",
+      "database_id": "23e91a15-4ae0-4cdd-82da-9524bfc165b6"
+    }
+  ],
   // Request logs (including agent visits) show in the dashboard under Workers Logs.
   "observability": {
     "enabled": true,
