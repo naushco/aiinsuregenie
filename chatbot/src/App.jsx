@@ -1122,7 +1122,7 @@ export default function AIInsureGenie() {
           if (!rs.length && said.length > 1) o.note = T("Thanks, I've got your answers from the homepage.", "Gracias, ya tengo sus respuestas de la página principal.") + (left ? T(" Just " + left + " more " + (left === 1 ? "question" : "questions") + ".", " Solo " + left + (left === 1 ? " pregunta más." : " preguntas más.")) : ""); }
         setS(o);
       }
-    }, 200);
+    }, 0); // Initialize entry context before the visitor can type; 200ms delay lost early messages.
     return function () { clearTimeout(t); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
