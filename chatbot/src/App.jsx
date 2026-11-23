@@ -1036,8 +1036,16 @@ export default function AIInsureGenie() {
 
   // A question typed or tapped at any point: answer it, keep the match where it is.
   var ask = function (text) {
-    // Educational questions are not declarations of personal insurance history.
+    // Only explicit first-person declarations can populate quote qualification.
+    // Questions, hypothetical scenarios and guide topics are not personal facts.
     var cur = sRef.current, merge = {}, noted = [];
+    var declaration = /\b(i am|i'm|i live|i need|i have|i had|my car|my insurance|i drive|i got|i was|i want)\b/i.test(text)
+      && !/\b(if i|suppose|hypothetically|what if|for example)\b/i.test(text);
+    if (declaration) {
+      var extracted = extract(text, cur);
+      merge = extracted.got;
+      noted = extracted.said.filter(Boolean);
+    }
     var qa = { q: text, a: null, noted: noted.join(", "), agent: /(dui|dwi|sr-?22|accident|ticket|rate|price|cost|raise|multa|accidente|precio)/i.test(text) };
     setS(Object.assign({}, cur, merge, { qa: qa, askMore: false }));
     track("question_asked", { stage: cur.stage }, false);
