@@ -318,7 +318,7 @@ function matchInsurers(p, pool) {
     s += (6 - (ins.priority || 3)) * 5 + (ins.boost || 0);
     if (ins.pinned) s += 1000;
     var premium = calcPremium(ins, p);
-    var savings = Math.max(Math.round((220 - premium) * 12), Math.round(80 + Math.random() * 200));
+    var savings = null; // Savings require verified comparable carrier quotes.
     return Object.assign({}, ins, { s: s, premium: premium, savings: savings });
   }).sort(function(a, b) { return b.s - a.s; }).filter(function(x) { return x.s > -50; }).slice(0, 4);
 }
