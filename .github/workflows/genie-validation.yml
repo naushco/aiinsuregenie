@@ -6,6 +6,7 @@ on:
       - 'backend/lib/genie-*.js'
       - 'backend/test/genie-*.test.js'
       - 'backend/test/trustedform-integration.test.js'
+      - 'backend/test/genie-chat-contract.test.js'
       - 'backend/api/leads.js'
       - 'backend/api/callback.js'
       - 'dashboard/**'
