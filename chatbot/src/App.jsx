@@ -290,17 +290,8 @@ async function getAnswer(text, profile, results) {
 }
 
 function calcPremium(ins, p) {
-  // No verified carrier quote API is connected; do not manufacture premiums.
+  // No verified carrier quote API is connected; never infer a premium from heuristics.
   return null;
-  var b = ins.base;
-  if (p.age) { if (p.age < 25) b *= 1.45; else if (p.age > 60) b *= 1.12; }
-  if (p.driving === "minor") b *= 1.25; else if (p.driving === "major") b *= 1.55; else if (p.driving === "dui") b *= 2;
-  if (p.coverage === "minimum") b *= 0.55; else if (p.coverage === "full") b *= 1.3;
-  if (p.insured === "no") b *= 1.18;
-  if (p.multiCar === "yes") b *= 0.85;
-  if (p.homeowner === "yes" && ["statefarm","allstate","nationwide"].includes(ins.id)) b *= 0.87;
-  if (p.military === "yes" && ins.id === "usaa") b *= 0.68;
-  return Math.round(b);
 }
 
 function matchInsurers(p, pool) {
@@ -860,11 +851,12 @@ function nextStage(s) {
 function toProfile(s) {
   var sits = s.sits || [];
   var p = { state: s.st || undefined };
-  p.driving = (sits.indexOf("sr22") >= 0 || sits.indexOf("dui") >= 0) ? "dui" : (sits.indexOf("record") >= 0 ? "major" : (s.sitDone ? "clean" : undefined));
+  p.driving = sits.indexOf("dui") >= 0 ? "dui" : (sits.indexOf("record") >= 0 ? "major" : (sits.indexOf("none") >= 0 ? "clean" : undefined));
+  p.requiresSR22 = sits.indexOf("sr22") >= 0;
   if (sits.indexOf("lapse") >= 0) p.insured = "no";
-  if (sits.indexOf("new") >= 0) p.age = 22;
+  // A new driver does not necessarily have a specific age.
   if (s.make && s.make !== "Other") p.vehicleMake = s.make;
-  if (s.year && /^\d{4}$/.test(s.year)) p.vehicleYear = s.year; else if (s.year === "old") p.vehicleYear = "2012";
+  if (s.year && /^\d{4}$/.test(s.year)) p.vehicleYear = s.year;
   p.coverage = s.cov === "min" ? "minimum" : (s.cov === "full" ? "full" : "standard");
   p.priority = s.pri || (s.cov === "full" ? "coverage" : "price");
   return p;
@@ -983,7 +975,7 @@ export default function AIInsureGenie() {
   useEffect(function () {
     // Only confirmed qualification fields are persisted. Never persist raw advisor
     // questions, conversation history, unconfirmed candidates or partner results.
-    if (DO_NOT_SELL) return; // honor existing GPC / local privacy opt-out
+    if (DO_NOT_SELL) { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} return; } // honor GPC / opt-out and remove old progress
     if (s.stage === "start" && !s.st && !s.sitDone && !s.make && !s.cov && !s.when && !s.pri) return;
     try {
       var keep = {
@@ -1069,7 +1061,7 @@ export default function AIInsureGenie() {
     var fromStart = cur.stage === "start";
     var confirmed = cur.qa && cur.qa.candidate ? cur.qa.candidate : {};
     var merged = Object.assign({}, cur, confirmed);
-    go(Object.assign({}, confirmed, { qa: null, askMore: false, stage: fromStart ? nextStage(merged) : cur.stage, said: fromStart ? (cur.qa ? cur.qa.q : "") : cur.said, note: fromStart && cur.qa && cur.qa.noted ? T("Confirmed: ", "Confirmado: ") + cur.qa.noted + "." : "" }));
+    go(Object.assign({}, confirmed, { qa: null, askMore: false, stage: fromStart || Object.keys(confirmed).length ? nextStage(merged) : cur.stage, said: fromStart ? (cur.qa ? cur.qa.q : "") : cur.said, note: fromStart && cur.qa && cur.qa.noted ? T("Confirmed: ", "Confirmado: ") + cur.qa.noted + "." : "" }));
   };
 
   // Typed text: a question gets an answer; "Texas, 2019 Camry, SR-22" fills the answers it contains.
@@ -1090,8 +1082,8 @@ export default function AIInsureGenie() {
     if (!h) {
       try {
         var saved = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
-        if (!DO_NOT_SELL && saved && saved.s && Date.now() - saved.t < 7 * 864e5 && (stepOf(saved.s.stage) >= 2 || saved.s.st || saved.s.sitDone || saved.s.make || saved.s.pri)) {
-          setS(Object.assign(fresh(), saved.s, { said: "", note: saved.s.stage === "done" ? T("Welcome back! Your match is still here.", "¡Bienvenido de nuevo! Su opción sigue aquí.") : T("Welcome back! Let's pick up where you left off.", "¡Bienvenido de nuevo! Sigamos donde lo dejó.") }));
+        if (!DO_NOT_SELL && saved && saved.s && saved.t <= Date.now() && Date.now() - saved.t < 7 * 864e5 && (stepOf(saved.s.stage) >= 2 || saved.s.st || saved.s.sitDone || saved.s.make || saved.s.pri)) {
+          setS(Object.assign(fresh(), saved.s, { stage: nextStage(saved.s), said: "", note: saved.s.stage === "done" ? T("Welcome back! Your match is still here.", "¡Bienvenido de nuevo! Su opción sigue aquí.") : T("Welcome back! Let's pick up where you left off.", "¡Bienvenido de nuevo! Sigamos donde lo dejó.") }));
           if (saved.s.stage === "done") showMatch(saved.s);
           track("chat_resumed", { stage: saved.s.stage }, true);
         }
@@ -1173,6 +1165,7 @@ export default function AIInsureGenie() {
   var goHome = function () { track("chat_left", { stage: stage }); window.location.href = SITE; };
   var askClose = function () { if (step >= 2 && stage !== "done") setLeave(true); else goHome(); };
   var startOver = function () { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} setS(Object.assign(fresh(), { stage: "state" })); };
+  var rejectCandidate = function () { go({ qa: null, askMore: false, note: T("No details were saved. You can correct them below.", "No se guardaron datos. Puede corregirlos abajo."), stage: sRef.current.stage === "start" ? "state" : sRef.current.stage }, true); };
 
   var results = Array.isArray(s.results) ? s.results : null;
   var starters = [
@@ -1254,7 +1247,7 @@ export default function AIInsureGenie() {
                     {stage !== "done" ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt" style={{ color: "#33415c" }}>{(s.sits.indexOf("dui") >= 0 || s.sits.indexOf("sr22") >= 0) ? T("Want me to find a partner for drivers like you", "¿Quiere que le busque un socio para conductores como usted") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?" : T("Want me to find the partner that fits you", "¿Quiere que le busque el socio que le conviene") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?"}
                       {s.qa.noted ? <span className="gh"><Svg d={I_CHECK} size={14} sw={2.2} /><span>{T("Please confirm: ", "Confirme: ") + s.qa.noted + T(". These details will be used only if you continue to quotes.", ". Estos datos solo se usarán si continúa a cotizaciones.")}</span></span> : null}
                     </div></div> : null}
-                    <div className="ans"><button type="button" className="c on" onClick={keepGoing}>{s.qa.noted ? T("Confirm details and continue", "Confirmar datos y continuar") : stage === "done" ? T("Back to my match", "Volver a mi opción") : T("Continue my match", "Seguir con mi búsqueda")}</button><button type="button" className="c" onClick={function () { go({ qa: null, askMore: true }, true); setTimeout(function () { inRef.current && inRef.current.focus(); }, 100); }}>{T("Ask another question", "Hacer otra pregunta")}</button></div>
+                    <div className="ans"><button type="button" className="c on" onClick={keepGoing}>{s.qa.noted ? T("Confirm details and continue", "Confirmar datos y continuar") : stage === "done" ? T("Back to my match", "Volver a mi opción") : T("Continue my match", "Seguir con mi búsqueda")}</button>{s.qa.noted ? <button type="button" className="c" onClick={rejectCandidate}>{T("Correct these details", "Corregir estos datos")}</button> : null}<button type="button" className="c" onClick={function () { go({ qa: null, askMore: true }, true); setTimeout(function () { inRef.current && inRef.current.focus(); }, 100); }}>{T("Ask another question", "Hacer otra pregunta")}</button></div>
                   </>
                 )}
               </>
