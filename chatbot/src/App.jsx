@@ -949,6 +949,7 @@ function fresh() {
 export default function AIInsureGenie() {
   var [s, setS] = useState(fresh);
   var [entryWelcome] = useState(pageWelcome);
+  var [entryContext] = useState(function () { try { var p = new URLSearchParams((window.location.hash || "").replace(/^#/, "")); return { mode: p.get("start") || "direct", topic: Object.prototype.hasOwnProperty.call(GUIDE_TOPICS, p.get("topic")) ? p.get("topic") : null }; } catch (e) { return { mode: "direct", topic: null }; } });
   var [typing, setTyping] = useState(false);
   var [draft, setDraft] = useState("");
   var [geo, setGeo] = useState("");
@@ -1188,11 +1189,18 @@ export default function AIInsureGenie() {
                   <p>{entryWelcome ? entryWelcome.description : T("I can help you understand auto insurance and find a suitable quoting partner in a few quick steps.", "Puedo ayudarle a entender el seguro de auto y encontrar un socio de cotización adecuado en unos pasos rápidos.")}</p>
                 </div>
                 <div className="starts">
-                  {starters.map(function (x) { return <button type="button" key={x.ic} className="st" onClick={x.fn}><span className="st-ic"><Svg d={START_ICONS[x.ic]} /></span><span className="st-l">{x.l}</span><span className="chev"><Svg d={I_CHEV} size={16} /></span></button>; })}
+                  {(entryWelcome && entryWelcome.kind === "guide" ? [] : starters).map(function (x) { return <button type="button" key={x.ic} className="st" onClick={x.fn}><span className="st-ic"><Svg d={START_ICONS[x.ic]} /></span><span className="st-l">{x.l}</span><span className="chev"><Svg d={I_CHEV} size={16} /></span></button>; })}
                 </div>
               </>
             ) : null}
 
+            {stage === "start" && !s.qa && !s.askMore && entryWelcome && entryWelcome.kind === "guide" ? (
+              <div className="starts">
+                <button type="button" className="st" onClick={function () { ask(entryContext.topic ? "What should I know about " + GUIDE_TOPICS[entryContext.topic] + "?" : "How does auto insurance work?"); }}><span className="st-l">{T("Explain this topic", "Explicar este tema")}</span></button>
+                <button type="button" className="st" onClick={function () { ask(entryContext.topic ? "How can I tell if " + GUIDE_TOPICS[entryContext.topic] + " applies to my situation?" : "How do I choose the right auto insurance coverage?"); }}><span className="st-l">{T("Help me understand my situation", "Ayúdeme a entender mi situación")}</span></button>
+                <button type="button" className="st" onClick={function () { track("advisor_to_quote", { topic: entryContext.topic || "general" }, true); setS(function (cur) { return Object.assign({}, cur, { stage: nextStage(cur), note: T("I'll ask only what I still need to find a suitable quoting partner.", "Solo preguntaré lo que falte para encontrar un socio de cotización adecuado.") }); }); }}><span className="st-l">{T("Explore insurance quotes", "Explorar cotizaciones")}</span></button>
+              </div>
+            ) : null}
             {(s.hist || []).length ? s.hist.map(function (h, i) { return (
               <Fragment key={i}>
                 {h.q ? <div className="g past"><img className="ga" src={LOGO} alt="" /><div className="gt">{h.q}</div></div> : null}
