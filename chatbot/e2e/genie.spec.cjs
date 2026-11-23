@@ -48,3 +48,24 @@ test("quote progression is saved with structured facts only", async ({ page }) =
   await page.reload();
   expect((await page.evaluate(() => JSON.parse(localStorage.getItem("aig-chat-v2")).s)).sits).toContain("sr22");
 });
+
+test("guide statements require confirmation and can be corrected", async ({ page }) => {
+  await page.goto("/#start=guide&topic=coverage");
+  await page.getByPlaceholder("Ask anything about car insurance").fill("I'm in Texas and need insurance this week.");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByRole("button", { name: "Confirm details and continue" })).toBeVisible();
+  const pending = await page.evaluate(() => JSON.parse(localStorage.getItem("aig-chat-v2") || "null"));
+  expect(pending?.s?.st || "").not.toBe("TX");
+  await page.getByRole("button", { name: "Correct these details" }).click();
+  const corrected = await page.evaluate(() => JSON.parse(localStorage.getItem("aig-chat-v2") || "null"));
+  expect(corrected?.s?.st || "").not.toBe("TX");
+});
+
+test("privacy opt-out clears stored quote progress", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "I need an SR-22" }).click();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("aig-chat-v2"))).not.toBeNull();
+  await page.evaluate(() => localStorage.setItem("aig-dns", "1"));
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("aig-chat-v2"))).toBeNull();
+});
