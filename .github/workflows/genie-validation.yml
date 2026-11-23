@@ -76,3 +76,39 @@ jobs:
       - name: Exercise mock-backed browser journeys
         run: npx playwright test --config=playwright.config.cjs
         working-directory: chatbot
+
+  publish-staging-assets:
+    # Only our trusted feature branch may publish compiled assets for isolated preview.
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feature/genie-2-intelligence' }}
+    needs: [backend-tests, dashboard-build, chatbot-build, browser-smoke]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: chatbot/package-lock.json
+      - name: Install and build actual Genie frontend
+        run: npm ci && npm run build
+        working-directory: chatbot
+      - name: Store build in isolated preview-assets branch
+        run: |
+          tar -C chatbot/dist -cf /tmp/genie-staging-dist.tar .
+          git fetch origin genie-staging-assets
+          git checkout -B genie-staging-assets origin/genie-staging-assets
+          mkdir -p chatbot/dist
+          find chatbot/dist -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+          tar -C chatbot/dist -xf /tmp/genie-staging-dist.tar
+          git add -f chatbot/dist
+          if git diff --cached --quiet; then
+            echo "Preview assets already current"
+            exit 0
+          fi
+          git -c user.name="genie-staging-bot" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "build: stage Genie preview frontend"
+          git push origin HEAD:genie-staging-assets
