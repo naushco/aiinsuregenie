@@ -930,12 +930,25 @@ function MatchCard({ ins, s, top, onCall }) {
   );
 }
 
+// Page-aware welcome copy: whitelist topic IDs, never echo arbitrary URL text.
+var GUIDE_TOPICS = { sr22: "SR-22 insurance", dui: "insurance after a DUI", coverage: "auto insurance coverage", lapse: "a coverage lapse", rates: "comparing rates", rideshare: "rideshare insurance" };
+function pageWelcome() {
+  try {
+    var p = new URLSearchParams((window.location.hash || "").replace(/^#/, ""));
+    var mode = p.get("start"), topic = GUIDE_TOPICS[p.get("topic")];
+    if (mode === "guide" || (mode === "ask" && topic)) return { kind: "guide", title: T("Questions about insurance?", "¿Preguntas sobre seguros?"), description: topic ? T("You are reading about " + topic + ". I can explain it or help you explore quoting options.", "Está leyendo sobre " + topic + ". Puedo explicarlo o ayudarle a explorar opciones de cotización.") : T("I can explain an insurance topic or help you explore quoting options.", "Puedo explicar un tema de seguros o ayudarle a explorar opciones de cotización.") };
+    if (mode === "quote") return { kind: "quote", title: T("Find your insurance options", "Encuentre sus opciones de seguro"), description: T("A few quick questions will help me find a suitable quoting partner. No phone number needed to see your match.", "Unas preguntas breves me ayudarán a encontrar un socio de cotización adecuado. No necesita teléfono para ver su opción.") };
+  } catch (e) {}
+  return null;
+}
+
 function fresh() {
   return { stage: "start", st: "", changing: false, sits: [], sitDone: false, make: "", model: "", year: "", cov: "", when: "", pri: "", carAge: "", hist: [], said: "", note: "", otherMake: false, qa: null, askMore: false, results: null, showAll: false, showEmail: "" };
 }
 
 export default function AIInsureGenie() {
   var [s, setS] = useState(fresh);
+  var [entryWelcome] = useState(pageWelcome);
   var [typing, setTyping] = useState(false);
   var [draft, setDraft] = useState("");
   var [geo, setGeo] = useState("");
@@ -1079,6 +1092,7 @@ export default function AIInsureGenie() {
       var rs = (p.get("reasons") || "").split(",").map(function (k) { return RS[k.trim()]; }).filter(Boolean);
       if (q) { track("chat_started", { mode: "question" }, true); setS(o); setTimeout(function () { ask(q); }, 50); return; }
       if (start === "agent") { track("chat_started", { mode: "agent" }, true); setS(o); setShowCall(true); return; }
+      if (start === "guide" || (start === "ask" && GUIDE_TOPICS[p.get("topic")])) { track("chat_started", { mode: "guide" }, true); setS(Object.assign(o, { stage: "start" })); return; }
       if (start === "ask") { track("chat_started", { mode: "question" }, true); setS(Object.assign(o, { askMore: true })); setTimeout(function () { inRef.current && inRef.current.focus(); }, 300); return; }
       if (start === "quote") {
         track("chat_started", { mode: "quote" }, true);
@@ -1170,8 +1184,8 @@ export default function AIInsureGenie() {
               <>
                 <div className="hello">
                   <img src={LOGO} alt="" />
-                  <h1 className="pj">{T("What can I help", "¿En qué le puedo")}<br />{T("you with today?", "ayudar hoy?")}</h1>
-                  <p>{T("I'll match you with the licensed quoting partner that fits, in 4 quick steps. No phone number needed to see your match.", "Le conecto con el socio de cotización con licencia que le conviene, en 4 pasos rápidos. No necesita dar su teléfono para ver su opción.")}</p>
+                  <h1 className="pj">{entryWelcome ? entryWelcome.title : T("What can I help you with today?", "¿En qué le puedo ayudar hoy?")}</h1>
+                  <p>{entryWelcome ? entryWelcome.description : T("I can help you understand auto insurance and find a suitable quoting partner in a few quick steps.", "Puedo ayudarle a entender el seguro de auto y encontrar un socio de cotización adecuado en unos pasos rápidos.")}</p>
                 </div>
                 <div className="starts">
                   {starters.map(function (x) { return <button type="button" key={x.ic} className="st" onClick={x.fn}><span className="st-ic"><Svg d={START_ICONS[x.ic]} /></span><span className="st-l">{x.l}</span><span className="chev"><Svg d={I_CHEV} size={16} /></span></button>; })}
