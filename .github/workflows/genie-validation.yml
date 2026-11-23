@@ -55,7 +55,8 @@ jobs:
         run: npm run build
         working-directory: chatbot
   browser-smoke:
-    runs-on: ubuntu-latest
+    # Pin supported image: ubuntu-latest currently resolves to 26.04, unsupported by Playwright.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
