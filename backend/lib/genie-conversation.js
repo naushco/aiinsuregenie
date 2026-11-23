@@ -9,15 +9,15 @@ function processTurn(previous, message, options) {
   const old = previous && typeof previous === "object" ? previous : {};
   const parsed = extractIntent(message);
   const facts = {
-    state: old.state || parsed.state || null,
+    state: parsed.state || old.state || null,
     situation: mergeUnique(old.situation, parsed.situation.filter(x=>SITUATIONS.has(x))),
     goal: mergeUnique(old.goal, parsed.goal),
     obstacle: mergeUnique(old.obstacle, parsed.obstacle),
-    urgency: old.urgency && old.urgency !== "unknown" ? old.urgency : parsed.urgency,
+    urgency: parsed.urgency !== "unknown" ? parsed.urgency : (old.urgency || "unknown"),
     vehicle_status: old.vehicle_status || "unknown",
     coverage_goal: old.coverage_goal || "unsure"
   };
-  // Explicit selections and corrections must be validated by the caller before merging.
+  // Extracted facts are candidates; the caller must distinguish them from confirmed selections.
   const next = nextQuestion(facts, options);
   return { version: parsed.version, facts, next, intelligence: { situation: facts.situation, goal: facts.goal, obstacle: facts.obstacle, urgency: facts.urgency, state: facts.state } };
 }
