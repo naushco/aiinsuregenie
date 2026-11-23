@@ -25,3 +25,16 @@ test("does not include raw user message or contact data", () => {
   assert.ok(!output.includes("John"));
   assert.ok(!output.includes("512-555-1234"));
 });
+
+test("ordinary driver is not forced to declare a risk situation", () => {
+  const result = processTurn({}, "I need affordable insurance in Texas today");
+  assert.equal(result.facts.state, "TX");
+  assert.equal(result.next.field, "vehicle_status");
+});
+
+test("later explicit state and urgency statements can correct earlier extraction", () => {
+  const first = processTurn({}, "I need insurance in Texas today");
+  const corrected = processTurn(first.facts, "Actually I live in Florida and need it next month");
+  assert.equal(corrected.facts.state, "FL");
+  assert.equal(corrected.facts.urgency, "later");
+});
