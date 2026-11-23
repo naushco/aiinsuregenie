@@ -57,7 +57,7 @@ function dashboardToInsurer(dp) {
     bdg: dp.badge,
     bc: dp.bc,
     r: dp.rating || 4.0,
-    base: dp.base !== undefined ? dp.base : Math.round(60 + (dp.payout || 5) * 3), // on-screen estimate only
+    base: null, // Never infer consumer premiums from partner payouts or dashboard settings
     ft: dp.features ? dp.features.split(",").map(function(f){return f.trim();}).filter(Boolean) : ["Competitive rates", "Fast quotes", "24/7 support"],
     bf: [dp.bestFor || "budget", "clean", "family"],
     rk: "std",
@@ -290,6 +290,8 @@ async function getAnswer(text, profile, results) {
 }
 
 function calcPremium(ins, p) {
+  // No verified carrier quote API is connected; do not manufacture premiums.
+  return null;
   var b = ins.base;
   if (p.age) { if (p.age < 25) b *= 1.45; else if (p.age > 60) b *= 1.12; }
   if (p.driving === "minor") b *= 1.25; else if (p.driving === "major") b *= 1.55; else if (p.driving === "dui") b *= 2;
@@ -1034,7 +1036,8 @@ export default function AIInsureGenie() {
 
   // A question typed or tapped at any point: answer it, keep the match where it is.
   var ask = function (text) {
-    var cur = sRef.current, x = extract(text, cur), merge = x.got, noted = x.said.filter(Boolean);
+    // Educational questions are not declarations of personal insurance history.
+    var cur = sRef.current, merge = {}, noted = [];
     var qa = { q: text, a: null, noted: noted.join(", "), agent: /(dui|dwi|sr-?22|accident|ticket|rate|price|cost|raise|multa|accidente|precio)/i.test(text) };
     setS(Object.assign({}, cur, merge, { qa: qa, askMore: false }));
     track("question_asked", { stage: cur.stage }, false);
@@ -1148,7 +1151,7 @@ export default function AIInsureGenie() {
   var canBack = at > 1 && stage !== "done" && showFlow;
   var goHome = function () { track("chat_left", { stage: stage }); window.location.href = SITE; };
   var askClose = function () { if (step >= 2 && stage !== "done") setLeave(true); else goHome(); };
-  var startOver = function () { setS(Object.assign(fresh(), { stage: "state" })); };
+  var startOver = function () { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} setS(Object.assign(fresh(), { stage: "state" })); };
 
   var results = Array.isArray(s.results) ? s.results : null;
   var starters = [
