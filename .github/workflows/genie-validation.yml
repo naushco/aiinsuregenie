@@ -6,6 +6,8 @@ on:
       - 'backend/lib/genie-*.js'
       - 'backend/test/genie-*.test.js'
       - 'dashboard/**'
+      - 'chatbot/**'
+      - 'backend/api/chat.js'
       - '.github/workflows/genie-validation.yml'
   workflow_dispatch:
 jobs:
@@ -33,3 +35,18 @@ jobs:
       - name: Build dashboard
         run: npm run build
         working-directory: dashboard
+  chatbot-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: chatbot/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+        working-directory: chatbot
+      - name: Build chatbot
+        run: npm run build
+        working-directory: chatbot
