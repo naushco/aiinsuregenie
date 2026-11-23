@@ -1047,16 +1047,19 @@ export default function AIInsureGenie() {
       noted = extracted.said.filter(Boolean);
     }
     var qa = { q: text, a: null, noted: noted.join(", "), agent: /(dui|dwi|sr-?22|accident|ticket|rate|price|cost|raise|multa|accidente|precio)/i.test(text) };
-    setS(Object.assign({}, cur, merge, { qa: qa, askMore: false }));
+    qa.candidate = merge; // Pending until visitor explicitly confirms before quote qualification.
+    setS(Object.assign({}, cur, { qa: qa, askMore: false }));
     track("question_asked", { stage: cur.stage }, false);
-    getAnswer(text, toProfile(Object.assign({}, cur, merge)), Array.isArray(cur.results) ? cur.results : []).then(function (a) {
+    getAnswer(text, toProfile(cur), Array.isArray(cur.results) ? cur.results : []).then(function (a) {
       setS(function (c) { return c.qa && c.qa.q === text ? Object.assign({}, c, { qa: Object.assign({}, c.qa, { a: a }) }) : c; });
     });
   };
   var keepGoing = function () {
     var cur = sRef.current;
     var fromStart = cur.stage === "start";
-    go({ qa: null, askMore: false, stage: fromStart ? nextStage(cur) : cur.stage, said: fromStart ? (cur.qa ? cur.qa.q : "") : cur.said, note: fromStart && cur.qa && cur.qa.noted ? T("Got it: ", "Perfecto: ") + cur.qa.noted + T(". I just need the rest.", ". Solo me falta lo demás.") : "" });
+    var confirmed = cur.qa && cur.qa.candidate ? cur.qa.candidate : {};
+    var merged = Object.assign({}, cur, confirmed);
+    go(Object.assign({}, confirmed, { qa: null, askMore: false, stage: fromStart ? nextStage(merged) : cur.stage, said: fromStart ? (cur.qa ? cur.qa.q : "") : cur.said, note: fromStart && cur.qa && cur.qa.noted ? T("Confirmed: ", "Confirmado: ") + cur.qa.noted + "." : "" }));
   };
 
   // Typed text: a question gets an answer; "Texas, 2019 Camry, SR-22" fills the answers it contains.
@@ -1239,9 +1242,9 @@ export default function AIInsureGenie() {
                       {s.qa.agent ? <div style={{ marginTop: 10 }}><button type="button" className="c" onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} size={15} />{T("Ask a licensed agent, free", "Pregunte a un agente con licencia, gratis")}</button></div> : null}
                     </div></div>
                     {stage !== "done" ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt" style={{ color: "#33415c" }}>{(s.sits.indexOf("dui") >= 0 || s.sits.indexOf("sr22") >= 0) ? T("Want me to find a partner for drivers like you", "¿Quiere que le busque un socio para conductores como usted") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?" : T("Want me to find the partner that fits you", "¿Quiere que le busque el socio que le conviene") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?"}
-                      {s.qa.noted ? <span className="gh"><Svg d={I_CHECK} size={14} sw={2.2} /><span>{T("I noted ", "Anoté ") + s.qa.noted + T(" from your question, so your match is shorter now.", " de su pregunta, así su búsqueda es más corta.")}</span></span> : null}
+                      {s.qa.noted ? <span className="gh"><Svg d={I_CHECK} size={14} sw={2.2} /><span>{T("Please confirm: ", "Confirme: ") + s.qa.noted + T(". These details will be used only if you continue to quotes.", ". Estos datos solo se usarán si continúa a cotizaciones.")}</span></span> : null}
                     </div></div> : null}
-                    <div className="ans"><button type="button" className="c on" onClick={keepGoing}>{stage === "done" ? T("Back to my match", "Volver a mi opción") : T("Continue my match", "Seguir con mi búsqueda")}</button><button type="button" className="c" onClick={function () { go({ qa: null, askMore: true }, true); setTimeout(function () { inRef.current && inRef.current.focus(); }, 100); }}>{T("Ask another question", "Hacer otra pregunta")}</button></div>
+                    <div className="ans"><button type="button" className="c on" onClick={keepGoing}>{s.qa.noted ? T("Confirm details and continue", "Confirmar datos y continuar") : stage === "done" ? T("Back to my match", "Volver a mi opción") : T("Continue my match", "Seguir con mi búsqueda")}</button><button type="button" className="c" onClick={function () { go({ qa: null, askMore: true }, true); setTimeout(function () { inRef.current && inRef.current.focus(); }, 100); }}>{T("Ask another question", "Hacer otra pregunta")}</button></div>
                   </>
                 )}
               </>
