@@ -1,0 +1,35 @@
+name: Genie 2.0 validation
+on:
+  pull_request:
+    branches: [cloudflare]
+    paths:
+      - 'backend/lib/genie-*.js'
+      - 'backend/test/genie-*.test.js'
+      - 'dashboard/**'
+      - '.github/workflows/genie-validation.yml'
+  workflow_dispatch:
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test Genie logic
+        run: node --test backend/test/genie-*.test.js
+  dashboard-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+        working-directory: dashboard
+      - name: Build dashboard
+        run: npm run build
+        working-directory: dashboard
