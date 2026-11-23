@@ -1068,6 +1068,8 @@ export default function AIInsureGenie() {
   var send = function () {
     var text = draft.trim(); if (!text || typing) return; setDraft("");
     var cur = sRef.current;
+    // Educational guide conversations must confirm personal facts before quote qualification.
+    if (cur.stage === "start" && entryWelcome && entryWelcome.kind === "guide") { ask(text); return; }
     if (cur.stage === "make" && cur.otherMake && !isQuestion(text, "qualifying", "vmake")) { var mk = text.charAt(0).toUpperCase() + text.slice(1); answer(mk, { make: mk.slice(0, 30), model: "unsure" }); return; }
     if (isQuestion(text, "qualifying", null)) { ask(text); return; }
     var x = extract(text, cur), got = x.got, said = x.said;
