@@ -981,8 +981,18 @@ export default function AIInsureGenie() {
   }, [s.stage, s.qa, s.askMore, s.showAll, s.showEmail, s.note, typing, Array.isArray(s.results) ? s.results.length : s.results, (s.hist || []).length]);
   // Save progress for 7 days, so a visitor who leaves can pick up where they were.
   useEffect(function () {
-    if (s.stage === "start") return; // never overwrite saved progress with the empty welcome screen
-    try { var keep = Object.assign({}, s, { qa: null, askMore: false, results: null, showAll: false, showEmail: "" }); localStorage.setItem(SAVE_KEY, JSON.stringify({ t: Date.now(), s: keep })); } catch (e) {}
+    // Only confirmed qualification fields are persisted. Never persist raw advisor
+    // questions, conversation history, unconfirmed candidates or partner results.
+    if (DO_NOT_SELL) return; // honor existing GPC / local privacy opt-out
+    if (s.stage === "start" && !s.st && !s.sitDone && !s.make && !s.cov && !s.when && !s.pri) return;
+    try {
+      var keep = {
+        stage: s.stage, st: s.st, sits: s.sits, sitDone: s.sitDone,
+        make: s.make, model: s.model, year: s.year, cov: s.cov,
+        when: s.when, pri: s.pri, carAge: s.carAge
+      };
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ t: Date.now(), s: keep }));
+    } catch (e) {}
     setResumeCookie(s);
   }, [s]);
 
@@ -1080,7 +1090,7 @@ export default function AIInsureGenie() {
     if (!h) {
       try {
         var saved = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
-        if (saved && saved.s && Date.now() - saved.t < 7 * 864e5 && stepOf(saved.s.stage) >= 2) {
+        if (!DO_NOT_SELL && saved && saved.s && Date.now() - saved.t < 7 * 864e5 && (stepOf(saved.s.stage) >= 2 || saved.s.st || saved.s.sitDone || saved.s.make || saved.s.pri)) {
           setS(Object.assign(fresh(), saved.s, { said: "", note: saved.s.stage === "done" ? T("Welcome back! Your match is still here.", "¡Bienvenido de nuevo! Su opción sigue aquí.") : T("Welcome back! Let's pick up where you left off.", "¡Bienvenido de nuevo! Sigamos donde lo dejó.") }));
           if (saved.s.stage === "done") showMatch(saved.s);
           track("chat_resumed", { stage: saved.s.stage }, true);
