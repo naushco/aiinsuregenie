@@ -5,6 +5,9 @@ on:
     paths:
       - 'backend/lib/genie-*.js'
       - 'backend/test/genie-*.test.js'
+      - 'backend/test/trustedform-integration.test.js'
+      - 'backend/api/leads.js'
+      - 'backend/api/callback.js'
       - 'dashboard/**'
       - 'chatbot/**'
       - 'backend/api/chat.js'
@@ -19,7 +22,7 @@ jobs:
         with:
           node-version: '22'
       - name: Test Genie logic
-        run: node --test backend/test/genie-*.test.js
+        run: node --test backend/test/genie-*.test.js backend/test/trustedform-integration.test.js
   dashboard-build:
     runs-on: ubuntu-latest
     steps:
