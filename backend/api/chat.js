@@ -149,7 +149,7 @@ module.exports = async function handler(req, res) {
 
     // Explicit opt-in AND server-side feature flag; existing chat response is unchanged otherwise.
     if (process.env.GENIE_V2_ENABLED === "true" && body.genie_v2 === true) {
-      return res.status(200).json({ answer: text, genie_v2: processTurn(body.genie_facts, message, { required: ["state", "situation", "urgency", "vehicle_status", "coverage_goal"] }) });
+      return res.status(200).json({ answer: text, genie_v2: processTurn(body.genie_facts, message, { required: ["state", "urgency", "vehicle_status", "coverage_goal"] }) });
     }
     return res.status(200).json({ answer: text });
   } catch (err) {
