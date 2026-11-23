@@ -54,3 +54,24 @@ jobs:
       - name: Build chatbot
         run: npm run build
         working-directory: chatbot
+  browser-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: chatbot/package-lock.json
+      - name: Install chatbot dependencies
+        run: npm ci
+        working-directory: chatbot
+      - name: Install isolated browser test runner
+        run: npm install --no-save --package-lock=false @playwright/test@1.58.2
+        working-directory: chatbot
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: chatbot
+      - name: Exercise mock-backed browser journeys
+        run: npx playwright test --config=playwright.config.cjs
+        working-directory: chatbot
