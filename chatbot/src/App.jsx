@@ -263,41 +263,25 @@ async function aiAnswer(msg, profile, results, confirmed) {
     });
     if (res.ok) {
       var data = await res.json();
-      if (data && data.answer) return data.answer;
+      if (data && data.answer) return { answer: data.answer, intelligence: data.genie_v2 || null };
     }
   } catch (e) { /* fall through */ }
 
-  // 2) Claude.ai preview path: direct call works only inside Claude artifacts.
-  //    On your real website this fails harmlessly and the friendly fallback is shown.
-  try {
-    var sys = "You are AI InsureGenie, a friendly US auto insurance advisor. Only answer auto insurance questions. Keep answers to 2-3 short paragraphs. Use **bold** for key terms. Never guarantee prices. Not a licensed agent." + (ES ? " Always reply in Spanish (neutral, use usted)." : "");
-    var msgs = convoHistory.slice(-8).concat([{ role: "user", content: msg }]);
-    var response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 600, system: sys, messages: msgs })
-    });
-    var d2 = await response.json();
-    if (d2 && d2.content) {
-      var text = "";
-      for (var i = 0; i < d2.content.length; i++) { if (d2.content[i].text) text += d2.content[i].text; }
-      return text || null;
-    }
-  } catch (err) { /* fall through */ }
+  // The public browser never calls Anthropic directly. The secure proxy is the
+  // only model route; on a network failure we use the local educational fallback.
   return null;
 }
 
 async function getAnswer(text, profile, results, confirmed) {
-  var mins = minimumsAnswer(text, profile); if (mins) return mins;
-  var answer = await aiAnswer(text, profile, results, confirmed) || staticAnswer(text);
-  if (!answer) {
-    return T("Sorry, I couldn't answer that just now. Try asking another way, tap **Get instant quote** to find your match, or talk to a licensed agent.", "Perdón, no pude responder eso ahora. Pruebe a preguntarlo de otra forma, toque **Obtener cotización** para ver su opción, o hable con un agente con licencia.");
-  }
-  // Remember this exchange so follow-up questions make sense
+  var mins = minimumsAnswer(text, profile);
+  if (mins) return { answer: mins, intelligence: null };
+  var result = await aiAnswer(text, profile, results, confirmed);
+  var answer = result && result.answer ? result.answer : (typeof result === "string" ? result : staticAnswer(text));
+  if (!answer) answer = T("Sorry, I couldn't answer that just now. Try asking another way, tap **Get instant quote** to find your match, or talk to a licensed agent.", "Perdón, no pude responder eso ahora. Pruebe a preguntar de otra forma o hable con un agente con licencia.");
   convoHistory.push({ role: "user", content: text });
   convoHistory.push({ role: "assistant", content: answer });
   if (convoHistory.length > 16) convoHistory = convoHistory.slice(-16);
-  return answer;
+  return { answer: answer, intelligence: result && result.intelligence ? result.intelligence : null };
 }
 
 function calcPremium(ins, p) {
@@ -1080,23 +1064,37 @@ export default function AIInsureGenie() {
   };
 
   // A question typed or tapped at any point: answer it, keep the match where it is.
-  var ask = function (text) {
+  var ask = function (text, explicitlySelected) {
     // Only explicit first-person declarations can populate quote qualification.
     // Questions, hypothetical scenarios and guide topics are not personal facts.
     var cur = sRef.current, merge = {}, noted = [];
     var declaration = /\b(i am|i'm|i live|i need|i have|i had|my car|my insurance|i drive|i got|i was|i want)\b/i.test(text)
       && !/\b(if i|suppose|hypothetically|what if|for example)\b/i.test(text);
-    if (declaration) {
+    if (declaration || explicitlySelected) {
       var extracted = extract(text, cur);
-      merge = extracted.got;
+      merge = Object.assign({}, extracted.got, explicitlySelected || {});
       noted = extracted.said.filter(Boolean);
     }
     var qa = { q: text, a: null, noted: noted.join(", "), agent: /(dui|dwi|sr-?22|accident|ticket|rate|price|cost|raise|multa|accidente|precio)/i.test(text) };
     qa.candidate = merge; // Pending until visitor explicitly confirms before quote qualification.
     setS(Object.assign({}, cur, { qa: qa, askMore: false }));
     track("question_asked", { stage: cur.stage }, false);
-    getAnswer(text, toProfile(cur), Array.isArray(cur.results) ? cur.results : [], genieConfirmed(cur)).then(function (a) {
-      setS(function (c) { return c.qa && c.qa.q === text ? Object.assign({}, c, { qa: Object.assign({}, c.qa, { a: a }) }) : c; });
+    getAnswer(text, toProfile(cur), Array.isArray(cur.results) ? cur.results : [], genieConfirmed(cur)).then(function (response) {
+      setS(function (c) {
+        if (!c.qa || c.qa.q !== text) return c;
+        var brain = response.intelligence;
+        var found = brain && brain.requires_confirmation ? candidateToWizard(brain.candidates || {}, cur) : {};
+        // Backend candidates are unverified and only shown for confirmation.
+        var pending = Object.assign({}, c.qa.candidate || {}, found);
+        var extra = candidateDescription(found, ABBR_STATE);
+        var noted = [c.qa.noted, extra].filter(Boolean).join(" · ");
+        return Object.assign({}, c, { qa: Object.assign({}, c.qa, {
+          a: response.answer, candidate: pending, noted: noted,
+          nextQuestion: brain && brain.next ? brain.next.text : null
+        }) });
+      });
+    }).catch(function () {
+      setS(function (c) { return c.qa && c.qa.q === text ? Object.assign({}, c, { qa: Object.assign({}, c.qa, { a: T("I can't answer just now, but we can continue with confirmed details.", "No puedo responder ahora, pero podemos seguir con los datos confirmados.") }) }) : c; });
     });
   };
   var keepGoing = function () {
@@ -1117,8 +1115,14 @@ export default function AIInsureGenie() {
     if (isQuestion(text, "qualifying", null)) { ask(text); return; }
     var x = extract(text, cur), got = x.got, said = x.said;
     if (!Object.keys(got).length) { ask(text); return; }
+    // Confirm free-text risk statements and multi-fact entries before storing.
+    // Single state, make or year entries in their dedicated step remain direct.
+    if (Object.keys(got).length > 1 || got.sits || got.when || got.cov) {
+      ask(text, got);
+      return;
+    }
     var n = Object.assign({}, cur, got);
-    go(Object.assign(got, { said: text, qa: null, note: T("Got it: ", "Perfecto: ") + said.filter(Boolean).join(", ") + T(". I just need the rest.", ". Solo me falta lo demás."), stage: nextStage(n) }));
+    go(Object.assign(got, { said: text, qa: null, note: T("Got it: ", "Perfecto: ") + said.filter(Boolean).join(", ") + T(". I just need the rest.", ". Solo me falta demás."), stage: nextStage(n) }));
   };
 
   // Open the right flow when arriving from the website (#start=quote&situation=sr22&state=Texas...).
