@@ -2,10 +2,10 @@
 // Read-only or OPTIONS requests; no D1, secrets, partner calls, or external network.
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { pathToFileURL } = require("node:url");
+const fs = require("node:fs");
 const path = require("node:path");
 const built = path.resolve(__dirname, "../dist/worker.js");
-const workerPromise = import(pathToFileURL(built).href).then(m => m.default);
+const workerPromise = import("data:text/javascript;base64," + fs.readFileSync(built).toString("base64")).then(m => m.default);
 
 async function request(pathname, method = "GET") {
   const worker = await workerPromise;
