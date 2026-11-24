@@ -36,3 +36,5 @@ jobs:
           assert.equal(partial.confirmed.situation_confirmed,true);
           console.log('Genie 2.1 planner validates complete and missing qualification without PII');
           NODE
+
+# Verify after successful Genie 2.1 API deployment.
