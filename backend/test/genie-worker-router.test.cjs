@@ -18,7 +18,7 @@ test("the compiled production Worker resolves health and root routes", async () 
 });
 
 test("the compiled production Worker resolves safe preflight routes", async () => {
-  for (const pathname of ["/api/chat", "/api/leads", "/api/callback"]) {
+  for (const pathname of ["/api/chat", "/api/plan", "/api/leads", "/api/callback"]) {
     const res = await request(pathname, "OPTIONS");
     assert.equal(res.status, 200, pathname + ": " + await res.text());
   }
@@ -34,4 +34,12 @@ test("the compiled production Worker still serves geo route", async () => {
 test("unknown paths return an intentional 404", async () => {
   const res = await request("/api/unknown___");
   assert.equal(res.status, 404);
+});
+
+test("compiled Worker does not expose Genie planning when operator flag absent", async () => {
+  const res = await fetch("http://127.0.0.1:8799/api/plan", {
+    method:"POST", headers:{"Content-Type":"application/json",Origin:"https://chat.aiinsuregenie.com"},
+    body:JSON.stringify({genie_v2:true,genie_facts:{state:"TX",situation_confirmed:true,vehicle_status:"no_vehicle"}})
+  });
+  assert.equal(res.status,404);
 });
