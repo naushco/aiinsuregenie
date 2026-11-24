@@ -97,15 +97,23 @@ jobs:
       - name: Install and build actual Genie frontend
         run: npm ci && npm run build
         working-directory: chatbot
+      - name: Bundle isolated Genie staging API
+        run: |
+          mkdir -p backend/dist
+          npx --yes --package=esbuild@0.25.12 esbuild backend/staging-worker.js --bundle --format=esm --platform=browser --target=es2022 --outfile=backend/dist/staging-worker.js
+          test -s backend/dist/staging-worker.js
       - name: Store build in isolated preview-assets branch
         run: |
           tar -C chatbot/dist -cf /tmp/genie-staging-dist.tar .
+          cp backend/dist/staging-worker.js /tmp/genie-staging-worker.js
           git fetch origin genie-staging-assets
           git checkout -B genie-staging-assets origin/genie-staging-assets
           mkdir -p chatbot/dist
           find chatbot/dist -mindepth 1 -maxdepth 1 -exec rm -rf {} +
           tar -C chatbot/dist -xf /tmp/genie-staging-dist.tar
-          git add -f chatbot/dist
+          mkdir -p backend/dist
+          cp /tmp/genie-staging-worker.js backend/dist/staging-worker.js
+          git add -f chatbot/dist backend/dist/staging-worker.js
           if git diff --cached --quiet; then
             echo "Preview assets already current"
             exit 0
