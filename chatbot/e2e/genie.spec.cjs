@@ -177,8 +177,8 @@ test("advisor confirms inferred details then reviews before quote questions",asy
 test("immediate get quote waits for review before displaying partner options",async({page})=>{
   await page.goto("/");
   await page.getByRole("button",{name:"Get quote now"}).click();
-  await expect(page.getByRole("region",{name:"Review your insurance profile"})).toBeVisible();
-  await page.getByRole("button",{name:"Continue with quote questions"}).click();
+  // Fast quote entry should skip an empty profile review for paid visitors.
+  await expect(page.getByRole("region",{name:"Review your insurance profile"})).toHaveCount(0);
   await expect(page.getByText("Which state do you live in?")).toBeVisible();
   await page.getByRole("button",{name:"Texas"}).click();
   await page.getByRole("button",{name:"Need an SR-22"}).click();
@@ -204,7 +204,7 @@ test("first-party campaign metadata survives quote -> advisor switch, without co
   expect(initial.fbclid).toBe("valid123");
   expect(initial).not.toHaveProperty("email");
   await page.getByRole("button",{name:"Get quote now"}).click();
-  await page.getByRole("button",{name:"Keep talking with Genie"}).click();
+  await page.getByRole("button",{name:"Ask Genie"}).click();
   await expect(page.getByPlaceholder("Ask anything about car insurance")).toBeVisible();
   await page.reload();
   const later=await page.evaluate(()=>JSON.parse(sessionStorage.getItem("aig-attribution-v1")));
