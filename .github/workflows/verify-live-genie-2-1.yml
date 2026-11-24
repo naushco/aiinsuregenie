@@ -47,8 +47,12 @@ jobs:
             await expect(page.locator('#xxTrustedFormCertUrl')).toHaveCount(1);
             await page.getByRole('button',{name:'I need an SR-22'}).click();
             const change=page.getByRole('button',{name:/Change state/});
-            if (await change.isVisible().catch(()=>false)) await change.click();
-            await page.getByRole('button',{name:/Texas/}).first().click();
+            const texas=page.getByRole('button',{name:/Texas/}).first();
+            // The chatbot briefly shows a typing animation after the first
+            // click. Wait for its state choices before checking geo suggestions.
+            await expect.poll(async()=>await change.isVisible() || await texas.isVisible()).toBe(true);
+            if (await change.isVisible()) await change.click();
+            await texas.click();
             await expect(page.getByText(/Do you own, finance, or lease a vehicle/)).toBeVisible();
             await page.getByRole('button',{name:'I need non-owner coverage'}).click();
             await expect(page.getByText('What coverage do you need?')).toBeVisible();
