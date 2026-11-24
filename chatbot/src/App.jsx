@@ -234,7 +234,7 @@ function safeProfile(p) {
   return out;
 }
 
-async function aiAnswer(msg, profile, results) {
+async function aiAnswer(msg, profile, results, confirmed) {
   var payload = {
     message: msg,
     history: convoHistory.slice(-8),
@@ -242,6 +242,9 @@ async function aiAnswer(msg, profile, results) {
     results: (results || []).map(function (r) { return { n: r.n }; }),
     lang: LANG
   };
+  // Only the isolated staging API receives the explicit confirmed/candidate split.
+  if (typeof window !== "undefined" && window.AIG_CONFIG && window.AIG_CONFIG.staging)
+    payload.confirmed = confirmed || {};
 
   // 1) Production path: your secure backend proxy
   try {
@@ -276,9 +279,9 @@ async function aiAnswer(msg, profile, results) {
   return null;
 }
 
-async function getAnswer(text, profile, results) {
+async function getAnswer(text, profile, results, confirmed) {
   var mins = minimumsAnswer(text, profile); if (mins) return mins;
-  var answer = await aiAnswer(text, profile, results) || staticAnswer(text);
+  var answer = await aiAnswer(text, profile, results, confirmed) || staticAnswer(text);
   if (!answer) {
     return T("Sorry, I couldn't answer that just now. Try asking another way, tap **Get instant quote** to find your match, or talk to a licensed agent.", "Perdón, no pude responder eso ahora. Pruebe a preguntarlo de otra forma, toque **Obtener cotización** para ver su opción, o hable con un agente con licencia.");
   }
@@ -848,6 +851,23 @@ function nextStage(s) {
   if (!s.when) return "when";
   return "done";
 }
+// Confirmed quote fields for the isolated Genie 2.0 staging intelligence API.
+// Never infer owned/leased status, a clean record, or a coverage selection.
+function genieConfirmed(s) {
+  var situations = [];
+  (s.sits || []).forEach(function (v) {
+    var mapped = { sr22: "sr22", dui: "dui", lapse: "coverage_lapse", ride: "rideshare", new: "new_driver" }[v];
+    if (mapped && situations.indexOf(mapped) < 0) situations.push(mapped);
+  });
+  var urgency = { today: "today", week: "within_week", compare: "later" }[s.when] || "unknown";
+  return {
+    state: s.st || null, situation: situations,
+    goal: s.pri === "price" ? ["lower_price"] : [],
+    urgency: urgency, vehicle_status: "unknown",
+    coverage_goal: s.cov === "min" ? "minimum" : s.cov === "full" ? "full" : "unsure"
+  };
+}
+
 function toProfile(s) {
   var sits = s.sits || [];
   var p = { state: s.st || undefined };
@@ -1052,7 +1072,7 @@ export default function AIInsureGenie() {
     qa.candidate = merge; // Pending until visitor explicitly confirms before quote qualification.
     setS(Object.assign({}, cur, { qa: qa, askMore: false }));
     track("question_asked", { stage: cur.stage }, false);
-    getAnswer(text, toProfile(cur), Array.isArray(cur.results) ? cur.results : []).then(function (a) {
+    getAnswer(text, toProfile(cur), Array.isArray(cur.results) ? cur.results : [], genieConfirmed(cur)).then(function (a) {
       setS(function (c) { return c.qa && c.qa.q === text ? Object.assign({}, c, { qa: Object.assign({}, c.qa, { a: a }) }) : c; });
     });
   };
