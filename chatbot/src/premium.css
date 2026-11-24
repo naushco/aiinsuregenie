@@ -1,0 +1,45 @@
+/* AI InsureGenie 3.0 — existing journey handlers retained. */
+.ig.aig3{background:#f6f8fb;color:#0e1b33}
+.aig3 .ig-card{max-width:1100px;background:#fff}
+.aig3 .hd{padding:10px 16px;background:#fff}
+.aig3 .hd-in{max-width:1040px;gap:8px}
+.aig3 .hd-name{font-size:clamp(14px,3.8vw,20px);color:var(--navy);letter-spacing:-.035em;white-space:nowrap}
+.aig3 .aig3-gold{color:#986300}
+.aig3 .hd-logo{width:36px;height:36px}
+.aig3 .hd-sub{font-size:12px;color:#52627d}
+.aig3 .ib{width:44px;height:44px}
+.aig3 .aig3-quote-cta{min-height:44px;flex:none;border:0;border-radius:999px;background:var(--gold);color:var(--navy);font-weight:700;padding:0 16px;cursor:pointer}
+.aig3 .prog,.aig3 .prog>i{height:4px}
+.aig3 .prog>i{background:var(--blue)}
+.aig3 .log-in{max-width:760px;padding:28px 24px 24px;gap:22px}
+.aig3-welcome .log-in{margin-top:0;margin-bottom:auto;padding-top:clamp(30px,7vh,84px)}
+.aig3 .hello{gap:14px;padding:0 0 16px}
+.aig3 .hello img{width:56px;height:56px}
+.aig3 .hello h1{font-size:clamp(30px,5vw,48px);letter-spacing:-.045em;color:var(--navy);line-height:1.1;max-width:620px}
+.aig3 .hello p{font-size:16px;line-height:1.65;color:#52627d;max-width:580px}
+.aig3 .starts{border:0;display:grid;gap:10px}
+.aig3 .st{border:1px solid #dce3ec;border-radius:14px;min-height:60px;padding:10px 14px;background:#fff}
+.aig3 .st:hover{border-color:#a7bbd7;background:#f6f8fb}
+.aig3 .st-ic{background:#eef3fb}
+.aig3-advisor.aig3-welcome .starts:first-of-type .st:first-child{background:var(--gold);border-color:var(--gold);color:var(--navy);font-weight:700}
+.aig3 .gt,.aig3 .g.past .gt{font-size:16px;line-height:1.65;color:#0e1b33}
+.aig3 .ga{width:30px;height:30px}
+.aig3 .u{background:#eef3fb;padding:14px 18px;font-size:16px;line-height:1.55}
+.aig3 .g[data-anchor] .gt{font-weight:700;font-size:clamp(22px,4vw,30px);line-height:1.28;color:var(--navy);letter-spacing:-.025em}
+.aig3 .g[data-anchor] .gh{font-size:14px;line-height:1.55;font-weight:400;letter-spacing:0;margin-top:10px;color:#52627d}
+.aig3 .aig3-answers:not(.row){display:grid;grid-template-columns:1fr;gap:10px}
+.aig3 .aig3-answers:not(.row) .c{white-space:normal;justify-content:flex-start;text-align:left;min-height:52px;border:1px solid #dce3ec;border-radius:12px;background:#fff;padding:12px 16px}
+.aig3 .aig3-answers:not(.row) .c:hover{border-color:var(--blue);background:#f6f8fb}
+.aig3 .aig3-answers:not(.row) .c.on{border-color:var(--blue);color:var(--navy);background:#eef3fb}
+.aig3 .aig3-answers:not(.row) .c.act{color:var(--blue);border:0;background:transparent}
+.aig3 .aig3-multi .c:not(.act)::before{content:"";width:18px;height:18px;flex:none;border:1px solid #8796ad;border-radius:4px}
+.aig3 .aig3-multi .c.on::before{content:"✓";display:grid;place-items:center;color:#fff;background:var(--blue);border-color:var(--blue)}
+.aig3 .p1,.aig3 .p2{border-radius:12px}
+.aig3 .mcard{border-radius:16px;box-shadow:0 4px 18px rgba(11,42,91,.05)}
+.aig3 .foot{border-top:1px solid #eef1f5;padding:12px 20px calc(14px + env(safe-area-inset-bottom))}
+.aig3 .comp{border-radius:18px;box-shadow:none}
+.aig3 .send{width:44px;height:44px}
+.aig3 .disc,.aig3 .disc a,.aig3 .fine{color:#52627d}
+.aig3 .det{min-height:44px}
+@media(min-width:800px){.ig.aig3{padding:0 24px}.aig3 .ig-card{border-inline:1px solid #e3e8ef}.aig3 .starts{grid-template-columns:1fr 1fr}.aig3 .aig3-answers:not(.row){grid-template-columns:1fr 1fr}.aig3 .hello{padding-bottom:24px}}
+@media(max-width:480px){.aig3 .hd{padding:8px 10px}.aig3 .hd-in{gap:4px;flex-wrap:wrap}.aig3 .hd-txt{min-width:130px}.aig3 .hd-logo{width:30px;height:30px}.aig3 .hd-sub{max-width:160px}.aig3 .ib{width:44px;height:44px}.aig3 .aig3-quote-cta{padding:0 12px}.aig3 .log-in{padding:24px 16px 20px;gap:18px}.aig3 .ans{padding-left:0}.aig3 .ans.row{margin:0 -16px;padding:2px 16px 4px}.aig3 .selwrap,.aig3 .txt{padding-left:0}.aig3 .back{margin-left:0;min-height:44px}.aig3 .foot{padding-inline:12px}}
