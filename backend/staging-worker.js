@@ -66,6 +66,28 @@ export default {
         requires_confirmation: !!inferred.facts.state || inferred.facts.situation.length > 0,
         buyer_routing: "disabled_in_staging" } }, 200, origin);
     }
+    if (url.pathname === "/__test/partner-route" && request.method === "POST") {
+      let b; try { b = await request.json(); } catch { return respond({ error: "Invalid JSON" }, 400, origin); }
+      // Synthetic buyer rules are submitted by the test. No real buyer inventory,
+      // prices, payout values, personal details, or outbound network calls.
+      const keys = b && typeof b === "object" && !Array.isArray(b) ? Object.keys(b) : [];
+      const allowed = new Set(["fixture", "state", "situation", "demo_buyers"]);
+      if (b?.fixture !== "SYNTHETIC_ONLY" || keys.some(k => !allowed.has(k)))
+        return respond({ error: "Only explicitly allowed synthetic routing fields are accepted" }, 400, origin);
+      const state = b.state, situation = b.situation;
+      if (!ALLOWED_STATES.has(state) || !SITUATIONS.has(situation) || !Array.isArray(b.demo_buyers) || b.demo_buyers.length > 8)
+        return respond({ error: "Invalid synthetic routing fixture" }, 400, origin);
+      if (b.demo_buyers.some(x => !x || typeof x !== "object" || !/^DEMO_[A-Z0-9_]{1,30}$/.test(x.id)
+        || !Array.isArray(x.states) || !Array.isArray(x.situations)
+        || x.states.some(st => !ALLOWED_STATES.has(st))
+        || x.situations.some(si => !SITUATIONS.has(si))))
+        return respond({ error: "Only DEMO buyer rules are allowed" }, 400, origin);
+      const eligible = b.demo_buyers.filter(x => x.states.includes(state) && x.situations.includes(situation))
+        .map(x => x.id);
+      return respond({ fixture: true, state, situation, eligible_demo_buyers: eligible,
+        recommended_demo_buyer: eligible[0] || null, eligible_for_real_insurance: null,
+        buyer_delivery: false, database_writes: false, simulated_only: true }, 200, origin);
+    }
     if (url.pathname === "/__test/consent-handoff" && request.method === "POST") {
       let b; try { b = await request.json(); } catch { return respond({ error: "Invalid JSON" }, 400, origin); }
       // Explicit fixture marker and no real PII. This endpoint only assembles and validates
