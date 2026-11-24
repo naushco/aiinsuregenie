@@ -1,4 +1,4 @@
-name: Genie deployment workflow validation
+name: Deploy Genie disabled chatbot
 on:
   push:
     branches:
@@ -7,9 +7,62 @@ on:
       - .github/workflows/deploy-genie-disabled-chat.yml
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: genie-production-chat-deployment
+  cancel-in-progress: false
+
 jobs:
-  validate:
+  deploy:
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
-      - name: Verify workflow execution is supported
-        run: echo 'GitHub Actions workflow parser and runner verified'
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/genie-2-intelligence
+      - name: Verify approved source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "43b7d33c86129cd5718813cec152c3ba4938caab"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: chatbot/package-lock.json
+      - name: Check Cloudflare deployment credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+      - name: Deploy production assets with Genie disabled
+        id: deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: bash scripts/deploy-genie-disabled-chat.sh
+      - name: Verify live chatbot configuration and TrustedForm
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error "https://chat.aiinsuregenie.com/config.js?verify=${GITHUB_RUN_ID}" > /tmp/genie-config.js
+          curl --fail --silent --show-error "https://chat.aiinsuregenie.com/?verify=${GITHUB_RUN_ID}" > /tmp/genie-index.html
+          grep -q 'genieV2Enabled: staging' /tmp/genie-config.js
+          grep -q 'api.trustedform.com/trustedform.js' /tmp/genie-index.html
+          grep -q 'xxTrustedFormCertUrl' /tmp/genie-index.html
+          grep -q 'id="root"' /tmp/genie-index.html
+      - name: Roll back to prior chatbot if deployment verification fails
+        if: failure()
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if test -n "$CLOUDFLARE_API_TOKEN" && test -n "$CLOUDFLARE_ACCOUNT_ID"; then
+            curl --fail-with-body --silent --show-error -X POST \
+              "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/scripts/aiinsuregenie-chat/deployments" \
+              -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              --data '{"strategy":"percentage","versions":[{"version_id":"3e2ef721-2001-4ceb-a6db-ac6bcb570406","percentage":100}]}'
+          fi
