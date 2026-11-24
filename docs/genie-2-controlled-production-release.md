@@ -71,3 +71,11 @@ The isolated staging chatbot is available at `https://aiinsuregenie-chat-staging
 - Automated check: `production-api-dry-run` in Genie validation, using Wrangler 4.167.0 (supports 2026 compatibility date), with 4 successful local route tests. No live endpoint or partner lead is contacted by these tests.
 - **No new production deployment was performed during this investigation.** The chatbot and API active versions remain unchanged. Before attempting another disabled-code rollout, verify the live API response using an independent browser/client and inspect the actual request URL/hostname, URL rewrites, and Cloudflare observability for 404s.
 
+
+## 2026-11-24 verified backend and disabled chatbot rollout
+
+- Successful GitHub Actions read-only live smoke checks on both API hostnames returned `"status":"ok"` against the newly deployed, server-disabled backend version; chat OPTIONS preflight passed. Run: https://github.com/naushco/aiinsuregenie/actions/runs/45371915236
+- The active feature-gated backend is version `59346416-420d-41a0-b9f0-b394694ef2fa`. Server flag `GENIE_V2_ENABLED` is not configured and cannot be enabled by visitor requests. Prior backend `8aa60c47-5d40-4072-b1ee-2844f1b4f390` remains the rollback target.
+- Existing production chatbot has **not been replaced** because static-assets upload from the connected Cloudflare API failed authorization. It would be unsafe to replace this asset-backed Worker with a script-only upload.
+- Once an operator has Wrangler authorization, use `bash scripts/deploy-genie-disabled-chat.sh` from a clean `feature/genie-2-intelligence` checkout. This verifies live API health, checks the original LegacyApp and TrustedForm, builds the chatbot and deploys only with Genie disabled.
+- Perform postdeployment browser checks on legacy UI, certificate generation, links and API response before approving any feature flag activation.
