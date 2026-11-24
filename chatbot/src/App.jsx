@@ -1227,7 +1227,7 @@ export default function AIInsureGenie() {
       try {
         var saved = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
         if (!DO_NOT_SELL && saved && saved.s && saved.t <= Date.now() && Date.now() - saved.t < 7 * 864e5 && (stepOf(saved.s.stage) >= 2 || saved.s.st || saved.s.sitDone || saved.s.make || saved.s.pri)) {
-          var savedJourney = saved.s.journey === "quote" ? "quote" : "advisor";
+          var savedJourney = saved.s.journey === "quote" || (!saved.s.journey && saved.s.stage !== "start") ? "quote" : "advisor";
           var restored = Object.assign(fresh(), saved.s, { journey: savedJourney,
             stage: savedJourney === "quote" ? nextStage(saved.s) : "start",
             reviewOpen: savedJourney === "quote" && nextStage(saved.s) === "done",
