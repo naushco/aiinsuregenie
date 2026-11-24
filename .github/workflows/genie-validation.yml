@@ -12,6 +12,8 @@ on:
       - 'dashboard/**'
       - 'chatbot/**'
       - 'backend/api/chat.js'
+      - 'backend/staging-worker.js'
+      - 'backend/test/genie-staging-api.test.cjs'
       - '.github/workflows/genie-validation.yml'
   workflow_dispatch:
 jobs:
@@ -102,6 +104,8 @@ jobs:
           mkdir -p backend/dist
           npx --yes --package=esbuild@0.25.12 esbuild backend/staging-worker.js --bundle --format=esm --platform=browser --target=es2022 --outfile=backend/dist/staging-worker.js
           test -s backend/dist/staging-worker.js
+      - name: Verify staging API and synthetic consent contract
+        run: node --test backend/test/genie-staging-api.test.cjs
       - name: Store build in isolated preview-assets branch
         run: |
           tar -C chatbot/dist -cf /tmp/genie-staging-dist.tar .
