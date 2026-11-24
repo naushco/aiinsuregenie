@@ -1,0 +1,87 @@
+name: Verify live Genie 2.1 browser journeys
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/verify-live-genie-2-1.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser-journeys:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/genie-2-1-20261124
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: chatbot/package-lock.json
+      - run: npm ci && npm install --no-save --package-lock=false @playwright/test@1.58.2
+        working-directory: chatbot
+      - run: npx playwright install --with-deps chromium
+        working-directory: chatbot
+      - name: Check public Genie 2.1, TrustedForm, confirmed facts, non-owner and interruptions
+        working-directory: chatbot
+        run: |
+          set -euo pipefail
+          cat > live-genie-2-1.config.cjs <<'CONFIG'
+          const {defineConfig}=require('@playwright/test');
+          module.exports=defineConfig({testDir:'./live-journeys',workers:1,timeout:60000,use:{baseURL:'https://chat.aiinsuregenie.com',browserName:'chromium',trace:'retain-on-failure'}});
+          CONFIG
+          mkdir -p live-journeys
+          cat > live-journeys/genie-2-1.spec.cjs <<'TEST'
+          const {test,expect}=require('@playwright/test');
+          test.beforeEach(async({page})=>{
+            await page.route('**/api/event*',r=>r.fulfill({status:204,body:''}));
+            for(const path of ['leads','callback','subscribe'])await page.route('**/api/'+path+'*',r=>r.fulfill({status:204,body:''}));
+            await page.route(/trustedform\.com/,r=>r.abort());
+          });
+          test('non-owner SR-22 visitor skips car questions and resumes saved progress',async({page})=>{
+            const plans=[];
+            page.on('request',r=>{if(r.url().includes('/api/plan')&&r.method()==='POST'){try{plans.push(r.postDataJSON())}catch{}}});
+            await page.goto('/');
+            await expect.poll(()=>page.evaluate(()=>window.AIG_CONFIG?.genieV2Enabled)).toBe(true);
+            await expect(page.locator('#xxTrustedFormCertUrl')).toHaveCount(1);
+            await page.getByRole('button',{name:'I need an SR-22'}).click();
+            await page.getByRole('button',{name:/Texas/}).first().click();
+            await expect(page.getByText(/Do you own, finance, or lease a vehicle/)).toBeVisible();
+            await page.getByRole('button',{name:'I need non-owner coverage'}).click();
+            await expect(page.getByText('What coverage do you need?')).toBeVisible();
+            await page.getByRole('button',{name:"I don't know"}).click();
+            await expect(page.getByText('When do you need it to start?')).toBeVisible();
+            await page.getByRole('button',{name:'Just comparing'}).click();
+            await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('aig-chat-v2')||'null')?.s?.stage)).toBe('done');
+            const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('aig-chat-v2')));
+            expect(saved.s.vehicleStatus).toBe('no_vehicle');
+            expect(saved.s.st).toBe('TX');
+            expect(saved.s.sits).toContain('sr22');
+            expect(saved.s.make).toBe('');
+            expect(saved.s.cov).toBe('unsure');
+            expect(saved.s.when).toBe('compare');
+            await expect.poll(()=>plans.length).toBeGreaterThan(0);
+            expect(plans.some(p=>p.genie_v2===true&&p.genie_facts?.vehicle_status==='no_vehicle')).toBe(true);
+            await page.reload();
+            expect((await page.evaluate(()=>JSON.parse(localStorage.getItem('aig-chat-v2')))).s.vehicleStatus).toBe('no_vehicle');
+          });
+          test('natural-language facts require confirmation and resume correct missing question',async({page})=>{
+            const questions=[];
+            page.on('request',r=>{if(r.url().includes('/api/chat')&&r.method()==='POST'){try{questions.push(r.postDataJSON())}catch{}}});
+            await page.goto('/#start=guide&topic=coverage');
+            await page.getByPlaceholder('Ask anything about car insurance').fill("I'm in Texas and need insurance this week.");
+            await page.getByRole('button',{name:'Send'}).click();
+            await expect(page.getByRole('button',{name:'Confirm details and continue'})).toBeVisible({timeout:45000});
+            const pending=await page.evaluate(()=>JSON.parse(localStorage.getItem('aig-chat-v2')||'null'));
+            expect(pending?.s?.st||'').not.toBe('TX');
+            expect(questions[0]?.genie_v2).toBe(true);
+            expect(questions[0]?.genie_facts?.state).toBe(null);
+            await page.getByRole('button',{name:'Confirm details and continue'}).click();
+            await expect(page.getByText('Anything special about your situation?')).toBeVisible();
+            const profile=await page.evaluate(()=>JSON.parse(localStorage.getItem('aig-chat-v2')));
+            expect(profile.s.st).toBe('TX');
+            expect(profile.s.when).toBe('week');
+          });
+          TEST
+          npx playwright test live-journeys/genie-2-1.spec.cjs --config=live-genie-2-1.config.cjs --reporter=line
