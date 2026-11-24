@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, Fragment } from "react";
 import MINIMUMS from "./minimums.js";
+import { confirmedFacts, localStage, stageFromPlan, candidateToWizard, candidateDescription } from "./genie-flow.js";
 
 var STORAGE_KEY = "aiinsuregenie-partners-v3";
 
@@ -834,45 +835,29 @@ var SIT = [
 ];
 var COVS = { min: T("State minimum", "Mínimo del estado"), full: T("Full coverage", "Cobertura total"), unsure: T("Not sure yet", "Todavía no sé") };
 var WHENS = { today: T("Today", "Hoy"), week: T("This week", "Esta semana"), compare: T("Just comparing", "Solo comparando") };
-var ORDER = ["start", "state", "sit", "make", "model", "year", "cov", "when", "done"];
+var ORDER = ["start", "state", "sit", "vehicle", "make", "model", "year", "cov", "when", "done"];
 var SAVE_KEY = "aig-chat-v2";
 
 function stName(ab) { return ABBR_STATE[ab] || ab || ""; }
-function stepOf(stage) { return { start: 0, state: 1, sit: 2, make: 3, model: 3, year: 3, cov: 4, when: 4, done: 5 }[stage] || 0; }
+function stepOf(stage) { return { start: 0, state: 1, sit: 2, vehicle: 3, make: 3, model: 3, year: 3, cov: 4, when: 4, done: 5 }[stage] || 0; }
 function bodyOf(make, model) { var m = (MODEL_LIST[make] || []).find(function (x) { return x[0] === model; }); return m ? m[1] : "sedan"; }
 function carName(s) { if (s.carAge && !s.make) return s.carAge; return [s.year && s.year !== "unsure" ? (s.year === "old" ? T("2015 or older", "2015 o antes") : s.year) : "", s.make, s.model && s.model !== "unsure" ? s.model : ""].filter(Boolean).join(" "); }
-var QH = { state: T("Which state do you live in?", "¿En qué estado vive?"), sit: T("Anything special about your situation?", "¿Algo especial en su situación?"), make: T("What car do you drive?", "¿Qué auto maneja?"), model: T("Which model?", "¿Qué modelo?"), year: T("And the year?", "¿Y el año?"), cov: T("What coverage do you need?", "¿Qué cobertura necesita?"), when: T("When do you need it to start?", "¿Cuándo la necesita?") };
+var QH = { state: T("Which state do you live in?", "¿En qué estado vive?"), sit: T("Anything special about your situation?", "¿Algo especial en su situación?"), vehicle: T("Do you own, finance or lease a vehicle, or need non-owner coverage?", "¿Tiene, financia o alquila un vehículo, o necesita cobertura sin auto?"), make: T("What car do you drive?", "¿Qué auto maneja?"), model: T("Which model?", "¿Qué modelo?"), year: T("And the year?", "¿Y el año?"), cov: T("What coverage do you need?", "¿Qué cobertura necesita?"), when: T("When do you need it to start?", "¿Cuándo la necesita?") };
 function questionsLeft(s) {
-  var FILL = { state: { st: "X" }, sit: { sitDone: true }, make: { make: "X" }, model: { model: "X" }, year: { year: "X" }, cov: { cov: "X" }, when: { when: "X" } };
+  var FILL = { state: { st: "X" }, sit: { sitDone: true }, vehicle: { vehicleStatus: "owned" }, make: { make: "X" }, model: { model: "X" }, year: { year: "X" }, cov: { cov: "X" }, when: { when: "X" } };
   var x = Object.assign({}, s), n = 0, st;
   while ((st = nextStage(x)) !== "done" && n < 9) { if (!(st === "model" || st === "year")) n++; Object.assign(x, FILL[st]); }
   return n;
 }
 function nextStage(s) {
-  if (!s.st) return "state";
-  if (!s.sitDone) return "sit";
-  if (!s.make && !s.carAge) return "make";
-  if (!s.model && MODEL_LIST[s.make]) return "model";
-  if (!s.year) return "year";
-  if (!s.cov && s.pri !== "price") return "cov";
-  if (!s.when) return "when";
-  return "done";
+  return localStage(s, function (make) { return !!MODEL_LIST[make]; });
 }
 // Confirmed quote fields for the isolated Genie 2.0 staging intelligence API.
 // Never infer owned/leased status, a clean record, or a coverage selection.
 function genieConfirmed(s) {
-  var situations = [];
-  (s.sits || []).forEach(function (v) {
-    var mapped = { sr22: "sr22", dui: "dui", lapse: "coverage_lapse", ride: "rideshare", new: "new_driver" }[v];
-    if (mapped && situations.indexOf(mapped) < 0) situations.push(mapped);
-  });
-  var urgency = { today: "today", week: "within_week", compare: "later" }[s.when] || "unknown";
-  return {
-    state: s.st || null, situation: situations,
-    goal: s.pri === "price" ? ["lower_price"] : [],
-    urgency: urgency, vehicle_status: "unknown",
-    coverage_goal: s.cov === "min" ? "minimum" : s.cov === "full" ? "full" : "unsure"
-  };
+  // All profile facts come exclusively from explicit visitor confirmation.
+  // Browser and API use the same field definitions and validated vocabulary.
+  return confirmedFacts(s);
 }
 
 function toProfile(s) {
@@ -964,7 +949,7 @@ function pageWelcome() {
 }
 
 function fresh() {
-  return { stage: "start", st: "", changing: false, sits: [], sitDone: false, make: "", model: "", year: "", cov: "", when: "", pri: "", carAge: "", hist: [], said: "", note: "", otherMake: false, qa: null, askMore: false, results: null, showAll: false, showEmail: "" };
+  return { stage: "start", st: "", changing: false, sits: [], sitDone: false, vehicleStatus: "", make: "", model: "", year: "", cov: "", when: "", pri: "", carAge: "", hist: [], said: "", note: "", otherMake: false, qa: null, askMore: false, results: null, showAll: false, showEmail: "" };
 }
 
 export default function AIInsureGenie() {
@@ -977,7 +962,7 @@ export default function AIInsureGenie() {
   var [showCall, setShowCall] = useState(false);
   var [leave, setLeave] = useState(false);
   var [list, setList] = useState(IS_PREVIEW ? DEFAULT_INSURERS : []);
-  var logRef = useRef(null), inRef = useRef(null), tRef = useRef(null), sRef = useRef(s);
+  var logRef = useRef(null), inRef = useRef(null), tRef = useRef(null), sRef = useRef(s), planRef = useRef(0);
   sRef.current = s;
 
   // Partners from the dashboard (refreshed every 30 seconds).
@@ -1006,7 +991,7 @@ export default function AIInsureGenie() {
     if (s.stage === "start" && !s.st && !s.sitDone && !s.make && !s.cov && !s.when && !s.pri) return;
     try {
       var keep = {
-        stage: s.stage, st: s.st, sits: s.sits, sitDone: s.sitDone,
+        stage: s.stage, st: s.st, sits: s.sits, sitDone: s.sitDone, vehicleStatus: s.vehicleStatus,
         make: s.make, model: s.model, year: s.year, cov: s.cov,
         when: s.when, pri: s.pri, carAge: s.carAge
       };
@@ -1014,6 +999,29 @@ export default function AIInsureGenie() {
     } catch (e) {}
     setResumeCookie(s);
   }, [s]);
+
+  // Genie 2.1: the backend planner is authoritative when available. The same
+  // deterministic local plan preserves usability on network failures.
+  // Nothing from this endpoint is stored in D1, and it makes no model/buyer call.
+  var syncPlan = function (proposed) {
+    if (!window.AIG_CONFIG?.genieV2Enabled || proposed.qa || proposed.stage === "start") return;
+    var stamp = JSON.stringify(genieConfirmed(proposed));
+    var requestId = ++planRef.current;
+    fetch(API_BASE + "/api/plan", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ genie_v2: true, genie_facts: genieConfirmed(proposed) })
+    }).then(function (r) { return r.ok ? r.json() : null; }).then(function (plan) {
+      if (!plan || plan.version !== "2.1" || !plan.next || planRef.current !== requestId) return;
+      setS(function (cur) {
+        if (cur.qa || JSON.stringify(genieConfirmed(cur)) !== stamp) return cur;
+        var selected = stageFromPlan(cur, plan.next, function (make) { return !!MODEL_LIST[make]; });
+        // Reconcile only the current qualification step; never overwrite the
+        // visitor's confirmed answers, consent, results or raw conversation.
+        if (selected === cur.stage) return cur;
+        return Object.assign({}, cur, { stage: selected, results: selected === "done" ? cur.results : null });
+      });
+    }).catch(function () { /* retain the equivalent local plan */ });
+  };
 
   // Every answer goes through go(): short "typing" pause, then the next question.
   var go = function (o, quiet) {
@@ -1025,6 +1033,7 @@ export default function AIInsureGenie() {
     if (next.stage === "done" && !next.results) next = Object.assign(next, { results: "loading" });
     setS(next);
     if (next.results === "loading") showMatch(next);
+    syncPlan(next);
   };
   var answer = function (said, o) { var n = Object.assign({}, sRef.current, o); go(Object.assign({ said: said, note: "", otherMake: false }, o, { stage: nextStage(n) })); };
 
@@ -1173,6 +1182,14 @@ export default function AIInsureGenie() {
     Q = [T("Anything special about your situation?", "¿Algo especial en su situación?"), T("Pick all that apply. Not every insurer handles SR-22s or rideshare.", "Elija todo lo que aplique. No todas las aseguradoras manejan SR-22 o plataformas.")];
     chips = SIT.map(function (x) { var on = s.sits.indexOf(x.k) >= 0; return ch(x.l, function () { var n = s.sits.slice(); if (x.k === "none") n = on ? [] : ["none"]; else { n = n.filter(function (y) { return y !== "none"; }); n = on ? n.filter(function (y) { return y !== x.k; }) : n.concat([x.k]); } go({ sits: n }, true); }, "", on); });
     if (s.sits.some(function (k) { return k === "sr22" || k === "dui"; })) chips.push(ch(T("How fast can an SR-22 be filed?", "¿Qué tan rápido se presenta una SR-22?"), function () { ask(T("How fast can an SR-22 be filed?", "¿Qué tan rápido se presenta una SR-22?")); }, "act"));
+  } else if (stage === "vehicle") {
+    Q = [T("Do you own, finance, or lease a vehicle, or need non-owner insurance?", "¿Tiene un vehículo, lo financia, lo alquila, o necesita un seguro sin auto?"), T("This helps us avoid asking vehicle questions that do not apply.", "Así evitamos preguntas sobre un vehículo que no tiene.")];
+    chips = [
+      ch(T("I own a vehicle", "Tengo un vehículo"), function () { answer(T("I own a vehicle", "Tengo un vehículo"), { vehicleStatus: "owned" }); }),
+      ch(T("I finance a vehicle", "Financio un vehículo"), function () { answer(T("I finance a vehicle", "Financio un vehículo"), { vehicleStatus: "financed" }); }),
+      ch(T("I lease a vehicle", "Alquilo un vehículo"), function () { answer(T("I lease a vehicle", "Alquilo un vehículo"), { vehicleStatus: "leased" }); }),
+      ch(T("I need non-owner coverage", "Necesito cobertura sin auto"), function () { answer(T("I need non-owner coverage", "Necesito cobertura sin auto"), { vehicleStatus: "no_vehicle", make: "", model: "", year: "", carAge: "" }); })
+    ];
   } else if (stage === "make") {
     Q = s.otherMake ? [T("Type your car's make below.", "Escriba abajo la marca de su auto."), ""] : [T("What car do you drive?", "¿Qué auto maneja?"), T("Swipe for more makes, or type it below.", "Deslice para ver más marcas, o escríbala abajo.")];
     if (!s.otherMake) { rowMode = true; chips = Object.keys(MODEL_LIST).map(function (m) { return ch(m, function () { answer(m, { make: m }); }); }); extra = [ch(T("Other make", "Otra marca"), function () { go({ otherMake: true }, true); setTimeout(function () { inRef.current && inRef.current.focus(); }, 100); }, "soft")]; }
@@ -1194,9 +1211,9 @@ export default function AIInsureGenie() {
   var partnersHere = list.filter(function (ins) { return fits(ins, { state: s.st || null }); }).length;
   var sub = stage === "done" && Array.isArray(s.results) ? (s.results.length ? s.results.length + T(s.results.length === 1 ? " partner fits you" : " partners fit you", s.results.length === 1 ? " socio encaja" : " socios encajan") : T("AI insurance assistant", "Asistente de seguros con IA"))
     : (s.st && partnersHere ? partnersHere + T(partnersHere === 1 ? " partner quotes in " : " partners quote in ", partnersHere === 1 ? " socio cotiza en " : " socios cotizan en ") + stName(s.st) : T("AI insurance assistant", "Asistente de seguros con IA"));
-  var details = [s.st ? stName(s.st) : "", s.sitDone ? SIT.filter(function (x) { return s.sits.indexOf(x.k) >= 0; }).map(function (x) { return x.s; }).join(" + ") : "", at > ORDER.indexOf("year") ? carName(s) : "", s.cov ? COVS[s.cov] : (s.pri === "price" ? T("Lowest price", "Precio más bajo") : "")].filter(Boolean);
-  var pct = [0, 0, 25, 50, 50, 50, 75, 90, 100][at] + "%";
-  var prev = { sit: { stage: "state", st: "", changing: false }, make: { stage: "sit", sitDone: false }, model: { stage: "make", make: "" }, year: { stage: MODEL_LIST[s.make] ? "model" : "make", model: "", make: MODEL_LIST[s.make] ? s.make : "" }, cov: { stage: "year", year: "" }, when: { stage: "cov", cov: "" } };
+  var details = [s.st ? stName(s.st) : "", s.vehicleStatus === "no_vehicle" ? T("Non-owner coverage", "Seguro sin auto") : "", s.sitDone ? SIT.filter(function (x) { return s.sits.indexOf(x.k) >= 0; }).map(function (x) { return x.s; }).join(" + ") : "", at > ORDER.indexOf("year") ? carName(s) : "", s.cov ? COVS[s.cov] : (s.pri === "price" ? T("Lowest price", "Precio más bajo") : "")].filter(Boolean);
+  var pct = [0, 0, 25, 38, 50, 50, 50, 75, 90, 100][at] + "%";
+  var prev = { sit: { stage: "state", st: "", changing: false }, vehicle: { stage: "sit", sitDone: false }, make: { stage: "vehicle", vehicleStatus: "" }, model: { stage: "make", make: "" }, year: { stage: MODEL_LIST[s.make] ? "model" : "make", model: "", make: MODEL_LIST[s.make] ? s.make : "" }, cov: { stage: "year", year: "" }, when: { stage: "cov", cov: "" } };
   var canBack = at > 1 && stage !== "done" && showFlow;
   var goHome = function () { track("chat_left", { stage: stage }); window.location.href = SITE; };
   var askClose = function () { if (step >= 2 && stage !== "done") setLeave(true); else goHome(); };
