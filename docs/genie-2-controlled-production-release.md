@@ -60,3 +60,14 @@ The isolated staging chatbot is available at `https://aiinsuregenie-chat-staging
 - Never fabricate carrier premiums, savings, approval, or eligibility.
 - Keep optional email-save consent separate from marketing email, phone, and SMS permission.
 - No automatic merge to `cloudflare`, no production site changes, and no activation of Genie 2.0 without explicit operator approval.
+
+## 2026-11-24 API 404 investigation (read-only + isolated tests)
+
+- Cloudflare custom domain map confirms `api.aiinsuregenie.com` points to `aiinsuregenie-api`, and the Workers.dev subdomain is enabled. The zone's separate Worker Routes list is empty, consistent with use of a Worker Custom Domain rather than a classic route.
+- Active API deployment version remains `8aa60c47-5d40-4072-b1ee-2844f1b4f390` (previous known-good). No `GENIE_V2_ENABLED` binding is configured; live visitors cannot enable the new brain.
+- The Cloudflare Browser Rendering client previously received an application-style `{"error":"Not found"}` on `/api/health` from both the custom domain and Workers.dev, **including after rollback**. External network verification from other tools was unavailable. This does not establish an outage for all users; the exact edge request-path or client-specific behavior remains unresolved.
+- The GitHub test suite now starts the **actual Wrangler-bundled production Worker** in a local Cloudflare runtime with local-only D1. Verified `/` and `/api/health` return HTTP 200, chat/leads/callback OPTIONS route correctly, `/api/geo` returns HTTP 200, and truly unknown paths return HTTP 404.
+- The local runtime may synthesize a US state for `/api/geo`, so tests assert a null state or two-letter US state rather than always null.
+- Automated check: `production-api-dry-run` in Genie validation; no live endpoint or partner lead is contacted by these tests.
+- **No new production deployment was performed during this investigation.** The chatbot and API active versions remain unchanged. Before attempting another disabled-code rollout, verify the live API response using an independent browser/client and inspect the actual request URL/hostname, URL rewrites, and Cloudflare observability for 404s.
+
