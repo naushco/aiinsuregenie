@@ -121,12 +121,18 @@ jobs:
           mkdir -p backend/dist
           npx --yes --package=esbuild@0.25.12 esbuild backend/staging-worker.js --bundle --format=esm --platform=browser --target=es2022 --outfile=backend/dist/staging-worker.js
           test -s backend/dist/staging-worker.js
+      - name: Prepare production API bundle without deploying it
+        run: |
+          npx --yes wrangler@4.50.0 deploy --dry-run --outdir dist
+          test -s dist/worker.js
+        working-directory: backend
       - name: Verify staging API and synthetic consent contract
         run: node --test backend/test/genie-staging-api.test.cjs
       - name: Store build in isolated preview-assets branch
         run: |
           tar -C chatbot/dist -cf /tmp/genie-staging-dist.tar .
           cp backend/dist/staging-worker.js /tmp/genie-staging-worker.js
+          cp backend/dist/worker.js /tmp/genie-production-api-bundle.js
           git fetch origin genie-staging-assets
           git checkout -B genie-staging-assets origin/genie-staging-assets
           mkdir -p chatbot/dist
@@ -134,7 +140,8 @@ jobs:
           tar -C chatbot/dist -xf /tmp/genie-staging-dist.tar
           mkdir -p backend/dist
           cp /tmp/genie-staging-worker.js backend/dist/staging-worker.js
-          git add -f chatbot/dist backend/dist/staging-worker.js
+          cp /tmp/genie-production-api-bundle.js backend/dist/worker.js
+          git add -f chatbot/dist backend/dist/staging-worker.js backend/dist/worker.js
           if git diff --cached --quiet; then
             echo "Preview assets already current"
             exit 0
