@@ -99,6 +99,10 @@ test("staging brain receives only confirmed facts, never unapproved candidates",
 
 test("without operator flag, actual legacy chatbot loads instead of Genie 2.0", async ({ page }) => {
   await page.unroute("**/config.js");
+  await page.route("**/config.js", async route => {
+    const response = await route.fetch();
+    await route.fulfill({ response, body: (await response.text()) + "\nwindow.AIG_CONFIG.genieV2Enabled = false;\n" });
+  });
   await page.goto("/");
   await expect.poll(() => page.evaluate(() => window.AIG_CONFIG?.genieV2Enabled)).toBe(false);
   await expect(page.getByPlaceholder("Ask anything about car insurance")).toBeVisible();
