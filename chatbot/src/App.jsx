@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, Fragment } from "react";
 import MINIMUMS from "./minimums.js";
-import { quoteIntent, hasConfirmedDetails, reviewProfile, profileReady, safeAttribution } from "./genie-journeys.js";
+import { quoteIntent, hasConfirmedDetails, profileReady, safeAttribution } from "./genie-journeys.js";
+import QuoteReview from "./QuoteReview.jsx";
 import { confirmedFacts, localStage, stageFromPlan, candidateToWizard, candidateDescription } from "./genie-flow.js";
 
 var STORAGE_KEY = "aiinsuregenie-partners-v3";
@@ -942,7 +943,7 @@ function pageWelcome() {
 }
 
 function fresh() {
-  return { journey: "advisor", reviewOpen: false, quoteReviewed: false, stage: "start", st: "", changing: false, sits: [], sitDone: false, vehicleStatus: "", make: "", model: "", year: "", cov: "", when: "", pri: "", carAge: "", hist: [], said: "", note: "", otherMake: false, qa: null, askMore: false, results: null, showAll: false, showEmail: "" };
+  return { journey: "advisor", reviewOpen: false, quoteReviewed: false, advisorTurns: [], stage: "start", st: "", changing: false, sits: [], sitDone: false, vehicleStatus: "", make: "", model: "", year: "", cov: "", when: "", pri: "", carAge: "", hist: [], said: "", note: "", otherMake: false, qa: null, askMore: false, results: null, showAll: false, showEmail: "" };
 }
 
 export default function AIInsureGenie() {
@@ -1039,6 +1040,7 @@ export default function AIInsureGenie() {
     var cur = sRef.current;
     if (cur.qa && cur.qa.candidate && Object.keys(cur.qa.candidate).length) {
       track("quote_requested_pending_confirmation", { journey: cur.journey }, false);
+      setS(function (c) { return c.qa ? Object.assign({}, c, { qa: Object.assign({}, c.qa, { quoteAfterConfirmation: true }) }) : c; });
       return; // the confirmation card must be addressed first
     }
     track("quote_requested", { origin: cur.journey }, false);
@@ -1138,7 +1140,9 @@ export default function AIInsureGenie() {
     var qa = { q: text, a: null, noted: noted.join(", "), agent: /(dui|dwi|sr-?22|accident|ticket|rate|price|cost|raise|multa|accidente|precio)/i.test(text) };
     qa.candidate = merge; // Pending until visitor explicitly confirms before quote qualification.
     qa.quoteAfterConfirmation = !!quoteAfterConfirmation;
-    setS(Object.assign({}, cur, { qa: qa, askMore: false }));
+    var prior = cur.qa && cur.qa.a ? [{ q: cur.qa.q, a: cur.qa.a }] : [];
+    setS(Object.assign({}, cur, { qa: qa, askMore: false,
+      advisorTurns: (cur.advisorTurns || []).concat(prior).slice(-8) }));
     track("question_asked", { stage: cur.stage }, false);
     getAnswer(text, toProfile(cur), Array.isArray(cur.results) ? cur.results : [], genieConfirmed(cur)).then(function (response) {
       setS(function (c) {
@@ -1171,6 +1175,7 @@ export default function AIInsureGenie() {
     }
     if (cur.journey === "advisor") {
       go(Object.assign({}, confirmed, { qa: null, askMore: true, journey: "advisor", stage: "start", said: "",
+        advisorTurns: (cur.advisorTurns || []).concat(cur.qa && cur.qa.a ? [{ q: cur.qa.q, a: cur.qa.a }] : []).slice(-8),
         reviewOpen: false, quoteReviewed: false, note: Object.keys(confirmed).length
           ? T("Thanks. I've added your confirmed details. What else can I help you understand?", "Gracias. He añadido sus datos confirmados. ¿En qué más puedo ayudarle?")
           : T("I'm here to help. Ask another question or explore quote options whenever you're ready.", "Estoy aquí para ayudarle. Pregunte o explore cotizaciones cuando quiera.") }), true);
@@ -1298,9 +1303,9 @@ export default function AIInsureGenie() {
     Q = [T("When do you need it to start?", "¿Cuándo la necesita?"), T("This helps us sort your matches.", "Esto nos ayuda a ordenar sus opciones.")];
     chips = Object.keys(WHENS).map(function (k) { return ch(WHENS[k], function () { answer(WHENS[k], { when: k }); }); });
   }
-  var showFlow = !s.qa && !typing;
+  var showFlow = s.journey === "quote" && !s.qa && !typing && !s.reviewOpen;
   var partnersHere = list.filter(function (ins) { return fits(ins, { state: s.st || null }); }).length;
-  var sub = stage === "done" && Array.isArray(s.results) ? (s.results.length ? s.results.length + T(s.results.length === 1 ? " partner fits you" : " partners fit you", s.results.length === 1 ? " socio encaja" : " socios encajan") : T("AI insurance assistant", "Asistente de seguros con IA"))
+  var sub = s.journey === "advisor" ? T("Personal insurance guidance", "Asesoría de seguro de auto") : stage === "done" && Array.isArray(s.results) ? (s.results.length ? s.results.length + T(s.results.length === 1 ? " partner fits you" : " partners fit you", s.results.length === 1 ? " socio encaja" : " socios encajan") : T("AI insurance assistant", "Asistente de seguros con IA"))
     : (s.st && partnersHere ? partnersHere + T(partnersHere === 1 ? " partner quotes in " : " partners quote in ", partnersHere === 1 ? " socio cotiza en " : " socios cotizan en ") + stName(s.st) : T("AI insurance assistant", "Asistente de seguros con IA"));
   var details = [s.st ? stName(s.st) : "", s.vehicleStatus === "no_vehicle" ? T("Non-owner coverage", "Seguro sin auto") : "", s.sitDone ? SIT.filter(function (x) { return s.sits.indexOf(x.k) >= 0; }).map(function (x) { return x.s; }).join(" + ") : "", at > ORDER.indexOf("year") ? carName(s) : "", s.cov ? COVS[s.cov] : (s.pri === "price" ? T("Lowest price", "Precio más bajo") : "")].filter(Boolean);
   var pct = [0, 0, 25, 38, 50, 50, 50, 75, 90, 100][at] + "%";
@@ -1309,7 +1314,7 @@ export default function AIInsureGenie() {
   if (s.vehicleStatus === "no_vehicle" && stage === "cov") prev.cov = { stage: "vehicle", vehicleStatus: "" };
   var goHome = function () { track("chat_left", { stage: stage }); window.location.href = SITE; };
   var askClose = function () { if (step >= 2 && stage !== "done") setLeave(true); else goHome(); };
-  var startOver = function () { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} setS(Object.assign(fresh(), { stage: "state" })); };
+  var startOver = function () { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} setS(Object.assign(fresh(), { journey: "quote", stage: "state" })); };
   var rejectCandidate = function () { go({ qa: null, askMore: false, note: T("No details were saved. You can correct them below.", "No se guardaron datos. Puede corregirlos abajo."), stage: sRef.current.stage === "start" ? "state" : sRef.current.stage }, true); };
 
   var results = Array.isArray(s.results) ? s.results : null;
