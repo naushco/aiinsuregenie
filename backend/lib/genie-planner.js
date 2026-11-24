@@ -1,6 +1,6 @@
 // Genie 2.0 deterministic question planner. No network calls, storage or PII logging.
 "use strict";
-const FIELD_ORDER = ["state", "situation", "urgency", "vehicle_status", "coverage_goal"];
+const FIELD_ORDER = ["state", "situation", "vehicle_status", "coverage_goal", "urgency"];
 const DEFAULT_REQUIRED = ["state", "situation", "urgency", "vehicle_status", "coverage_goal"];
 const QUESTIONS = {
   state: "Which US state do you need auto insurance in?",
@@ -18,6 +18,7 @@ function isPresent(field, value, facts) {
   if (value === null || value === undefined || value === "") return false;
   if (field === "situation") return (facts && facts.situation_confirmed === true) || (Array.isArray(value) && value.length > 0);
   if (field === "state") return typeof value === "string" && /^[A-Z]{2}$/.test(value);
+  if (field === "coverage_goal") return (facts && facts.coverage_goal_confirmed === true) || value === "minimum" || value === "full";
   if (ALLOWED[field]) return ALLOWED[field].includes(value) && value !== "unknown";
   return false;
 }
