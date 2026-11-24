@@ -1,7 +1,7 @@
-name: Genie 2.0 validation
+name: AI InsureGenie validation
 on:
   pull_request:
-    branches: [cloudflare]
+    branches: [cloudflare, feature/genie-2-2-dual-journeys]
     paths:
       - 'backend/lib/genie-*.js'
       - 'backend/test/genie-*.test.js'
