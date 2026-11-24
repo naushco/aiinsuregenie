@@ -123,7 +123,7 @@ test("Genie 2.1 skips irrelevant car questions for a confirmed non-owner", async
   await page.getByRole("button",{name:"I don't know"}).click();
   await expect(page.getByText("When do you need it to start?")).toBeVisible();
   await page.getByRole("button",{name:"Just comparing"}).click();
-  await expect.poll(()=>JSON.parse(localStorage.getItem("aig-chat-v2")||"null")?.s?.stage).toBe("done");
+  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem("aig-chat-v2")||"null")?.s?.stage)).toBe("done");
   const saved=JSON.parse(await page.evaluate(()=>localStorage.getItem("aig-chat-v2")));
   expect(saved.s.st).toBe("TX");
   expect(saved.s.vehicleStatus).toBe("no_vehicle");
