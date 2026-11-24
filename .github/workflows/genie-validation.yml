@@ -41,8 +41,17 @@ jobs:
           npx --yes wrangler@4.50.0 deploy --dry-run --outdir dist
           test -s dist/worker.js
         working-directory: backend
-      - name: Test compiled production Worker routing without real bindings
-        run: node --test test/genie-worker-router.test.cjs
+      - name: Test compiled Worker inside isolated local Cloudflare runtime
+        run: |
+          npx --yes wrangler@4.50.0 dev --local --ip 127.0.0.1 --port 8799 --persist-to /tmp/genie-local-d1 > /tmp/genie-local-worker.log 2>&1 &
+          WORKER_PID=$!
+          trap 'kill $WORKER_PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 35); do
+            if curl -fsS http://127.0.0.1:8799/api/geo >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          cat /tmp/genie-local-worker.log
+          node --test test/genie-worker-router.test.cjs
         working-directory: backend
   dashboard-build:
     runs-on: ubuntu-latest
