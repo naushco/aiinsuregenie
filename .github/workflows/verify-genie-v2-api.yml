@@ -1,0 +1,33 @@
+name: Verify public Genie 2.0 API activation
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/verify-genie-v2-api.yml']
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Verify safe read-only route and opt-in Genie response
+        run: |
+          set -euo pipefail
+          curl -fsSL --max-time 25 https://api.aiinsuregenie.com/api/health -o /tmp/genie-health.json
+          node -e "const r=require('/tmp/genie-health.json');if(r.status!=='ok'||!r.setup.ai_chat_key_set)process.exit(1)"
+          curl -fsS --max-time 45 --retry 1 --retry-delay 2 \
+            -H 'Content-Type: application/json' \
+            -H 'Origin: https://chat.aiinsuregenie.com' \
+            --data '{"message":"What is comprehensive auto insurance coverage?","genie_v2":true,"genie_facts":{}}' \
+            https://api.aiinsuregenie.com/api/chat -o /tmp/genie-chat.json
+          node <<'NODE'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const j=JSON.parse(fs.readFileSync('/tmp/genie-chat.json','utf8'));
+          assert.equal(typeof j.answer,'string');
+          assert.ok(j.answer.length>30);
+          assert.equal(j.genie_v2?.version,'2.0');
+          assert.equal(j.genie_v2?.confirmed?.state,null);
+          assert.equal(j.genie_v2?.requires_confirmation,false);
+          assert.equal(j.genie_v2?.next?.field,'state');
+          console.log('Genie 2.0 live server brain verified without lead submission');
+          NODE
