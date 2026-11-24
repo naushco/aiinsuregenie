@@ -1352,10 +1352,11 @@ export default function AIInsureGenie() {
               <>
                 <div className="hello">
                   <img src={LOGO} alt="" />
-                  <h1 className="pj">{entryWelcome ? entryWelcome.title : T("What can I help you with today?", "¿En qué le puedo ayudar hoy?")}</h1>
-                  <p>{entryWelcome ? entryWelcome.description : T("I can help you understand auto insurance and find a suitable quoting partner in a few quick steps.", "Puedo ayudarle a entender el seguro de auto y encontrar un socio de cotización adecuado en unos pasos rápidos.")}</p>
+                  <h1 className="pj">{entryWelcome ? entryWelcome.title : s.journey === "advisor" ? T("Tell me what's going on with your insurance.", "Cuénteme sobre su seguro de auto.") : T("What can I help you with today?", "¿En qué le puedo ayudar hoy?")}</h1>
+                  <p>{entryWelcome ? entryWelcome.description : s.journey === "advisor" ? T("Ask naturally. I'll explain your options and help prepare for quotes whenever you want.", "Pregunte con naturalidad. Le ayudaré a entender sus opciones.") : T("I can help you understand auto insurance and find a suitable quoting partner in a few quick steps.", "Puedo ayudarle a entender el seguro de auto y encontrar un socio de cotización adecuado en unos pasos rápidos.")}</p>
                 </div>
                 <div className="starts">
+                  {s.journey === "advisor" ? <button type="button" className="st" onClick={beginQuote}><span className="st-ic"><Svg d={START_ICONS.tag}/></span><span className="st-l">{T("Get quote now", "Obtener cotización ahora")}</span><span className="chev"><Svg d={I_CHEV} size={16}/></span></button> : null}
                   {(entryWelcome && entryWelcome.kind === "guide" ? [] : starters).map(function (x) { return <button type="button" key={x.ic} className="st" onClick={x.fn}><span className="st-ic"><Svg d={START_ICONS[x.ic]} /></span><span className="st-l">{x.l}</span><span className="chev"><Svg d={I_CHEV} size={16} /></span></button>; })}
                 </div>
               </>
@@ -1365,9 +1366,10 @@ export default function AIInsureGenie() {
               <div className="starts">
                 <button type="button" className="st" onClick={function () { ask(entryContext.topic ? "What should I know about " + GUIDE_TOPICS[entryContext.topic] + "?" : "How does auto insurance work?"); }}><span className="st-l">{T("Explain this topic", "Explicar este tema")}</span></button>
                 <button type="button" className="st" onClick={function () { ask(entryContext.topic ? "How can I tell if " + GUIDE_TOPICS[entryContext.topic] + " applies to my situation?" : "How do I choose the right auto insurance coverage?"); }}><span className="st-l">{T("Help me understand my situation", "Ayúdeme a entender mi situación")}</span></button>
-                <button type="button" className="st" onClick={function () { track("advisor_to_quote", { topic: entryContext.topic || "general" }, true); setS(function (cur) { return Object.assign({}, cur, { stage: nextStage(cur), note: T("I'll ask only what I still need to find a suitable quoting partner.", "Solo preguntaré lo que falte para encontrar un socio de cotización adecuado.") }); }); }}><span className="st-l">{T("Explore insurance quotes", "Explorar cotizaciones")}</span></button>
+                <button type="button" className="st" onClick={beginQuote}><span className="st-l">{T("Explore insurance quotes", "Explorar cotizaciones")}</span></button>
               </div>
             ) : null}
+            {s.journey === "advisor" ? (s.advisorTurns || []).map(function (h, i) { return <Fragment key={"ad"+i}><div className="u">{h.q}</div><div className="g past"><img className="ga" src={LOGO} alt=""/><div className="gt"><Bold text={h.a}/></div></div></Fragment>; }) : null}
             {(s.hist || []).length ? s.hist.map(function (h, i) { return (
               <Fragment key={i}>
                 {h.q ? <div className="g past"><img className="ga" src={LOGO} alt="" /><div className="gt">{h.q}</div></div> : null}
@@ -1384,7 +1386,7 @@ export default function AIInsureGenie() {
               </div>
             ) : null}
 
-            {Q && !typing ? <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{Q[0]}{Q[1] ? <span className="gh"><Svg d={I_INFO} size={14} /><span>{Q[1]}</span></span> : null}</div></div> : null}
+            {Q && !typing && !s.reviewOpen && s.journey === "quote" ? <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{Q[0]}{Q[1] ? <span className="gh"><Svg d={I_INFO} size={14} /><span>{Q[1]}</span></span> : null}</div></div> : null}
 
             {s.qa ? (
               <>
