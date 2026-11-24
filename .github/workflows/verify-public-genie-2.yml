@@ -55,3 +55,5 @@ jobs:
           assert.equal(r.genie_v2?.buyer_routing,'not_in_advisor_engine');
           console.log('Confirmed facts, AI response and no buyer-routing verified');
           NODE
+
+# Rerun after Cloudflare finished public frontend deployment.
