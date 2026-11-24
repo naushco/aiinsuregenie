@@ -1,0 +1,83 @@
+name: Deploy Genie code with live chatbot DISABLED
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Type DEPLOY_DISABLED_ONLY to deploy the existing chatbot with Genie 2.0 OFF"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aiinsuregenie-production-chat-disabled-rollout
+  cancel-in-progress: false
+
+jobs:
+  deploy-disabled-chatbot:
+    if: ${{ inputs.confirmation == 'DEPLOY_DISABLED_ONLY' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout tested feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/genie-2-intelligence
+          fetch-depth: 1
+      - name: Require the reviewed source revision
+        run: |
+          set -euo pipefail
+          ACTUAL="$(git rev-parse HEAD)"
+          EXPECTED="43b7d33c86129cd5718813cec152c3ba4938caab"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "Source branch changed since validation. Review and update this expected commit before deploying."
+            exit 1
+          fi
+          test "$(git branch --show-current)" = "feature/genie-2-intelligence"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: chatbot/package-lock.json
+      - name: Require securely configured Cloudflare deploy credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ] || [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "Cloudflare secrets are missing. Configure CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in GitHub Actions repository secrets."
+            exit 1
+          fi
+      - name: Deploy chatbot static assets with Genie 2.0 disabled
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: bash scripts/deploy-genie-disabled-chat.sh
+      - name: Verify live legacy shell, TrustedForm loader and disabled Genie flag
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 8); do
+            curl --fail-with-body --silent --show-error --max-time 20               "https://chat.aiinsuregenie.com/config.js?verify=${GITHUB_RUN_ID}-${i}" -o /tmp/genie-live-config.js || true
+            curl --fail-with-body --silent --show-error --max-time 20               "https://chat.aiinsuregenie.com/?verify=${GITHUB_RUN_ID}-${i}" -o /tmp/genie-live-index.html || true
+            if node <<'NODE'
+          const fs=require('node:fs');
+          const vm=require('node:vm');
+          const assert=require('node:assert/strict');
+          const code=fs.readFileSync('/tmp/genie-live-config.js','utf8');
+          const html=fs.readFileSync('/tmp/genie-live-index.html','utf8');
+          const context={location:{hostname:'chat.aiinsuregenie.com',origin:'https://chat.aiinsuregenie.com'},window:{}};
+          vm.runInNewContext(code,context);
+          assert.equal(context.window.AIG_CONFIG?.genieV2Enabled,false);
+          assert.equal(context.window.AIG_CONFIG?.apiBase,'https://api.aiinsuregenie.com');
+          assert.match(html,/trustedform\.js/i);
+          assert.match(html,/xxTrustedFormCertUrl/i);
+          assert.match(html,/id="root"/);
+          console.log('Production disabled-mode configuration and TrustedForm markup verified');
+          NODE
+            then exit 0; fi
+            sleep 5
+          done
+          echo "Post-deploy validation did not confirm the disabled/legacy shell. Review Cloudflare Deployments and roll back chatbot immediately."
+          exit 1
