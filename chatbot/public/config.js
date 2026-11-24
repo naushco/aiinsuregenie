@@ -5,8 +5,11 @@
   var host = (typeof location !== "undefined" && location.hostname) || "";
   var staging = /(^|[.-])staging([.-]|$)|(^|[.-])preview([.-]|$)|^localhost$|^127\.0\.0\.1$/.test(host)
     || /^aiinsuregenie-chat-staging\./.test(host);
+  var stagingApi = /^aiinsuregenie-chat-staging\.in-naushco\.workers\.dev$/.test(host)
+    ? "https://aiinsuregenie-api-staging.in-naushco.workers.dev"
+    : (typeof location !== "undefined" ? location.origin : "");
   var apiBase = staging
-    ? (window.AIG_STAGING_API_BASE || (typeof location !== "undefined" ? location.origin : ""))
+    ? (window.AIG_STAGING_API_BASE || stagingApi)
     : (/\.workers\.dev$/.test(host)
       ? "https://aiinsuregenie-api.in-naushco.workers.dev"
       : "https://api.aiinsuregenie.com");
