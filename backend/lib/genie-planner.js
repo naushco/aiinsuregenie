@@ -1,7 +1,7 @@
 // Genie 2.0 deterministic question planner. No network calls, storage or PII logging.
 "use strict";
 const FIELD_ORDER = ["state", "situation", "urgency", "vehicle_status", "coverage_goal"];
-const DEFAULT_REQUIRED = ["state", "urgency", "vehicle_status", "coverage_goal"];
+const DEFAULT_REQUIRED = ["state", "situation", "urgency", "vehicle_status", "coverage_goal"];
 const QUESTIONS = {
   state: "Which US state do you need auto insurance in?",
   situation: "Is there anything about your driving or insurance history we should account for?",
@@ -14,9 +14,9 @@ const ALLOWED = {
   vehicle_status: ["owned", "financed", "leased", "no_vehicle", "unknown"],
   coverage_goal: ["minimum", "full", "unsure"]
 };
-function isPresent(field, value) {
+function isPresent(field, value, facts) {
   if (value === null || value === undefined || value === "") return false;
-  if (field === "situation") return Array.isArray(value) && (value.length > 0 || value.none === true);
+  if (field === "situation") return (facts && facts.situation_confirmed === true) || (Array.isArray(value) && value.length > 0);
   if (field === "state") return typeof value === "string" && /^[A-Z]{2}$/.test(value);
   if (ALLOWED[field]) return ALLOWED[field].includes(value) && value !== "unknown";
   return false;
@@ -25,7 +25,7 @@ function nextQuestion(facts, options) {
   const f = facts && typeof facts === "object" ? facts : {};
   const required = options && Array.isArray(options.required) ? options.required.filter(x => FIELD_ORDER.includes(x)) : DEFAULT_REQUIRED;
   for (const field of FIELD_ORDER) {
-    if (required.includes(field) && !isPresent(field, f[field])) return { field, text: QUESTIONS[field], complete: false };
+    if (required.includes(field) && !isPresent(field, f[field], f)) return { field, text: QUESTIONS[field], complete: false };
   }
   return { field: null, text: null, complete: true };
 }
