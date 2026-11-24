@@ -1457,8 +1457,8 @@ export default function AIInsureGenie() {
                 </>
               ) : (
                 <>
-                  <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{T("I don't have a quoting partner for ", "Todavía no tengo un socio de cotización para ") + stName(s.st) + T(" yet. I can email you as soon as one covers your state, or a licensed agent can call you.", ". Puedo avisarle por correo en cuanto uno cubra su estado, o un agente con licencia puede llamarle.")}</div></div>
-                  <EmailCard profile={toProfile(s)} source="no_match" />
+                  <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{s.vehicleStatus === "no_vehicle" ? T("I cannot verify a suitable non-owner insurance quoting partner in ", "No puedo verificar un socio de seguro sin vehículo en ") + stName(s.st) + T(" right now. A licensed insurance professional may be able to explain your options.", " ahora. Un agente autorizado podría ayudarle.") : T("I don't have a quoting partner for ", "Todavía no tengo un socio de cotización para ") + stName(s.st) + T(" yet. I can email you as soon as one covers your state, or a licensed agent can call you.", ". Puedo avisarle por correo en cuanto uno cubra su estado, o un agente con licencia puede llamarle.")}</div></div>
+                  {s.vehicleStatus === "no_vehicle" ? null : <EmailCard profile={toProfile(s)} source="no_match" />}
                   <button type="button" className="p2" style={{ marginLeft: 36 }} onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} size={17} />{T("Talk to a licensed agent", "Hablar con un agente con licencia")}</button>
                 </>
               )
