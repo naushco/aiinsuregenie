@@ -1013,6 +1013,7 @@ export default function AIInsureGenie() {
     if (!quiet) { setTyping(true); clearTimeout(tRef.current); tRef.current = setTimeout(function () { setTyping(false); }, 500); }
     var cur0 = sRef.current;
     if (next.stage !== cur0.stage) track("step_answered", { step: cur0.stage, state: next.st || null });
+    if (next.stage === "done" && cur0.stage !== "done") track("qualification_complete", { version: "2.1", vehicle_confirmed: !!next.vehicleStatus, coverage_confirmed: !!next.cov }, true);
     if (next.stage !== cur0.stage && o.said) next.hist = (cur0.hist || []).concat([{ q: QH[cur0.stage] || null, a: o.said }]).slice(-12);
     if (next.stage === "done" && !next.results) next = Object.assign(next, { results: "loading" });
     setS(next);
@@ -1022,6 +1023,13 @@ export default function AIInsureGenie() {
   var answer = function (said, o) { var n = Object.assign({}, sRef.current, o); go(Object.assign({ said: said, note: "", otherMake: false }, o, { stage: nextStage(n) })); };
 
   var showMatch = async function (n) {
+    // No connected buyer is verified to offer non-owner policies. Do not
+    // present an ordinary vehicle-policy partner as eligible for this case.
+    if (n.vehicleStatus === "no_vehicle") {
+      setTimeout(function () { setS(function (cur) { return Object.assign({}, cur, { results: [] }); }); }, 400);
+      track("no_match", { vehicle_type: "non_owner" });
+      return;
+    }
     if (!INSURERS.length) { var l = await loadInsurers(); if (l) { INSURERS = l; setList(l); } }
     var p = toProfile(n);
     var r = pickPartners(p).map(function (ins) { return Object.assign({}, ins, { rUrl: buildUrl(ins, p) }); });
@@ -1219,6 +1227,7 @@ export default function AIInsureGenie() {
   var pct = [0, 0, 25, 38, 50, 50, 50, 75, 90, 100][at] + "%";
   var prev = { sit: { stage: "state", st: "", changing: false }, vehicle: { stage: "sit", sitDone: false }, make: { stage: "vehicle", vehicleStatus: "" }, model: { stage: "make", make: "" }, year: { stage: MODEL_LIST[s.make] ? "model" : "make", model: "", make: MODEL_LIST[s.make] ? s.make : "" }, cov: { stage: "year", year: "" }, when: { stage: "cov", cov: "" } };
   var canBack = at > 1 && stage !== "done" && showFlow;
+  if (s.vehicleStatus === "no_vehicle" && stage === "cov") prev.cov = { stage: "vehicle", vehicleStatus: "" };
   var goHome = function () { track("chat_left", { stage: stage }); window.location.href = SITE; };
   var askClose = function () { if (step >= 2 && stage !== "done") setLeave(true); else goHome(); };
   var startOver = function () { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} setS(Object.assign(fresh(), { stage: "state" })); };
