@@ -1033,7 +1033,7 @@ export default function AIInsureGenie() {
   // Pull answers out of a sentence: "cheapest insurance for my 2019 hyundai sonata in Texas".
   var extract = function (text, cur) {
     var o = parseFree(text, null), lower = " " + text.toLowerCase().replace(/[^a-z0-9\- ]/g, " ") + " ", got = {}, said = [];
-    if (o.state && !cur.st) { got.st = o.state; said.push(stName(o.state)); }
+    if (o.state && o.state !== cur.st) { got.st = o.state; said.push(stName(o.state)); }
     var sits = (cur.sits || []).slice();
     // "What is an SR-22?" is a question about it, not a sign they need one.
     var general = /^\s*(what|how|why|does|do|is|are|can|when|which|who|que|qué|como|cómo)\b/i.test(text) && !/\b(i|i'm|im|my|me|yo|mi|tengo|necesito)\b/i.test(text);
@@ -1051,6 +1051,13 @@ export default function AIInsureGenie() {
     }
     if (o.vehicleYear && !cur.year) got.year = parseInt(o.vehicleYear, 10) <= 2015 ? "old" : o.vehicleYear;
     if (got.make || got.year) said.push(carName(Object.assign({}, cur, got)));
+    // Timing is a tentative fact during an advisor conversation, never confirmed silently.
+    if (!cur.when) {
+      var requestedWhen = /\b(today|right now|immediately|asap|tonight)\b/.test(lower) ? "today"
+        : /\b(this week|next few days|within (?:a )?week)\b/.test(lower) ? "week"
+        : /\b(just comparing|no rush|next month|just researching)\b/.test(lower) ? "compare" : "";
+      if (requestedWhen) { got.when = requestedWhen; said.push(WHENS[requestedWhen]); }
+    }
     if ((o.priority === "price" || /\b(cheap|cheapest|lowest|low cost|affordable|save money|barato)/.test(lower)) && !cur.pri) { got.pri = "price"; said.push(T("lowest price", "precio más bajo")); }
     if (/\bfull coverage\b/.test(lower) && !cur.cov) { got.cov = "full"; said.push(COVS.full); }
     return { got: got, said: said };
