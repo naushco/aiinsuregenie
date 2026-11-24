@@ -1,15 +1,22 @@
 ---
 title: Non-owner SR-22 insurance: how it works if you don't own a car
-seo_title: Non-owner SR-22 insurance: costs from $33/month, how to buy
-description: Need an SR-22 without a car? What non-owner SR-22 insurance covers, 2026 prices from about $33 a month, the cheapest insurers, and how to buy one.
+seo_title: Non-owner SR-22: get an SR-22 without a car (from $33/month)
+description: How to get an SR-22 without a car: non-owner SR-22 insurance costs about $33–$40 a month in 2026. What it covers, cheapest insurers, and how to buy one.
 path: sr22-insurance/non-owner
 lang: en
 date: 2026-11-01
-updated: 2026-11-19
+updated: 2026-11-24
 genie: sr22
 ---
 
 If you need an SR-22 to get your license back but you don't own a car, a **non-owner SR-22 policy** is usually the answer. It gives you liability coverage when you drive cars you don't own, and the insurer files the SR-22 with your state ([Insurance.com](https://insurance.com/auto-insurance/non-owner-car-insurance/non-owner-sr22-insurance)). Texas DPS, for example, points drivers without a car to this option ([Texas DPS](https://www.dps.texas.gov/node/676)).
+
+## Quick answer
+
+- **Can you get an SR-22 without a car?** Yes. You buy a non-owner policy and the insurer files the SR-22 with your state ([Insurance.com](https://insurance.com/auto-insurance/non-owner-car-insurance/non-owner-sr22-insurance)).
+- **Cost:** about **$33 to $40 a month** for minimum coverage at the cheapest insurers in 2026 ($28 at USAA, for military families only) ([MoneyGeek](https://www.moneygeek.com/insurance/auto/cheapest-sr-22-insurance)), plus a filing fee of about $15 to $50 ([CarInsurance.com](https://www.carinsurance.com/kb/how-to-get-sr22-without-valid-license)).
+- **Covers:** liability when you drive a car you don't own. **Doesn't cover:** the car itself or your own injuries.
+- **How to buy:** usually by phone, from an insurer that sells non-owner policies and files SR-22s. Keep it active for your full SR-22 period.
 
 [[genie]]
 
@@ -54,7 +61,7 @@ For comparison, the cheapest **standard** SR-22 policy in the same study average
 
 Texas DPS accepts an SR-22 on a non-owner policy for drivers who don't own a vehicle ([Texas DPS](https://www.dps.texas.gov/node/676)). It must meet Texas's 30/60/25 minimum limits and stay on file for the full period, usually two years. See our [Texas SR-22 guide](/sr22-insurance/texas/) and [cheapest SR-22 insurance in Texas](/cheapest-sr22-insurance-texas/).
 
-## How to get one
+## How to get an SR-22 without a car
 
 1. **Check your notice** for how long you need the SR-22.
 2. **Find an insurer that sells non-owner policies and files SR-22s.** These are usually not sold online, so it often takes a call ([Insurance.com](https://insurance.com/auto-insurance/non-owner-car-insurance/non-owner-sr22-insurance)). Genie can point you to a quoting partner.
@@ -63,6 +70,9 @@ Texas DPS accepts an SR-22 on a non-owner policy for drivers who don't own a veh
 5. **Switch to a regular policy** with the SR-22 attached if you buy a car.
 
 ## Common questions
+
+### Is "SR-22 without a car" the same as a non-owner SR-22?
+Yes. If you need an SR-22 but don't own a vehicle, the usual way to meet the requirement is a non-owner policy with the SR-22 filed on it ([Insurance.com](https://insurance.com/auto-insurance/non-owner-car-insurance/non-owner-sr22-insurance)). People also search for it as a "non-driver" or "non-vehicle" SR-22.
 
 ### Can I get a non-owner SR-22 with a suspended license?
 Often, yes. Many insurers will sell the policy and file the SR-22 while your license is suspended ([CarInsurance.com](https://www.carinsurance.com/kb/how-to-get-sr22-without-valid-license)).
