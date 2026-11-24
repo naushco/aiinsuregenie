@@ -1186,6 +1186,12 @@ export default function AIInsureGenie() {
         if (!c.qa || c.qa.q !== text) return c;
         var brain = response.intelligence;
         var found = declaration && brain && brain.requires_confirmation ? candidateToWizard(brain.candidates || {}, cur) : {};
+        if (found.sits) {
+          // Keep only situations the visitor stated, not ones they merely asked about.
+          var statedSits = (extract(stated, cur).got.sits || cur.sits || []);
+          found.sits = found.sits.filter(function (k) { return statedSits.indexOf(k) >= 0; });
+          if (!found.sits.length) { delete found.sits; delete found.sitDone; }
+        }
         // Backend candidates are unverified and only shown for confirmation.
         var pending = Object.assign({}, c.qa.candidate || {}, found);
         var noted = describePending(pending, cur);
@@ -1351,7 +1357,11 @@ export default function AIInsureGenie() {
   } else if (stage === "cov") {
     Q = [T("What coverage do you need?", "¿Qué cobertura necesita?"), T("State minimum is the cheapest legal option. Full coverage also pays to fix your own car.", "El mínimo del estado es la opción legal más barata. La cobertura total también paga la reparación de su auto.")];
     if (s.vehicleStatus === "no_vehicle") Q = [T("What coverage do you need?", "¿Qué cobertura necesita?"), T("Non-owner policies cover liability only (damage or injuries you cause), so there's no full-coverage option.", "Las pólizas sin vehículo solo cubren responsabilidad civil, así que no hay opción de cobertura total.")];
-    chips = [ch(COVS.min, function () { answer(COVS.min, { cov: "min" }); })].concat(s.vehicleStatus === "no_vehicle" ? [] : [ch(COVS.full, function () { answer(COVS.full, { cov: "full" }); })]).concat([ ch(T("I don't know", "No sé"), function () { answer(T("I don't know", "No sé"), { cov: "unsure" }); }, "soft"), ch(T("What's full coverage?", "¿Qué es cobertura total?"), function () { ask(T("What does full coverage include?", "¿Qué incluye la cobertura total?")); }, "act")]);
+    var nonOwner = s.vehicleStatus === "no_vehicle";
+    chips = [ch(COVS.min, function () { answer(COVS.min, { cov: "min" }); })]
+      .concat(nonOwner ? [] : [ch(COVS.full, function () { answer(COVS.full, { cov: "full" }); })])
+      .concat([ch(T("I don't know", "No sé"), function () { answer(T("I don't know", "No sé"), { cov: "unsure" }); }, "soft")])
+      .concat(nonOwner ? [] : [ch(T("What's full coverage?", "¿Qué es cobertura total?"), function () { ask(T("What does full coverage include?", "¿Qué incluye la cobertura total?")); }, "act")]);
   } else if (stage === "when") {
     Q = [T("When do you need it to start?", "¿Cuándo la necesita?"), T("This helps us sort your matches.", "Esto nos ayuda a ordenar sus opciones.")];
     chips = Object.keys(WHENS).map(function (k) { return ch(WHENS[k], function () { answer(WHENS[k], { when: k }); }); });
@@ -1449,12 +1459,12 @@ export default function AIInsureGenie() {
                 {s.qa.a == null ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="dots" aria-label={T("Genie is typing", "Genie está escribiendo")}><i /><i /><i /></div></div> : (
                   <>
                     <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt"><Bold text={s.qa.a} />
-                      {s.qa.agent ? <div style={{ marginTop: 10 }}><button type="button" className="c" onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} size={15} />{T("Ask a licensed agent, free", "Pregunte a un agente con licencia, gratis")}</button></div> : null}
+                      {s.qa.agent ? <div style={{ marginTop: 10 }}><button type="button" className="c" style={{ whiteSpace: "normal", textAlign: "left", maxWidth: "100%" }} onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} size={15} />{T("Ask a licensed agent, free", "Pregunte a un agente con licencia, gratis")}</button></div> : null}
                     </div></div>
                     {stage !== "done" ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt" style={{ color: "#33415c" }}>{s.journey === "advisor" ? T("We can keep talking, or explore quoting options when you're ready.", "Podemos seguir hablando o explorar cotizaciones cuando quiera.") : (s.sits.indexOf("dui") >= 0 || s.sits.indexOf("sr22") >= 0) ? T("Want me to find a partner for drivers like you", "¿Quiere que le busque un socio para conductores como usted") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?" : T("Want me to find the partner that fits you", "¿Quiere que le busque el socio que le conviene") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?"}
                       {s.qa.noted ? <span className="gh"><Svg d={I_CHECK} size={14} sw={2.2} /><span>{T("Please confirm: ", "Confirme: ") + s.qa.noted + T(". These details will be used only if you continue to quotes.", ". Estos datos solo se usarán si continúa a cotizaciones.")}</span></span> : null}
                     </div></div> : null}
-                    <div className="ans"><button type="button" className="c on" onClick={keepGoing}>{s.qa.quoteAfterConfirmation ? T("Confirm details and review quotes", "Confirmar detalles y revisar cotizaciones") : s.qa.noted ? (s.journey === "advisor" ? T("Confirm details and keep talking", "Confirmar datos y seguir hablando") : T("Confirm details and continue", "Confirmar datos y continuar")) : s.journey === "advisor" ? T("Keep talking with Genie", "Seguir hablando con Genie") : stage === "done" ? T("Back to my match", "Volver a mi opción") : T("Continue my match", "Seguir con mi búsqueda")}</button>{s.qa.noted ? <button type="button" className="c" onClick={rejectCandidate}>{T("Correct these details", "Corregir estos datos")}</button> : null}<button type="button" className="c" onClick={function () { go({ qa: null, askMore: true }, true); setTimeout(function () { inRef.current && inRef.current.focus(); }, 100); }}>{T("Ask another question", "Hacer otra pregunta")}</button>{s.journey === "advisor" ? <button type="button" className="c" onClick={beginQuote}>{T("Explore quotes", "Explorar cotizaciones")}</button> : null}</div>
+                    <div className="ans"><button type="button" className="c on" onClick={keepGoing}>{s.qa.profileOnly ? T("Confirm and continue", "Confirmar y continuar") : s.qa.quoteAfterConfirmation ? T("Confirm details and review quotes", "Confirmar detalles y revisar cotizaciones") : s.qa.noted ? (s.journey === "advisor" ? T("Confirm details and keep talking", "Confirmar datos y seguir hablando") : T("Confirm details and continue", "Confirmar datos y continuar")) : s.journey === "advisor" ? T("Keep talking with Genie", "Seguir hablando con Genie") : stage === "done" ? T("Back to my match", "Volver a mi opción") : T("Continue my match", "Seguir con mi búsqueda")}</button>{s.qa.noted ? <button type="button" className="c" onClick={rejectCandidate}>{T("Correct these details", "Corregir estos datos")}</button> : null}<button type="button" className="c" onClick={function () { var c0 = sRef.current; go({ qa: null, askMore: true, advisorTurns: (c0.advisorTurns || []).concat(c0.qa && c0.qa.a ? [{ q: c0.qa.q, a: c0.qa.a }] : []).slice(-8) }, true); setTimeout(function () { inRef.current && inRef.current.focus(); }, 100); }}>{T("Ask another question", "Hacer otra pregunta")}</button>{s.journey === "advisor" ? <button type="button" className="c" onClick={beginQuote}>{T("Explore quotes", "Explorar cotizaciones")}</button> : null}</div>
                   </>
                 )}
               </>
@@ -1466,7 +1476,7 @@ export default function AIInsureGenie() {
               </>
             ) : null}
 
-            {s.reviewOpen && !s.qa && !typing ? <QuoteReview profile={s} stateName={stName} hasModels={function (make) { return !!MODEL_LIST[make]; }} onEdit={editReviewField} onContinue={continueReviewed} onAdvice={resumeAdvice}/> : null}
+            {s.reviewOpen && !s.qa && !typing ? <QuoteReview profile={s} es={ES} stateName={stName} hasModels={function (make) { return !!MODEL_LIST[make]; }} onEdit={editReviewField} onContinue={continueReviewed} onAdvice={resumeAdvice}/> : null}
             {typing ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="dots" aria-label={T("Genie is typing", "Genie está escribiendo")}><i /><i /><i /></div></div> : null}
 
             {showFlow && chips.length ? (
