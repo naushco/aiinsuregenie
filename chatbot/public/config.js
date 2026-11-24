@@ -13,5 +13,8 @@
     : (/\.workers\.dev$/.test(host)
       ? "https://aiinsuregenie-api.in-naushco.workers.dev"
       : "https://api.aiinsuregenie.com");
-  window.AIG_CONFIG = { apiBase: apiBase, staging: staging };
+  // Production rollout is disabled. Only an operator deployment edit may enable
+  // Genie 2.0; URL parameters, cookies, and localStorage cannot turn it on.
+  // Staging remains enabled for isolated preview tests.
+  window.AIG_CONFIG = { apiBase: apiBase, staging: staging, genieV2Enabled: staging };
 })();
