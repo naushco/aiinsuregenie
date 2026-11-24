@@ -53,6 +53,20 @@ jobs:
           cat /tmp/genie-local-worker.log
           node --test test/genie-worker-router.test.cjs
         working-directory: backend
+  production-live-readonly-smoke:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Verify production API health without lead submissions
+        run: |
+          set -euo pipefail
+          for host in https://api.aiinsuregenie.com https://aiinsuregenie-api.in-naushco.workers.dev; do
+            response=$(curl --fail-with-body --silent --show-error --max-time 20 --retry 2 --retry-delay 2 "$host/api/health")
+            printf '%s' "$response" | node -e "let s=''; process.stdin.on('data',x=>s+=x).on('end',()=>{const j=JSON.parse(s);if(j.status!=='ok') process.exit(1);console.log('Health verified for current Worker')})"
+          done
+          curl --fail-with-body --silent --show-error --max-time 20 -X OPTIONS \
+            -H 'Origin: https://chat.aiinsuregenie.com' \
+            -H 'Access-Control-Request-Method: POST' \
+            https://api.aiinsuregenie.com/api/chat > /dev/null
   dashboard-build:
     runs-on: ubuntu-latest
     steps:
