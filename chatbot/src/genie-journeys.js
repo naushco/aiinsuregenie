@@ -24,7 +24,7 @@ export function reviewProfile(s, nameState=x=>x) {
     {key:"st",label:"State",value:v.st?nameState(v.st):null,ready:!!v.st},
     {key:"sits",label:"Insurance situation",value:v.sitDone?(sits.length?sits.map(k=>RISK_LABELS[k]).filter(Boolean).join(", "):"Not specified"):null,ready:v.sitDone===true},
     {key:"vehicleStatus",label:"Vehicle status",value:STATUS_LABELS[v.vehicleStatus]||null,ready:!!STATUS_LABELS[v.vehicleStatus]},
-    {key:"car",label:"Vehicle",value:vehicle||null,ready:v.vehicleStatus==="no_vehicle"||!!(v.make && v.year)},
+    {key:"car",label:"Vehicle",value:vehicle||null,ready:v.vehicleStatus==="no_vehicle"||!!((v.make||v.carAge)&&v.year)},
     {key:"cov",label:"Coverage",value:COVERAGE_LABELS[v.cov]||null,ready:!!COVERAGE_LABELS[v.cov]},
     {key:"when",label:"When coverage is needed",value:WHEN_LABELS[v.when]||null,ready:!!WHEN_LABELS[v.when]},
     {key:"pri",label:"Main priority",value:v.pri==="price"?"Lower cost":v.pri==="coverage"?"Coverage":v.pri==="service"?"Service":null,ready:true}
