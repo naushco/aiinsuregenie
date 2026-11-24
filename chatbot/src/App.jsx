@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, Fragment } from "react";
 import "./premium.css";
 import MINIMUMS from "./minimums.js";
-import { quoteIntent, hasConfirmedDetails, profileReady, safeAttribution } from "./genie-journeys.js";
+import { quoteIntent, hasConfirmedDetails, profileReady, safeAttribution, qualificationSummary, reviewProfile } from "./genie-journeys.js";
 import QuoteReview from "./QuoteReview.jsx";
 import { confirmedFacts, localStage, stageFromPlan, candidateToWizard, candidateDescription } from "./genie-flow.js";
 
@@ -453,7 +453,7 @@ var sentOnce = {};
 function track(type, extra, once) {
   if (once) { if (sentOnce[type]) return; sentOnce[type] = 1; }
   try {
-    var body = JSON.stringify(Object.assign({ type: type, session_id: SESSION_ID, lang: LANG, dns: DO_NOT_SELL }, UTM, extra || {}));
+    var body = JSON.stringify(Object.assign({ type: type, session_id: SESSION_ID, lang: LANG, dns: DO_NOT_SELL }, UTM, extra || {}, { frontend_version: "3.0" }));
     var url = API_BASE + "/api/event";
     if (navigator.sendBeacon && navigator.sendBeacon(url, new Blob([body], { type: "text/plain" }))) return;
     fetch(url, { method: "POST", headers: { "Content-Type": "text/plain" }, body: body, keepalive: true }).catch(function () {});
@@ -922,12 +922,12 @@ function MatchCard({ ins, s, top, onCall }) {
         <span className="m-name pj">{ins.n}</span>
       </div>
       <p className="m-why">{whyLine(s)}</p>
-      <div className="m-facts">{[T("Free to compare", "Comparar es gratis"), T("No obligation", "Sin compromiso"), T("Their short form", "Su formulario corto")].map(function (f) { return <span key={f}><Svg d={I_CHECK} size={14} sw={2.4} />{f}</span>; })}</div>
+      <div className="m-facts">{[T("Free to compare", "Comparar es gratis"), T("No obligation", "Sin compromiso"), T("External provider", "Proveedor externo")].map(function (f) { return <span key={f}><Svg d={I_CHECK} size={14} sw={2.4} />{f}</span>; })}</div>
       <div className="m-btns">
-        <a className="p1" href={ins.rUrl || "#"} target="_blank" rel="noopener noreferrer sponsored" onClick={function () { track("partner_click", { partner_id: ins.id, placement: top ? "top" : "other", state: s.st || null }); }}>{T("Get my quote", "Obtener mi cotización")}</a>
+        <a className="p1" href={ins.rUrl || "#"} target="_blank" rel="noopener noreferrer sponsored" onClick={function () { track("partner_click", { partner_id: ins.id, placement: top ? "top" : "other", state: s.st || null }); }}>{T("Continue to partner", "Continuar al socio")}</a>
         {top ? <button type="button" className="p2" onClick={onCall}><Svg d={I_PHONE} size={17} />{T("Talk to a licensed agent", "Hablar con un agente con licencia")}</button> : null}
       </div>
-      <p className="m-note">{T("Opens " + ins.n + "'s site in a new tab. Fill in their short form to see your quotes.", "Abre el sitio de " + ins.n + " en otra pestaña. Llene su formulario corto para ver sus cotizaciones.")}</p>
+      <p className="m-note">{T("Opens " + ins.n + " in a new tab. The provider determines actual prices, coverage and eligibility.", "Abre " + ins.n + " en otra pestaña. El proveedor determina precios, cobertura y elegibilidad.")}</p>
     </article>
   );
 }
@@ -957,6 +957,7 @@ export default function AIInsureGenie() {
   var [geo, setGeo] = useState("");
   var [showCall, setShowCall] = useState(false);
   var [leave, setLeave] = useState(false);
+  var [profileOpen, setProfileOpen] = useState(false);
   var [list, setList] = useState(IS_PREVIEW ? DEFAULT_INSURERS : []);
   var logRef = useRef(null), inRef = useRef(null), tRef = useRef(null), sRef = useRef(s), planRef = useRef(0);
   sRef.current = s;
@@ -1025,7 +1026,7 @@ export default function AIInsureGenie() {
     if (!quiet) { setTyping(true); clearTimeout(tRef.current); tRef.current = setTimeout(function () { setTyping(false); }, 500); }
     var cur0 = sRef.current;
     if (next.stage !== cur0.stage) track("step_answered", { step: cur0.stage, state: next.st || null });
-    if (next.stage === "done" && cur0.stage !== "done") track("qualification_complete", { version: "2.2", journey: next.journey, vehicle_confirmed: !!next.vehicleStatus, coverage_confirmed: !!next.cov }, true);
+    if (next.stage === "done" && cur0.stage !== "done") track("qualification_complete", { version: "3.0", journey: next.journey, vehicle_confirmed: !!next.vehicleStatus, coverage_confirmed: !!next.cov }, true);
     if (next.stage !== cur0.stage && o.said) next.hist = (cur0.hist || []).concat([{ q: QH[cur0.stage] || null, a: o.said }]).slice(-12);
     // No partner handoff until the visitor reviews the insurance profile.
     if (next.stage === "done" && !next.quoteReviewed) next = Object.assign(next, { reviewOpen: true, results: null });
@@ -1327,6 +1328,8 @@ export default function AIInsureGenie() {
   var rejectCandidate = function () { go({ qa: null, askMore: false, note: T("No details were saved. You can correct them below.", "No se guardaron datos. Puede corregirlos abajo."), stage: sRef.current.stage === "start" ? "state" : sRef.current.stage }, true); };
 
   var results = Array.isArray(s.results) ? s.results : null;
+  var readiness = qualificationSummary(s, function(make){return !!MODEL_LIST[make];});
+  var profileRows = reviewProfile(s, stName).filter(function(f){return (f.key !== "pri" || f.value) && (f.key !== "car" || s.vehicleStatus !== "no_vehicle");});
   var starters = [
     { ic: "doc", l: T("I need an SR-22", "Necesito una SR-22"), fn: function () { track("chat_started", { mode: "starter_sr22" }, true); answer(T("I need an SR-22", "Necesito una SR-22"), { sits: ["sr22"], sitDone: true }); } },
     { ic: "tag", l: T("Cheapest price for my car", "El precio más bajo para mi auto"), fn: function () { track("chat_started", { mode: "starter_price" }, true); answer(T("Cheapest price for my car", "El precio más bajo para mi auto"), { pri: "price" }); } },
@@ -1346,25 +1349,26 @@ export default function AIInsureGenie() {
             {s.journey === "quote" && !s.reviewOpen ? <button type="button" className="ib" aria-label={T("Ask Genie", "Preguntar a Genie")} title={T("Ask Genie about insurance", "Preguntar a Genie")} onClick={resumeAdvice}><Svg d={I_INFO} /></button> : null}
             {s.journey === "advisor" && !typing && !s.qa ? <button type="button" className="aig3-quote-cta" aria-label={T("Get Quote", "Obtener cotización")} onClick={beginQuote}>{T("Get Quote", "Cotizar")}</button> : null}
             <button type="button" className="ib call" aria-label={T("Talk to a licensed agent", "Hablar con un agente con licencia")} onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} /></button>
-            <button type="button" className="ib" aria-label={T("Minimise chat", "Minimizar el chat")} onClick={goHome}><Svg d={<path d="M6 9l6 6 6-6" />} size={22} sw={2} /></button>
+            <button type="button" className="ib aig3-profile-toggle" aria-label={T("My insurance profile", "Mi perfil de seguro")} aria-expanded={profileOpen} onClick={function(){setProfileOpen(!profileOpen);}}><Svg d={<><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></>}/></button>
             <button type="button" className="ib" aria-label={T("Close chat", "Cerrar el chat")} onClick={askClose}><Svg d={<path d="M6 6l12 12M18 6L6 18" />} size={20} sw={2} /></button>
           </div>
           {step >= 1 ? <div className="prog" aria-hidden="true"><i style={{ width: pct }} /></div> : null}
         </header>
         {details.length ? (
-          <button type="button" className="det" onClick={beginQuote} aria-label={T("Review your details", "Revisar sus datos")}>
+          <button type="button" className="det" onClick={function(){setProfileOpen(true);}} aria-label={T("Review your details", "Revisar sus datos")}>
             <span className="det-in"><span><b>{T("Your details", "Sus datos")}</b> · {details.join(" · ")}</span><Svg d={I_EDIT} size={14} /></span>
           </button>
         ) : null}
 
+        <div className={"aig3-workspace" + (profileOpen?" profile-open":"")}>
         <main className="log" ref={logRef} aria-live="polite">
           <div className="log-in">
             {stage === "start" && !s.qa && !s.askMore ? (
               <>
                 <div className="hello">
                   <img src={LOGO} alt="" />
-                  <h1 className="pj">{entryWelcome ? entryWelcome.title : s.journey === "advisor" ? T("Car insurance, made clearer.", "Cuénteme sobre su seguro de auto.") : T("What can I help you with today?", "¿En qué le puedo ayudar hoy?")}</h1>
-                  <p>{entryWelcome ? entryWelcome.description : s.journey === "advisor" ? T("Get answers, understand your coverage and explore insurance options when you are ready.", "Pregunte con naturalidad. Le ayudaré a entender sus opciones.") : T("I can help you understand auto insurance and find a suitable quoting partner in a few quick steps.", "Puedo ayudarle a entender el seguro de auto y encontrar un socio de cotización adecuado en unos pasos rápidos.")}</p>
+                  <h1 className="pj">{entryWelcome ? entryWelcome.title : s.journey === "advisor" ? T("Car insurance, made clearer.", "Seguro de auto, más claro.") : T("What can I help you with today?", "¿En qué le puedo ayudar hoy?")}</h1>
+                  <p>{entryWelcome ? entryWelcome.description : s.journey === "advisor" ? T("Get answers, understand your coverage and explore insurance options when you are ready.", "Obtenga respuestas, entienda su cobertura y explore opciones cuando esté listo.") : T("I can help you understand auto insurance and find a suitable quoting partner in a few quick steps.", "Puedo ayudarle a entender el seguro de auto y encontrar un socio de cotización adecuado en unos pasos rápidos.")}</p>
                 </div>
                 <div className="starts">
                   {s.journey === "advisor" ? <button type="button" className="st" onClick={beginQuote}><span className="st-ic"><Svg d={START_ICONS.tag}/></span><span className="st-l">{T("Get quote now", "Obtener cotización ahora")}</span><span className="chev"><Svg d={I_CHEV} size={16}/></span></button> : null}
@@ -1446,14 +1450,14 @@ export default function AIInsureGenie() {
               !results ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Checking partners in ", "Buscando socios en ") + stName(s.st) + "…"}<div className="dots"><i /><i /><i /></div></div></div>
               : results.length ? (
                 <>
-                  <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Done! Here's the partner that matches your answers.", "¡Listo! Este es el socio que coincide con sus respuestas.")}</div></div>
+                  <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Your insurance options", "Sus opciones de seguro")}</div></div>
                   <MatchCard ins={results[0]} s={s} top onCall={function () { setShowCall(true); }} />
                   <div className="m-links">
-                    {results.length > 1 ? <button type="button" className="lk" onClick={function () { go({ showAll: !s.showAll }, true); }}>{s.showAll ? T("Hide other matches", "Ocultar otras opciones") : T("See all " + results.length + " matches", "Ver las " + results.length + " opciones")}</button> : <span />}
+                    {results.length > 1 ? <button type="button" className="lk" onClick={function () { go({ showAll: !s.showAll }, true); }}>{s.showAll ? T("Hide other matches", "Ocultar otras opciones") : T("See all " + results.length + " options", "Ver las " + results.length + " opciones")}</button> : <span />}
                     <button type="button" className="lk" style={{ color: "#6b7588", fontWeight: 500 }} onClick={function () { go({ showEmail: s.showEmail ? "" : "after_match" }, true); }}>{T("Email me my match", "Enviarme mi opción por correo")}</button>
                   </div>
                   {s.showEmail ? <EmailCard profile={toProfile(s)} source={s.showEmail} /> : null}
-                  {s.showAll ? results.slice(1, 3).map(function (ins) { return <MatchCard key={ins.id} ins={ins} s={s} onCall={function () { setShowCall(true); }} />; }) : null}
+                  {s.showAll ? results.slice(1).map(function (ins) { return <MatchCard key={ins.id} ins={ins} s={s} onCall={function () { setShowCall(true); }} />; }) : null}
                   <p className="fine">{T("We connect you with licensed quoting partners; quotes and policies come from the insurers they work with. Confirm coverage and price before you buy. Partners may pay us when you connect; it doesn't change your price. ", "Le conectamos con socios de cotización con licencia; las cotizaciones y pólizas vienen de las aseguradoras con las que trabajan. Confirme la cobertura y el precio antes de comprar. Los socios pueden pagarnos cuando usted se conecta; eso no cambia su precio. ")}<a href={SITE + "how-we-make-money/"} target="_blank" rel="noopener noreferrer">{T("How we make money", "Cómo ganamos dinero")}</a></p>
                 </>
               ) : (
@@ -1467,6 +1471,8 @@ export default function AIInsureGenie() {
             {s.showEmail === "exit" && stage !== "done" ? <EmailCard profile={toProfile(s)} source="exit" /> : null}
           </div>
         </main>
+        {profileOpen ? <aside className="aig3-profile" aria-label={T("Your insurance profile","Su perfil de seguro")}><div className="aig3-profile-head"><h2 className="pj">{T("Your insurance profile","Su perfil de seguro")}</h2><button className="ib" type="button" aria-label={T("Close profile","Cerrar perfil")} onClick={function(){setProfileOpen(false);}}>×</button></div><p>{T("Confirmed details only. Review before sharing.","Solo datos confirmados. Revise antes de compartir.")}</p><div className="aig3-profile-meter"><i style={{width: (readiness.confirmed_count/Math.max(1,readiness.required_count)*100)+"%"}}/></div><p>{readiness.confirmed_count} / {readiness.required_count} {T("required details confirmed","datos requeridos confirmados")}</p><dl>{profileRows.map(function(f){return <div className="aig3-profile-row" key={f.key}><div><dt>{f.label}</dt><dd>{f.ready&&f.value?f.value:T("Not confirmed","Sin confirmar")}</dd></div><button type="button" className="lk" onClick={function(){setProfileOpen(false);editReviewField(f.key);}}>{T("Edit","Editar")}</button></div>;})}</dl><button type="button" className="p1" onClick={function(){setProfileOpen(false);beginQuote();}}>{T("Review and explore options","Revisar y explorar opciones")}</button></aside>:null}
+        </div>
 
         <footer className="foot">
           <div className="foot-in">
@@ -1475,7 +1481,7 @@ export default function AIInsureGenie() {
               <input id="msg" ref={inRef} value={draft} maxLength={300} autoComplete="off" onChange={function (e) { setDraft(e.target.value); }} onKeyDown={function (e) { if (e.key === "Enter") { e.preventDefault(); send(); } }} placeholder={stage === "make" && s.otherMake ? T("e.g. Subaru", "p. ej. Subaru") : T("Ask anything about car insurance", "Pregunte lo que quiera sobre seguro de auto")} />
               <button type="button" className="send" aria-label={T("Send", "Enviar")} disabled={!draft.trim()} onClick={send}><Svg d={<path d="M12 19V5M5 12l7-7 7 7" />} sw={2.2} /></button>
             </div>
-            <p className="disc">{T("AI assistant, not a licensed agent · We only call when you ask · ", "Asistente con IA, no es agente con licencia · Solo llamamos si usted lo pide · ")}<a href={SITE + "privacy/"} target="_blank" rel="noopener noreferrer">{T("Privacy", "Privacidad")}</a></p>
+            <p className="disc">{T("AI InsureGenie provides AI guidance, not a policy · ", "AI InsureGenie ofrece orientación con IA, no una póliza · ")}<a href={SITE + "privacy/"} target="_blank" rel="noopener noreferrer">{T("Privacy", "Privacidad")}</a></p>
           </div>
         </footer>
 
