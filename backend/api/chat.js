@@ -4,7 +4,7 @@
 
 const { cors } = require("../lib/http");
 const MINIMUMS = require("../lib/minimums.js");
-const { processTurn } = require("../lib/genie-conversation");
+const { buildIntelligence } = require("../lib/genie-runtime");
 
 // Legal minimums come only from the checked table, never from the model's memory.
 function minimumsBlock() {
@@ -148,8 +148,8 @@ module.exports = async function handler(req, res) {
     if (!text) return res.status(502).json({ error: "No answer generated." });
 
     // Explicit opt-in AND server-side feature flag; existing chat response is unchanged otherwise.
-    if (process.env.GENIE_V2_ENABLED === "true" && body.genie_v2 === true) {
-      return res.status(200).json({ answer: text, genie_v2: processTurn(body.genie_facts, message, { required: ["state", "urgency", "vehicle_status", "coverage_goal"] }) });
+    if (req.genieV2Enabled === true && body.genie_v2 === true) {
+      return res.status(200).json({ answer: text, genie_v2: buildIntelligence(body.genie_facts, message) });
     }
     return res.status(200).json({ answer: text });
   } catch (err) {
