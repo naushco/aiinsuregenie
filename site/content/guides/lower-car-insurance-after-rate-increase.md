@@ -48,6 +48,8 @@ If your car is worth little and paid off, collision and comprehensive may cost m
 ### 5. Keep your coverage continuous
 Never let your policy lapse to save money in the short term. A gap usually raises your next price. If money is tight, see [what to do about a late payment](/late-car-insurance-payment/).
 
+If you started driving for Uber, Lyft or a delivery app, tell your insurer and ask about a [rideshare add-on](/rideshare-insurance/); an undisclosed rideshare claim can cost far more than the add-on.
+
 ## Common questions
 
 ### How can I lower my car insurance after a rate increase?
