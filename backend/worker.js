@@ -1,3 +1,4 @@
+// Genie 2.3 release (2026-11-24): see PR #30.
 // Cloudflare Workers entry for the AI InsureGenie API.
 // Runs the same handlers in api/*.js that Vercel runs, through a small request/response adapter,
 // so the API code stays identical on both platforms during the move.

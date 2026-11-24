@@ -1,3 +1,4 @@
+// Genie 2.3 release (2026-11-24): see PR #30.
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import LegacyApp from './LegacyApp.jsx'
