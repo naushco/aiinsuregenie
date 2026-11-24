@@ -1044,6 +1044,13 @@ export default function AIInsureGenie() {
       return; // the confirmation card must be addressed first
     }
     track("quote_requested", { origin: cur.journey }, false);
+    // Fast Get Quote from paid ads or an empty conversation must not start with
+    // an empty profile summary. Ask the first missing question immediately.
+    if (!hasConfirmedDetails(cur)) {
+      go({ journey: "quote", qa: null, askMore: false, reviewOpen: false, quoteReviewed: false,
+        stage: nextStage(cur), results: null, note: "" }, true);
+      return;
+    }
     go({ journey: "quote", qa: null, askMore: false, reviewOpen: true, quoteReviewed: false,
       note: T("Please review what I understood before we look at quoting options.", "Revise los datos antes de explorar cotizaciones.") }, true);
   };
