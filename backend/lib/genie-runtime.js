@@ -12,6 +12,7 @@ function validatedConfirmed(input) {
   const s = input && typeof input === "object" && !Array.isArray(input) ? input : {};
   return {
     situation_confirmed: s.situation_confirmed === true || (Array.isArray(s.situation) && s.situation.length > 0),
+    coverage_goal_confirmed: s.coverage_goal_confirmed === true,
     state: typeof s.state === "string" && /^[A-Z]{2}$/.test(s.state) ? s.state : null,
     situation: Array.isArray(s.situation) ? [...new Set(s.situation.filter(x => SITUATIONS.has(x)))].slice(0, 9) : [],
     goal: Array.isArray(s.goal) ? [...new Set(s.goal.filter(x => GOALS.has(x)))].slice(0, 5) : [],
