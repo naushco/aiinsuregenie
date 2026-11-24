@@ -12,12 +12,12 @@ jobs:
       - name: Verify production health and deterministic qualification without sending leads
         run: |
           set -euo pipefail
-          curl --fail-with-body -fsS --max-time 30 https://api.aiinsuregenie.com/api/health > /tmp/health.json
+          curl --fail-with-body -sS --max-time 30 https://api.aiinsuregenie.com/api/health > /tmp/health.json
           node -e "const h=require('/tmp/health.json');if(h.status!=='ok')process.exit(1)"
           for DATA in \
             '{"genie_v2":true,"genie_facts":{"state":"TX","situation":["sr22"],"situation_confirmed":true,"vehicle_status":"no_vehicle","coverage_goal":"unsure","coverage_goal_confirmed":true,"urgency":"within_week"}}' \
             '{"genie_v2":true,"genie_facts":{"state":"TX","situation_confirmed":true,"vehicle_status":"no_vehicle"}}'; do
-            curl --fail-with-body -fsS --max-time 30 \
+            curl --fail-with-body -sS --max-time 30 \
               -H 'Origin: https://chat.aiinsuregenie.com' \
               -H 'Content-Type: application/json' \
               -d "$DATA" https://api.aiinsuregenie.com/api/plan >> /tmp/plans.jsonl
