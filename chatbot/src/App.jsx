@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, Fragment } from "react";
+import "./premium.css";
 import MINIMUMS from "./minimums.js";
 import { quoteIntent, hasConfirmedDetails, profileReady, safeAttribution } from "./genie-journeys.js";
 import QuoteReview from "./QuoteReview.jsx";
@@ -1305,7 +1306,7 @@ export default function AIInsureGenie() {
     rowMode = true; chips = YEARS.map(function (y) { return ch(y, function () { answer(y, { year: y }); }); }).concat([ch(T("2015 or older", "2015 o antes"), function () { answer(T("2015 or older", "2015 o antes"), { year: "old" }); })]);
     extra = [ch(T("I'm not sure", "No estoy seguro"), function () { answer(T("I'm not sure", "No estoy seguro"), { year: "unsure" }); }, "soft")];
   } else if (stage === "cov") {
-    Q = [T("What coverage do you need?", "¿Qué cobertura necesita?"), T("State minimum is the cheapest legal option. Full coverage also pays to fix your own car.", "El mínimo del estado es la opción legal más barata. La cobertura total también paga la reparación de su auto.")];
+    Q = [T("What coverage do you need?", "¿Qué cobertura necesita?"), T("State minimum is the required level of coverage. Broader coverage may include collision and comprehensive, subject to policy terms and deductibles.", "El mínimo estatal es la cobertura requerida. Una cobertura más amplia puede incluir colisión y cobertura integral, según los términos y deducibles.")];
     chips = [ch(COVS.min, function () { answer(COVS.min, { cov: "min" }); }), ch(COVS.full, function () { answer(COVS.full, { cov: "full" }); }), ch(T("I don't know", "No sé"), function () { answer(T("I don't know", "No sé"), { cov: "unsure" }); }, "soft"), ch(T("What's full coverage?", "¿Qué es cobertura total?"), function () { ask(T("What does full coverage include?", "¿Qué incluye la cobertura total?")); }, "act")];
   } else if (stage === "when") {
     Q = [T("When do you need it to start?", "¿Cuándo la necesita?"), T("This helps us sort your matches.", "Esto nos ayuda a ordenar sus opciones.")];
@@ -1334,16 +1335,16 @@ export default function AIInsureGenie() {
   ];
 
   return (
-    <div className="ig">
+    <div className={"ig aig3 " + (s.journey === "quote" ? "aig3-quote" : "aig3-advisor") + (stage === "start" && !s.qa && !s.askMore ? " aig3-welcome" : "")}>
       <style>{CSS_TEXT}</style>
       <div className="ig-card">
         <header className="hd">
           <div className="hd-in">
             <img className="hd-logo" src={LOGO} alt="" />
-            <div className="hd-txt"><span className="hd-name pj">Genie</span><span className="hd-sub">{sub}</span></div>
+            <div className="hd-txt"><span className="hd-name pj">AI Insure<span className="aig3-gold">Genie</span></span><span className="hd-sub">{sub}</span></div>
             {step >= 1 ? <span className="hd-step">{stage === "done" ? T("Done", "Listo") : step + " / 4"}</span> : null}
             {s.journey === "quote" && !s.reviewOpen ? <button type="button" className="ib" aria-label={T("Ask Genie", "Preguntar a Genie")} title={T("Ask Genie about insurance", "Preguntar a Genie")} onClick={resumeAdvice}><Svg d={I_INFO} /></button> : null}
-            {s.journey === "advisor" && hasConfirmedDetails(s) && !s.qa ? <button type="button" className="ib" aria-label={T("Get quote", "Obtener cotización")} title={T("Review my quote profile", "Revisar datos de cotización")} onClick={beginQuote}><Svg d={I_CHECK}/></button> : null}
+            {s.journey === "advisor" && !typing && !s.qa ? <button type="button" className="aig3-quote-cta" aria-label={T("Get Quote", "Obtener cotización")} onClick={beginQuote}>{T("Get Quote", "Cotizar")}</button> : null}
             <button type="button" className="ib call" aria-label={T("Talk to a licensed agent", "Hablar con un agente con licencia")} onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} /></button>
             <button type="button" className="ib" aria-label={T("Minimise chat", "Minimizar el chat")} onClick={goHome}><Svg d={<path d="M6 9l6 6 6-6" />} size={22} sw={2} /></button>
             <button type="button" className="ib" aria-label={T("Close chat", "Cerrar el chat")} onClick={askClose}><Svg d={<path d="M6 6l12 12M18 6L6 18" />} size={20} sw={2} /></button>
@@ -1351,7 +1352,7 @@ export default function AIInsureGenie() {
           {step >= 1 ? <div className="prog" aria-hidden="true"><i style={{ width: pct }} /></div> : null}
         </header>
         {details.length ? (
-          <button type="button" className="det" onClick={startOver} aria-label={T("Edit your details", "Editar sus datos")}>
+          <button type="button" className="det" onClick={beginQuote} aria-label={T("Review your details", "Revisar sus datos")}>
             <span className="det-in"><span><b>{T("Your details", "Sus datos")}</b> · {details.join(" · ")}</span><Svg d={I_EDIT} size={14} /></span>
           </button>
         ) : null}
@@ -1362,8 +1363,8 @@ export default function AIInsureGenie() {
               <>
                 <div className="hello">
                   <img src={LOGO} alt="" />
-                  <h1 className="pj">{entryWelcome ? entryWelcome.title : s.journey === "advisor" ? T("Tell me what's going on with your insurance.", "Cuénteme sobre su seguro de auto.") : T("What can I help you with today?", "¿En qué le puedo ayudar hoy?")}</h1>
-                  <p>{entryWelcome ? entryWelcome.description : s.journey === "advisor" ? T("Ask naturally. I'll explain your options and help prepare for quotes whenever you want.", "Pregunte con naturalidad. Le ayudaré a entender sus opciones.") : T("I can help you understand auto insurance and find a suitable quoting partner in a few quick steps.", "Puedo ayudarle a entender el seguro de auto y encontrar un socio de cotización adecuado en unos pasos rápidos.")}</p>
+                  <h1 className="pj">{entryWelcome ? entryWelcome.title : s.journey === "advisor" ? T("Car insurance, made clearer.", "Cuénteme sobre su seguro de auto.") : T("What can I help you with today?", "¿En qué le puedo ayudar hoy?")}</h1>
+                  <p>{entryWelcome ? entryWelcome.description : s.journey === "advisor" ? T("Get answers, understand your coverage and explore insurance options when you are ready.", "Pregunte con naturalidad. Le ayudaré a entender sus opciones.") : T("I can help you understand auto insurance and find a suitable quoting partner in a few quick steps.", "Puedo ayudarle a entender el seguro de auto y encontrar un socio de cotización adecuado en unos pasos rápidos.")}</p>
                 </div>
                 <div className="starts">
                   {s.journey === "advisor" ? <button type="button" className="st" onClick={beginQuote}><span className="st-ic"><Svg d={START_ICONS.tag}/></span><span className="st-l">{T("Get quote now", "Obtener cotización ahora")}</span><span className="chev"><Svg d={I_CHEV} size={16}/></span></button> : null}
@@ -1425,7 +1426,7 @@ export default function AIInsureGenie() {
             {typing ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="dots" aria-label={T("Genie is typing", "Genie está escribiendo")}><i /><i /><i /></div></div> : null}
 
             {showFlow && chips.length ? (
-              <div className={"ans" + (rowMode ? " row" : "")} role={multi ? "group" : undefined}>
+              <div className={"ans aig3-answers" + (rowMode ? " row" : "") + (multi ? " aig3-multi" : "")} role={multi ? "group" : undefined}>
                 {chips.map(function (c) { return <button type="button" key={c.label} className={c.cls} aria-pressed={multi ? c.on : undefined} onClick={c.fn}>{c.label}</button>; })}
               </div>
             ) : null}
