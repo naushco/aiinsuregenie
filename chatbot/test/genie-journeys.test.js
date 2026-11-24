@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { quoteIntent,hasConfirmedDetails,reviewProfile,profileReady,safeAttribution,safeJourney } from "../src/genie-journeys.js";
+import { quoteIntent,hasConfirmedDetails,reviewProfile,profileReady,qualificationSummary,safeAttribution,safeJourney } from "../src/genie-journeys.js";
 const base={st:"TX",sitDone:true,sits:["dui","lapse"],vehicleStatus:"no_vehicle",cov:"unsure",when:"today",pri:"price"};
 test("quote intent requires deliberate purchase/quoting language, not education",()=>{
  for(const q of ["Get my quote","I need an auto insurance quote","I want to buy car insurance","Show me quotes","I need car insurance today"]) assert.equal(quoteIntent(q),true,q);
@@ -36,4 +36,21 @@ test("first-party attribution is allowlisted, trimmed, and retains safe values a
  assert.deepEqual(safeAttribution("?utm_source=meta",original,true),{});
  assert.equal(safeJourney("advisor","quote"),"quote");
  assert.equal(safeJourney("quote","unexpected"),"quote");
+});
+
+test("qualification completeness is not a price or eligibility score",()=>{
+ const ready=qualificationSummary(base);
+ assert.equal(ready.ready,true);
+ assert.equal(ready.confirmed_count,5);
+ assert.equal(ready.required_count,5);
+ assert.deepEqual(ready.missing_fields,[]);
+ assert.deepEqual(ready.situation,["dui","lapse"]);
+ assert.equal(ready.buyer_routing,"not_configured");
+ assert.equal(Object.hasOwn(ready,"premium"),false);
+ assert.equal(Object.hasOwn(ready,"lead_value"),false);
+ const partial=qualificationSummary({st:"TX",sitDone:false,sits:[],vehicleStatus:"owned",cov:"min"});
+ assert.equal(partial.ready,false);
+ assert.ok(partial.missing_fields.includes("sits"));
+ assert.ok(partial.missing_fields.includes("when"));
+ assert.ok(partial.missing_fields.includes("car"));
 });
