@@ -10,6 +10,8 @@
   "compatibility_date": "2026-10-01",
   // Node APIs used by the handlers (crypto) and process.env for settings.
   "compatibility_flags": ["nodejs_compat"],
+  // Preserve public Genie activation explicitly during Wrangler deployment.
+  "vars": { "GENIE_V2_ENABLED": "true" },
   "d1_databases": [
     {
       "binding": "DB",

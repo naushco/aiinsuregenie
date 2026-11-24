@@ -1,5 +1,9 @@
 import { useState, useRef, useEffect, Fragment } from "react";
 import MINIMUMS from "./minimums.js";
+import { quoteIntent, hasConfirmedDetails, profileReady, safeAttribution } from "./genie-journeys.js";
+import QuoteReview from "./QuoteReview.jsx";
+import { statedPart } from "./genie-journeys.js";
+import { confirmedFacts, localStage, stageFromPlan, candidateToWizard, candidateDescription } from "./genie-flow.js";
 
 var STORAGE_KEY = "aiinsuregenie-partners-v3";
 
@@ -57,7 +61,7 @@ function dashboardToInsurer(dp) {
     bdg: dp.badge,
     bc: dp.bc,
     r: dp.rating || 4.0,
-    base: dp.base !== undefined ? dp.base : Math.round(60 + (dp.payout || 5) * 3), // on-screen estimate only
+    base: null, // Never infer consumer premiums from partner payouts or dashboard settings
     ft: dp.features ? dp.features.split(",").map(function(f){return f.trim();}).filter(Boolean) : ["Competitive rates", "Fast quotes", "24/7 support"],
     bf: [dp.bestFor || "budget", "clean", "family"],
     rk: "std",
@@ -234,14 +238,25 @@ function safeProfile(p) {
   return out;
 }
 
-async function aiAnswer(msg, profile, results) {
+async function aiAnswer(msg, profile, results, confirmed, journey) {
   var payload = {
     message: msg,
     history: convoHistory.slice(-8),
     profile: safeProfile(profile),
     results: (results || []).map(function (r) { return { n: r.n }; }),
-    lang: LANG
+    lang: LANG,
+    journey: journey === "advisor" ? "advisor" : "quote"
   };
+  // The production brain is always opt-in twice: a deployment-only frontend flag,
+  // plus a separate server-side Cloudflare Worker flag. Staging sends its own
+  // confirmed payload for deterministic isolated testing.
+  if (typeof window !== "undefined" && window.AIG_CONFIG) {
+    if (window.AIG_CONFIG.staging) payload.confirmed = confirmed || {};
+    else if (window.AIG_CONFIG.genieV2Enabled === true) {
+      payload.genie_v2 = true;
+      payload.genie_facts = confirmed || {};
+    }
+  }
 
   // 1) Production path: your secure backend proxy
   try {
@@ -252,53 +267,30 @@ async function aiAnswer(msg, profile, results) {
     });
     if (res.ok) {
       var data = await res.json();
-      if (data && data.answer) return data.answer;
+      if (data && data.answer) return { answer: data.answer, intelligence: data.genie_v2 || null };
     }
   } catch (e) { /* fall through */ }
 
-  // 2) Claude.ai preview path: direct call works only inside Claude artifacts.
-  //    On your real website this fails harmlessly and the friendly fallback is shown.
-  try {
-    var sys = "You are AI InsureGenie, a friendly US auto insurance advisor. Only answer auto insurance questions. Keep answers to 2-3 short paragraphs. Use **bold** for key terms. Never guarantee prices. Not a licensed agent." + (ES ? " Always reply in Spanish (neutral, use usted)." : "");
-    var msgs = convoHistory.slice(-8).concat([{ role: "user", content: msg }]);
-    var response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 600, system: sys, messages: msgs })
-    });
-    var d2 = await response.json();
-    if (d2 && d2.content) {
-      var text = "";
-      for (var i = 0; i < d2.content.length; i++) { if (d2.content[i].text) text += d2.content[i].text; }
-      return text || null;
-    }
-  } catch (err) { /* fall through */ }
+  // The public browser never calls Anthropic directly. The secure proxy is the
+  // only model route; on a network failure we use the local educational fallback.
   return null;
 }
 
-async function getAnswer(text, profile, results) {
-  var mins = minimumsAnswer(text, profile); if (mins) return mins;
-  var answer = await aiAnswer(text, profile, results) || staticAnswer(text);
-  if (!answer) {
-    return T("Sorry, I couldn't answer that just now. Try asking another way, tap **Get instant quote** to find your match, or talk to a licensed agent.", "Perdón, no pude responder eso ahora. Pruebe a preguntarlo de otra forma, toque **Obtener cotización** para ver su opción, o hable con un agente con licencia.");
-  }
-  // Remember this exchange so follow-up questions make sense
+async function getAnswer(text, profile, results, confirmed, journey) {
+  var mins = minimumsAnswer(text, profile);
+  if (mins) return { answer: mins, intelligence: null };
+  var result = await aiAnswer(text, profile, results, confirmed, journey);
+  var answer = result && result.answer ? result.answer : (typeof result === "string" ? result : staticAnswer(text));
+  if (!answer) answer = T("Sorry, I couldn't answer that just now. Try asking another way, tap **Get instant quote** to find your match, or talk to a licensed agent.", "Perdón, no pude responder eso ahora. Pruebe a preguntar de otra forma o hable con un agente con licencia.");
   convoHistory.push({ role: "user", content: text });
   convoHistory.push({ role: "assistant", content: answer });
   if (convoHistory.length > 16) convoHistory = convoHistory.slice(-16);
-  return answer;
+  return { answer: answer, intelligence: result && result.intelligence ? result.intelligence : null };
 }
 
 function calcPremium(ins, p) {
-  var b = ins.base;
-  if (p.age) { if (p.age < 25) b *= 1.45; else if (p.age > 60) b *= 1.12; }
-  if (p.driving === "minor") b *= 1.25; else if (p.driving === "major") b *= 1.55; else if (p.driving === "dui") b *= 2;
-  if (p.coverage === "minimum") b *= 0.55; else if (p.coverage === "full") b *= 1.3;
-  if (p.insured === "no") b *= 1.18;
-  if (p.multiCar === "yes") b *= 0.85;
-  if (p.homeowner === "yes" && ["statefarm","allstate","nationwide"].includes(ins.id)) b *= 0.87;
-  if (p.military === "yes" && ins.id === "usaa") b *= 0.68;
-  return Math.round(b);
+  // No verified carrier quote API is connected; never infer a premium from heuristics.
+  return null;
 }
 
 function matchInsurers(p, pool) {
@@ -316,7 +308,7 @@ function matchInsurers(p, pool) {
     s += (6 - (ins.priority || 3)) * 5 + (ins.boost || 0);
     if (ins.pinned) s += 1000;
     var premium = calcPremium(ins, p);
-    var savings = Math.max(Math.round((220 - premium) * 12), Math.round(80 + Math.random() * 200));
+    var savings = null; // Savings require verified comparable carrier quotes.
     return Object.assign({}, ins, { s: s, premium: premium, savings: savings });
   }).sort(function(a, b) { return b.s - a.s; }).filter(function(x) { return x.s > -50; }).slice(0, 4);
 }
@@ -445,9 +437,17 @@ var API_BASE = (typeof window !== "undefined" && window.AIG_CONFIG && window.AIG
 // Privacy-friendly event log: no cookies, no names, phones or emails. Only the event, the session ID,
 // and non-personal context (state, partner, campaign). Sent with sendBeacon so it never slows the chat.
 var UTM = (function () {
-  var q = {};
-  try { var u = new URLSearchParams(window.location.search); ["utm_source","utm_medium","utm_campaign","utm_content","pub"].forEach(function (k) { if (u.get(k)) q[k] = u.get(k).slice(0, 80); }); } catch (e) {}
-  return q;
+  // Keep first-party campaign IDs across advisor <-> quote switching and refresh,
+  // but never copy arbitrary query fields or contact data into analytics.
+  if (DO_NOT_SELL) {
+    try { sessionStorage.removeItem("aig-attribution-v1"); } catch (e) {}
+    return {};
+  }
+  var previous = {};
+  try { previous = JSON.parse(sessionStorage.getItem("aig-attribution-v1") || "{}"); } catch (e) {}
+  var attribution = safeAttribution(window.location.search, previous);
+  try { sessionStorage.setItem("aig-attribution-v1", JSON.stringify(attribution)); } catch (e) {}
+  return attribution;
 })();
 var sentOnce = {};
 function track(type, extra, once) {
@@ -831,38 +831,56 @@ var SIT = [
 ];
 var COVS = { min: T("State minimum", "Mínimo del estado"), full: T("Full coverage", "Cobertura total"), unsure: T("Not sure yet", "Todavía no sé") };
 var WHENS = { today: T("Today", "Hoy"), week: T("This week", "Esta semana"), compare: T("Just comparing", "Solo comparando") };
-var ORDER = ["start", "state", "sit", "make", "model", "year", "cov", "when", "done"];
+var ORDER = ["start", "state", "sit", "vehicle", "make", "model", "year", "cov", "when", "done"];
 var SAVE_KEY = "aig-chat-v2";
 
 function stName(ab) { return ABBR_STATE[ab] || ab || ""; }
-function stepOf(stage) { return { start: 0, state: 1, sit: 2, make: 3, model: 3, year: 3, cov: 4, when: 4, done: 5 }[stage] || 0; }
+function stepOf(stage) { return { start: 0, state: 1, sit: 2, vehicle: 3, make: 3, model: 3, year: 3, cov: 4, when: 4, done: 5 }[stage] || 0; }
 function bodyOf(make, model) { var m = (MODEL_LIST[make] || []).find(function (x) { return x[0] === model; }); return m ? m[1] : "sedan"; }
+// One readable line for details waiting for confirmation, e.g. "Texas · SR-22 + DUI · 2019 Toyota Camry".
+function describePending(p, cur) {
+  if (!p) return "";
+  var out = [];
+  if (p.st) out.push(stName(p.st));
+  if (p.sits && p.sits.length) {
+    var known = (cur && cur.sitDone && cur.sits) || [];
+    var added = p.sits.filter(function (k) { return k !== "none" && known.indexOf(k) < 0; });
+    if (added.length) out.push(SIT.filter(function (k) { return added.indexOf(k.k) >= 0; }).map(function (k) { return k.s; }).join(" + "));
+  }
+  if (p.make || p.year) out.push(carName(Object.assign({}, cur || {}, p)));
+  if (p.cov && COVS[p.cov]) out.push(COVS[p.cov]);
+  if (p.when && WHENS[p.when]) out.push(WHENS[p.when]);
+  if (p.pri === "price") out.push(T("lowest price", "precio más bajo"));
+  return out.filter(Boolean).join(" · ");
+}
 function carName(s) { if (s.carAge && !s.make) return s.carAge; return [s.year && s.year !== "unsure" ? (s.year === "old" ? T("2015 or older", "2015 o antes") : s.year) : "", s.make, s.model && s.model !== "unsure" ? s.model : ""].filter(Boolean).join(" "); }
-var QH = { state: T("Which state do you live in?", "¿En qué estado vive?"), sit: T("Anything special about your situation?", "¿Algo especial en su situación?"), make: T("What car do you drive?", "¿Qué auto maneja?"), model: T("Which model?", "¿Qué modelo?"), year: T("And the year?", "¿Y el año?"), cov: T("What coverage do you need?", "¿Qué cobertura necesita?"), when: T("When do you need it to start?", "¿Cuándo la necesita?") };
+var QH = { state: T("Which state do you live in?", "¿En qué estado vive?"), sit: T("Anything special about your situation?", "¿Algo especial en su situación?"), vehicle: T("Do you own, finance or lease a vehicle, or need non-owner coverage?", "¿Tiene, financia o alquila un vehículo, o necesita cobertura sin auto?"), make: T("What car do you drive?", "¿Qué auto maneja?"), model: T("Which model?", "¿Qué modelo?"), year: T("And the year?", "¿Y el año?"), cov: T("What coverage do you need?", "¿Qué cobertura necesita?"), when: T("When do you need it to start?", "¿Cuándo la necesita?") };
 function questionsLeft(s) {
-  var FILL = { state: { st: "X" }, sit: { sitDone: true }, make: { make: "X" }, model: { model: "X" }, year: { year: "X" }, cov: { cov: "X" }, when: { when: "X" } };
+  var FILL = { state: { st: "X" }, sit: { sitDone: true }, vehicle: { vehicleStatus: "owned" }, make: { make: "X" }, model: { model: "X" }, year: { year: "X" }, cov: { cov: "X" }, when: { when: "X" } };
   var x = Object.assign({}, s), n = 0, st;
   while ((st = nextStage(x)) !== "done" && n < 9) { if (!(st === "model" || st === "year")) n++; Object.assign(x, FILL[st]); }
   return n;
 }
 function nextStage(s) {
-  if (!s.st) return "state";
-  if (!s.sitDone) return "sit";
-  if (!s.make && !s.carAge) return "make";
-  if (!s.model && MODEL_LIST[s.make]) return "model";
-  if (!s.year) return "year";
-  if (!s.cov && s.pri !== "price") return "cov";
-  if (!s.when) return "when";
-  return "done";
+  return localStage(s, function (make) { return !!MODEL_LIST[make]; });
 }
+// Confirmed quote fields for the isolated Genie 2.0 staging intelligence API.
+// Never infer owned/leased status, a clean record, or a coverage selection.
+function genieConfirmed(s) {
+  // All profile facts come exclusively from explicit visitor confirmation.
+  // Browser and API use the same field definitions and validated vocabulary.
+  return confirmedFacts(s);
+}
+
 function toProfile(s) {
   var sits = s.sits || [];
   var p = { state: s.st || undefined };
-  p.driving = (sits.indexOf("sr22") >= 0 || sits.indexOf("dui") >= 0) ? "dui" : (sits.indexOf("record") >= 0 ? "major" : (s.sitDone ? "clean" : undefined));
+  p.driving = sits.indexOf("dui") >= 0 ? "dui" : (sits.indexOf("record") >= 0 ? "major" : (sits.indexOf("none") >= 0 ? "clean" : undefined));
+  p.requiresSR22 = sits.indexOf("sr22") >= 0;
   if (sits.indexOf("lapse") >= 0) p.insured = "no";
-  if (sits.indexOf("new") >= 0) p.age = 22;
+  // A new driver does not necessarily have a specific age.
   if (s.make && s.make !== "Other") p.vehicleMake = s.make;
-  if (s.year && /^\d{4}$/.test(s.year)) p.vehicleYear = s.year; else if (s.year === "old") p.vehicleYear = "2012";
+  if (s.year && /^\d{4}$/.test(s.year)) p.vehicleYear = s.year;
   p.coverage = s.cov === "min" ? "minimum" : (s.cov === "full" ? "full" : "standard");
   p.priority = s.pri || (s.cov === "full" ? "coverage" : "price");
   return p;
@@ -930,19 +948,33 @@ function MatchCard({ ins, s, top, onCall }) {
   );
 }
 
+// Page-aware welcome copy: whitelist topic IDs, never echo arbitrary URL text.
+var GUIDE_TOPICS = { sr22: "SR-22 insurance", dui: "insurance after a DUI", coverage: "auto insurance coverage", lapse: "a coverage lapse", rates: "comparing rates", rideshare: "rideshare insurance" };
+function pageWelcome() {
+  try {
+    var p = new URLSearchParams((window.location.hash || "").replace(/^#/, ""));
+    var mode = p.get("start"), topic = GUIDE_TOPICS[p.get("topic")];
+    if (mode === "guide" || (mode === "ask" && topic)) return { kind: "guide", title: T("Questions about insurance?", "¿Preguntas sobre seguros?"), description: topic ? T("You are reading about " + topic + ". I can explain it or help you explore quoting options.", "Está leyendo sobre " + topic + ". Puedo explicarlo o ayudarle a explorar opciones de cotización.") : T("I can explain an insurance topic or help you explore quoting options.", "Puedo explicar un tema de seguros o ayudarle a explorar opciones de cotización.") };
+    if (mode === "quote") return { kind: "quote", title: T("Find your insurance options", "Encuentre sus opciones de seguro"), description: T("A few quick questions will help me find a suitable quoting partner. No phone number needed to see your match.", "Unas preguntas breves me ayudarán a encontrar un socio de cotización adecuado. No necesita teléfono para ver su opción.") };
+  } catch (e) {}
+  return null;
+}
+
 function fresh() {
-  return { stage: "start", st: "", changing: false, sits: [], sitDone: false, make: "", model: "", year: "", cov: "", when: "", pri: "", carAge: "", hist: [], said: "", note: "", otherMake: false, qa: null, askMore: false, results: null, showAll: false, showEmail: "" };
+  return { journey: "advisor", reviewOpen: false, quoteReviewed: false, advisorTurns: [], stage: "start", st: "", changing: false, sits: [], sitDone: false, vehicleStatus: "", make: "", model: "", year: "", cov: "", when: "", pri: "", carAge: "", hist: [], said: "", note: "", otherMake: false, qa: null, askMore: false, results: null, showAll: false, showEmail: "" };
 }
 
 export default function AIInsureGenie() {
   var [s, setS] = useState(fresh);
+  var [entryWelcome] = useState(pageWelcome);
+  var [entryContext] = useState(function () { try { var p = new URLSearchParams((window.location.hash || "").replace(/^#/, "")); return { mode: p.get("start") || "direct", topic: Object.prototype.hasOwnProperty.call(GUIDE_TOPICS, p.get("topic")) ? p.get("topic") : null }; } catch (e) { return { mode: "direct", topic: null }; } });
   var [typing, setTyping] = useState(false);
   var [draft, setDraft] = useState("");
   var [geo, setGeo] = useState("");
   var [showCall, setShowCall] = useState(false);
   var [leave, setLeave] = useState(false);
   var [list, setList] = useState(IS_PREVIEW ? DEFAULT_INSURERS : []);
-  var logRef = useRef(null), inRef = useRef(null), tRef = useRef(null), sRef = useRef(s);
+  var logRef = useRef(null), inRef = useRef(null), tRef = useRef(null), sRef = useRef(s), planRef = useRef(0);
   sRef.current = s;
 
   // Partners from the dashboard (refreshed every 30 seconds).
@@ -965,10 +997,45 @@ export default function AIInsureGenie() {
   }, [s.stage, s.qa, s.askMore, s.showAll, s.showEmail, s.note, typing, Array.isArray(s.results) ? s.results.length : s.results, (s.hist || []).length]);
   // Save progress for 7 days, so a visitor who leaves can pick up where they were.
   useEffect(function () {
-    if (s.stage === "start") return; // never overwrite saved progress with the empty welcome screen
-    try { var keep = Object.assign({}, s, { qa: null, askMore: false, results: null, showAll: false, showEmail: "" }); localStorage.setItem(SAVE_KEY, JSON.stringify({ t: Date.now(), s: keep })); } catch (e) {}
+    // Only confirmed qualification fields are persisted. Never persist raw advisor
+    // questions, conversation history, unconfirmed candidates or partner results.
+    if (DO_NOT_SELL) { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} return; } // honor GPC / opt-out and remove old progress
+    if (s.stage === "start" && !hasConfirmedDetails(s)) return;
+    try {
+      var keep = {
+        stage: s.stage, journey: s.journey, st: s.st, sits: s.sits, sitDone: s.sitDone, vehicleStatus: s.vehicleStatus,
+        make: s.make, model: s.model, year: s.year, cov: s.cov,
+        when: s.when, pri: s.pri, carAge: s.carAge
+      };
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ t: Date.now(), s: keep }));
+    } catch (e) {}
     setResumeCookie(s);
   }, [s]);
+
+  // Genie 2.1: the backend planner is authoritative when available. The same
+  // deterministic local plan preserves usability on network failures.
+  // Nothing from this endpoint is stored in D1, and it makes no model/buyer call.
+  var syncPlan = function (proposed) {
+    if (!window.AIG_CONFIG?.genieV2Enabled || proposed.qa || proposed.stage === "start" || proposed.reviewOpen) return;
+    var stamp = JSON.stringify(genieConfirmed(proposed));
+    var requestId = ++planRef.current;
+    fetch(API_BASE + "/api/plan", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ genie_v2: true, genie_facts: genieConfirmed(proposed) })
+    }).then(function (r) { return r.ok ? r.json() : null; }).then(function (plan) {
+      if (!plan || plan.version !== "2.1" || !plan.next || planRef.current !== requestId) return;
+      setS(function (cur) {
+        if (cur.qa || cur.reviewOpen || cur.journey !== "quote" || JSON.stringify(genieConfirmed(cur)) !== stamp) return cur;
+        var selected = stageFromPlan(cur, plan.next, function (make) { return !!MODEL_LIST[make]; });
+        // Reconcile only the current qualification step; never overwrite the
+        // visitor's confirmed answers, consent, results or raw conversation.
+        if (selected === cur.stage) return cur;
+        var review = selected === "done" && !cur.quoteReviewed && !!cur.chatFacts;
+        if (selected === "done" && !review && !cur.quoteReviewed) { setTimeout(function () { go({ quoteReviewed: true, stage: "done" }, true); }, 0); return cur; }
+        return Object.assign({}, cur, { stage: selected, reviewOpen: review, results: selected === "done" ? cur.results : null });
+      });
+    }).catch(function () { /* retain the equivalent local plan */ });
+  };
 
   // Every answer goes through go(): short "typing" pause, then the next question.
   var go = function (o, quiet) {
@@ -976,14 +1043,78 @@ export default function AIInsureGenie() {
     if (!quiet) { setTyping(true); clearTimeout(tRef.current); tRef.current = setTimeout(function () { setTyping(false); }, 500); }
     var cur0 = sRef.current;
     if (next.stage !== cur0.stage) track("step_answered", { step: cur0.stage, state: next.st || null });
+    if (next.stage === "done" && cur0.stage !== "done") track("qualification_complete", { version: "2.2", journey: next.journey, vehicle_confirmed: !!next.vehicleStatus, coverage_confirmed: !!next.cov }, true);
     if (next.stage !== cur0.stage && o.said) next.hist = (cur0.hist || []).concat([{ q: QH[cur0.stage] || null, a: o.said }]).slice(-12);
-    if (next.stage === "done" && !next.results) next = Object.assign(next, { results: "loading" });
+    // No partner handoff until the visitor reviews the insurance profile.
+    // Details confirmed from chat get one review; tap-only quote visitors go straight to their match
+    // (their answers stay editable in the "Your details" bar).
+    if (next.stage === "done" && !next.quoteReviewed && !next.chatFacts) next = Object.assign(next, { quoteReviewed: true });
+    if (next.stage === "done" && !next.quoteReviewed) next = Object.assign(next, { reviewOpen: true, results: null });
+    if (next.stage === "done" && next.quoteReviewed && !next.results) next = Object.assign(next, { results: "loading" });
     setS(next);
     if (next.results === "loading") showMatch(next);
+    if (next.journey === "quote") syncPlan(next);
   };
-  var answer = function (said, o) { var n = Object.assign({}, sRef.current, o); go(Object.assign({ said: said, note: "", otherMake: false }, o, { stage: nextStage(n) })); };
+  var answer = function (said, o) { var n = Object.assign({}, sRef.current, o); go(Object.assign({ said: said, note: "", otherMake: false }, o, { stage: nextStage(n), journey: "quote" })); };
 
+  // The shared summary is presented before quote qualification or partner
+  // handoff. Review never submits a lead, and advisory facts remain editable.
+  var beginQuote = function () {
+    var cur = sRef.current;
+    if (cur.qa && cur.qa.candidate && Object.keys(cur.qa.candidate).length) {
+      track("quote_requested_pending_confirmation", { journey: cur.journey }, false);
+      setS(function (c) { return c.qa ? Object.assign({}, c, { qa: Object.assign({}, c.qa, { quoteAfterConfirmation: true }) }) : c; });
+      return; // the confirmation card must be addressed first
+    }
+    track("quote_requested", { origin: cur.journey }, false);
+    var turns = (cur.advisorTurns || []).concat(cur.qa && cur.qa.a ? [{ q: cur.qa.q, a: cur.qa.a }] : []).slice(-8);
+    // Fast Get Quote from paid ads or an empty conversation must not start with
+    // an empty profile summary. Ask the first missing question immediately.
+    if (!hasConfirmedDetails(cur)) {
+      go({ journey: "quote", qa: null, askMore: false, reviewOpen: false, quoteReviewed: false, advisorTurns: turns,
+        stage: nextStage(cur), results: null, note: "" }, true);
+      return;
+    }
+    go({ journey: "quote", qa: null, askMore: false, reviewOpen: true, quoteReviewed: false, advisorTurns: turns,
+      note: T("Please review what I understood before we look at quoting options.", "Revise los datos antes de explorar cotizaciones.") }, true);
+  };
+  var editReviewField = function (field) {
+    var cleared = {};
+    var toStage = { st: "state", sits: "sit", vehicleStatus: "vehicle", car: "make", cov: "cov", when: "when", pri: "cov" }[field] || "state";
+    if (field === "st") cleared = { st: "", changing: true };
+    if (field === "sits") cleared = { sitDone: false };
+    if (field === "vehicleStatus") cleared = { vehicleStatus: "", make: "", model: "", year: "", carAge: "" };
+    if (field === "car") cleared = { make: "", model: "", year: "", carAge: "" };
+    if (field === "cov") cleared = { cov: "" };
+    if (field === "when") cleared = { when: "" };
+    if (field === "pri") cleared = { pri: "", cov: "" };
+    go(Object.assign({ journey: "quote", reviewOpen: false, quoteReviewed: false,
+      stage: toStage, results: null, qa: null, note: "" }, cleared), true);
+  };
+  var continueReviewed = function () {
+    var cur = sRef.current;
+    if (!profileReady(cur, function (make) { return !!MODEL_LIST[make]; })) {
+      track("quote_review_continue", { complete: false }, false);
+      go({ reviewOpen: false, quoteReviewed: true, journey: "quote", stage: nextStage(cur), results: null,
+        note: T("I'll ask only for the missing information.", "Solo preguntaré por los datos que faltan.") }, true);
+      return;
+    }
+    track("quote_review_confirmed", { complete: true }, false);
+    go({ journey: "quote", reviewOpen: false, quoteReviewed: true, stage: "done", results: null, note: "" }, true);
+  };
+  var resumeAdvice = function () {
+    track("quote_to_advisor", { stage: sRef.current.stage }, false);
+    go({ journey: "advisor", reviewOpen: false, quoteReviewed: false, stage: "start", qa: null, askMore: true,
+      results: null, note: T("Ask me anything about auto insurance. Your confirmed details are kept for when you want quotes.", "Pregúnteme sobre seguros. Conservamos sus datos confirmados para cuando quiera cotizaciones.") }, true);
+  };
   var showMatch = async function (n) {
+    // No connected buyer is verified to offer non-owner policies. Do not
+    // present an ordinary vehicle-policy partner as eligible for this case.
+    if (n.vehicleStatus === "no_vehicle") {
+      setTimeout(function () { setS(function (cur) { return Object.assign({}, cur, { results: [] }); }); }, 400);
+      track("no_match", { vehicle_type: "non_owner" });
+      return;
+    }
     if (!INSURERS.length) { var l = await loadInsurers(); if (l) { INSURERS = l; setList(l); } }
     var p = toProfile(n);
     var r = pickPartners(p).map(function (ins) { return Object.assign({}, ins, { rUrl: buildUrl(ins, p) }); });
@@ -995,7 +1126,7 @@ export default function AIInsureGenie() {
   // Pull answers out of a sentence: "cheapest insurance for my 2019 hyundai sonata in Texas".
   var extract = function (text, cur) {
     var o = parseFree(text, null), lower = " " + text.toLowerCase().replace(/[^a-z0-9\- ]/g, " ") + " ", got = {}, said = [];
-    if (o.state && !cur.st) { got.st = o.state; said.push(stName(o.state)); }
+    if (o.state && o.state !== cur.st) { got.st = o.state; said.push(stName(o.state)); }
     var sits = (cur.sits || []).slice();
     // "What is an SR-22?" is a question about it, not a sign they need one.
     var general = /^\s*(what|how|why|does|do|is|are|can|when|which|who|que|qué|como|cómo)\b/i.test(text) && !/\b(i|i'm|im|my|me|yo|mi|tengo|necesito)\b/i.test(text);
@@ -1013,37 +1144,124 @@ export default function AIInsureGenie() {
     }
     if (o.vehicleYear && !cur.year) got.year = parseInt(o.vehicleYear, 10) <= 2015 ? "old" : o.vehicleYear;
     if (got.make || got.year) said.push(carName(Object.assign({}, cur, got)));
+    // Timing is a tentative fact during an advisor conversation, never confirmed silently.
+    if (!cur.when) {
+      var requestedWhen = /\b(today|right now|immediately|asap|tonight)\b/.test(lower) ? "today"
+        : /\b(this week|next few days|within (?:a )?week)\b/.test(lower) ? "week"
+        : /\b(just comparing|no rush|next month|just researching)\b/.test(lower) ? "compare" : "";
+      if (requestedWhen) { got.when = requestedWhen; said.push(WHENS[requestedWhen]); }
+    }
     if ((o.priority === "price" || /\b(cheap|cheapest|lowest|low cost|affordable|save money|barato)/.test(lower)) && !cur.pri) { got.pri = "price"; said.push(T("lowest price", "precio más bajo")); }
     if (/\bfull coverage\b/.test(lower) && !cur.cov) { got.cov = "full"; said.push(COVS.full); }
     return { got: got, said: said };
   };
 
   // A question typed or tapped at any point: answer it, keep the match where it is.
-  var ask = function (text) {
-    var cur = sRef.current, x = extract(text, cur), merge = x.got, noted = x.said.filter(Boolean);
-    var qa = { q: text, a: null, noted: noted.join(", "), agent: /(dui|dwi|sr-?22|accident|ticket|rate|price|cost|raise|multa|accidente|precio)/i.test(text) };
-    setS(Object.assign({}, cur, merge, { qa: qa, askMore: false }));
+  var ask = function (text, explicitlySelected, quoteAfterConfirmation, profileOnly) {
+    // Only explicit first-person declarations can populate quote qualification.
+    // Questions, hypothetical scenarios and guide topics are not personal facts.
+    var cur = sRef.current, merge = {}, noted = [];
+    var stated = statedPart(text);
+    var declaration = !!stated;
+    if (declaration || explicitlySelected) {
+      var extracted = extract(stated || text, cur);
+      merge = Object.assign({}, extracted.got, explicitlySelected || {});
+      noted = extracted.said.filter(Boolean);
+    }
+    var qa = { q: text, a: null, noted: describePending(merge, cur), agent: /(dui|dwi|sr-?22|accident|ticket|rate|price|cost|raise|multa|accidente|precio)/i.test(text) };
+    qa.candidate = merge; // Pending until visitor explicitly confirms before quote qualification.
+    qa.quoteAfterConfirmation = !!quoteAfterConfirmation;
+    var prior = cur.qa && cur.qa.a ? [{ q: cur.qa.q, a: cur.qa.a }] : [];
+    setS(Object.assign({}, cur, { qa: qa, askMore: false,
+      advisorTurns: (cur.advisorTurns || []).concat(prior).slice(-8) }));
+    if (profileOnly) {
+      qa.a = T("Thanks. Here's what I understood. Please check it before I find your quote options.", "Gracias. Esto es lo que entendí. Revíselo antes de buscar sus opciones.");
+      qa.profileOnly = true;
+      setS(Object.assign({}, cur, { qa: qa, askMore: false, advisorTurns: (cur.advisorTurns || []).concat(prior).slice(-8) }));
+      return;
+    }
     track("question_asked", { stage: cur.stage }, false);
-    getAnswer(text, toProfile(Object.assign({}, cur, merge)), Array.isArray(cur.results) ? cur.results : []).then(function (a) {
-      setS(function (c) { return c.qa && c.qa.q === text ? Object.assign({}, c, { qa: Object.assign({}, c.qa, { a: a }) }) : c; });
+    getAnswer(text, toProfile(cur), Array.isArray(cur.results) ? cur.results : [], genieConfirmed(cur), cur.journey).then(function (response) {
+      setS(function (c) {
+        if (!c.qa || c.qa.q !== text) return c;
+        var brain = response.intelligence;
+        var found = declaration && brain && brain.requires_confirmation ? candidateToWizard(brain.candidates || {}, cur) : {};
+        // Backend candidates are unverified and only shown for confirmation.
+        var pending = Object.assign({}, c.qa.candidate || {}, found);
+        var noted = describePending(pending, cur);
+        return Object.assign({}, c, { qa: Object.assign({}, c.qa, {
+          a: response.answer, candidate: pending, noted: noted,
+          nextQuestion: brain && brain.next ? brain.next.text : null
+        }) });
+      });
+    }).catch(function () {
+      setS(function (c) { return c.qa && c.qa.q === text ? Object.assign({}, c, { qa: Object.assign({}, c.qa, { a: T("I can't answer just now, but we can continue with confirmed details.", "No puedo responder ahora, pero podemos seguir con los datos confirmados.") }) }) : c; });
     });
   };
   var keepGoing = function () {
     var cur = sRef.current;
     var fromStart = cur.stage === "start";
-    go({ qa: null, askMore: false, stage: fromStart ? nextStage(cur) : cur.stage, said: fromStart ? (cur.qa ? cur.qa.q : "") : cur.said, note: fromStart && cur.qa && cur.qa.noted ? T("Got it: ", "Perfecto: ") + cur.qa.noted + T(". I just need the rest.", ". Solo me falta lo demás.") : "" });
+    var confirmed = cur.qa && cur.qa.candidate ? Object.assign({}, cur.qa.candidate) : {};
+    if (Object.keys(confirmed).length) confirmed.chatFacts = true;
+    var merged = Object.assign({}, cur, confirmed);
+    if (cur.qa && cur.qa.profileOnly) {
+      // The visitor just confirmed exactly what they typed: no second review, ask only what's missing.
+      go(Object.assign({}, confirmed, { journey: "quote", qa: null, askMore: false, reviewOpen: false, quoteReviewed: true,
+        stage: nextStage(merged), said: cur.qa.q, results: null,
+        note: T("Confirmed: ", "Confirmado: ") + cur.qa.noted + T(". I just need the rest.", ". Solo me falta lo demás.") }));
+      return;
+    }
+    if (cur.qa && cur.qa.quoteAfterConfirmation) {
+      go(Object.assign({}, confirmed, { journey: "quote", qa: null, askMore: false, stage: fromStart ? "start" : cur.stage,
+        reviewOpen: true, quoteReviewed: false, results: null,
+        advisorTurns: (cur.advisorTurns || []).concat(cur.qa && cur.qa.a ? [{ q: cur.qa.q, a: cur.qa.a }] : []).slice(-8),
+        note: T("Check these details before we prepare your quote options.", "Revise estos datos antes de preparar su cotización.") }), true);
+      return;
+    }
+    if (cur.journey === "advisor") {
+      go(Object.assign({}, confirmed, { qa: null, askMore: true, journey: "advisor", stage: "start", said: "",
+        advisorTurns: (cur.advisorTurns || []).concat(cur.qa && cur.qa.a ? [{ q: cur.qa.q, a: cur.qa.a }] : []).slice(-8),
+        reviewOpen: false, quoteReviewed: false, note: Object.keys(confirmed).length
+          ? T("Thanks. I've added your confirmed details. What else can I help you understand?", "Gracias. He añadido sus datos confirmados. ¿En qué más puedo ayudarle?")
+          : T("I'm here to help. Ask another question or explore quote options whenever you're ready.", "Estoy aquí para ayudarle. Pregunte o explore cotizaciones cuando quiera.") }), true);
+      return;
+    }
+    go(Object.assign({}, confirmed, { qa: null, askMore: false, stage: fromStart || Object.keys(confirmed).length ? nextStage(merged) : cur.stage, said: fromStart ? (cur.qa ? cur.qa.q : "") : cur.said, note: fromStart && cur.qa && cur.qa.noted ? T("Confirmed: ", "Confirmado: ") + cur.qa.noted + "." : "" }));
   };
 
   // Typed text: a question gets an answer; "Texas, 2019 Camry, SR-22" fills the answers it contains.
   var send = function () {
     var text = draft.trim(); if (!text || typing) return; setDraft("");
     var cur = sRef.current;
+    // Explicit quote requests can begin from either journey. Unverified facts
+    // must be confirmed before the insurance profile review.
+    if (quoteIntent(text)) {
+      var quoteFacts = extract(text, cur).got;
+      if (Object.keys(quoteFacts).length) ask(text, quoteFacts, true);
+      else beginQuote();
+      return;
+    }
+    if (cur.journey === "advisor") {
+      // "Texas, 2019 Camry, DUI, need SR-22" is a profile, not a question: confirm it and move to quotes.
+      // Only a comma-separated list of details counts; sentences ("I'm in Texas and...") stay conversational.
+      var listLike = /,/.test(text) && !/\b(i|i'm|im|my|me|we|our)\b/i.test(text.replace(/\bneed\b/ig, ""));
+      var typed = listLike && !/\?/.test(text) && !isQuestion(text, "qualifying", null) ? extract(text, cur).got : {};
+      if (Object.keys(typed).length >= 2) { ask(text, typed, true, true); return; }
+      ask(text); return;
+    }
+    if (cur.stage === "start" && entryWelcome && entryWelcome.kind === "guide") { ask(text); return; }
     if (cur.stage === "make" && cur.otherMake && !isQuestion(text, "qualifying", "vmake")) { var mk = text.charAt(0).toUpperCase() + text.slice(1); answer(mk, { make: mk.slice(0, 30), model: "unsure" }); return; }
     if (isQuestion(text, "qualifying", null)) { ask(text); return; }
     var x = extract(text, cur), got = x.got, said = x.said;
     if (!Object.keys(got).length) { ask(text); return; }
+    // Confirm free-text risk statements and multi-fact entries before storing.
+    // Single state, make or year entries in their dedicated step remain direct.
+    if (Object.keys(got).length > 1 || got.sits || got.when || got.cov) {
+      ask(text, got);
+      return;
+    }
     var n = Object.assign({}, cur, got);
-    go(Object.assign(got, { said: text, qa: null, note: T("Got it: ", "Perfecto: ") + said.filter(Boolean).join(", ") + T(". I just need the rest.", ". Solo me falta lo demás."), stage: nextStage(n) }));
+    go(Object.assign(got, { said: text, qa: null, note: T("Got it: ", "Perfecto: ") + said.filter(Boolean).join(", ") + T(". I just need the rest.", ". Solo me falta demás."), stage: nextStage(n) }));
   };
 
   // Open the right flow when arriving from the website (#start=quote&situation=sr22&state=Texas...).
@@ -1052,9 +1270,14 @@ export default function AIInsureGenie() {
     if (!h) {
       try {
         var saved = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
-        if (saved && saved.s && Date.now() - saved.t < 7 * 864e5 && stepOf(saved.s.stage) >= 2) {
-          setS(Object.assign(fresh(), saved.s, { said: "", note: saved.s.stage === "done" ? T("Welcome back! Your match is still here.", "¡Bienvenido de nuevo! Su opción sigue aquí.") : T("Welcome back! Let's pick up where you left off.", "¡Bienvenido de nuevo! Sigamos donde lo dejó.") }));
-          if (saved.s.stage === "done") showMatch(saved.s);
+        if (!DO_NOT_SELL && saved && saved.s && saved.t <= Date.now() && Date.now() - saved.t < 7 * 864e5 && (stepOf(saved.s.stage) >= 2 || saved.s.st || saved.s.sitDone || saved.s.make || saved.s.pri)) {
+          var savedJourney = saved.s.journey === "quote" || (!saved.s.journey && saved.s.stage !== "start") ? "quote" : "advisor";
+          var restored = Object.assign(fresh(), saved.s, { journey: savedJourney,
+            stage: savedJourney === "quote" ? nextStage(saved.s) : "start",
+            reviewOpen: savedJourney === "quote" && nextStage(saved.s) === "done",
+            quoteReviewed: false, results: null, said: "",
+            note: T("Welcome back! Your confirmed details are saved.", "¡Bienvenido de nuevo! Sus datos confirmados están guardados.") });
+          setS(restored);
           track("chat_resumed", { stage: saved.s.stage }, true);
         }
       } catch (e) {}
@@ -1064,7 +1287,7 @@ export default function AIInsureGenie() {
     try { window.history.replaceState(null, "", window.location.pathname + window.location.search); } catch (e) {}
     var start = p.get("start"), q = (p.get("q") || "").trim().slice(0, 200);
     var t = setTimeout(function () {
-      var o = Object.assign(fresh(), { stage: "start" }), said = [];
+      var o = Object.assign(fresh(), { stage: "start", journey: start === "quote" ? "quote" : "advisor" }), said = [];
       var stN = (p.get("state") || "").trim(), ab = STATE_ABBR[stN.toLowerCase()];
       if (ab) { o.st = ab; said.push(stName(ab)); }
       var goal = p.get("goal");
@@ -1079,6 +1302,7 @@ export default function AIInsureGenie() {
       var rs = (p.get("reasons") || "").split(",").map(function (k) { return RS[k.trim()]; }).filter(Boolean);
       if (q) { track("chat_started", { mode: "question" }, true); setS(o); setTimeout(function () { ask(q); }, 50); return; }
       if (start === "agent") { track("chat_started", { mode: "agent" }, true); setS(o); setShowCall(true); return; }
+      if (start === "guide" || (start === "ask" && GUIDE_TOPICS[p.get("topic")])) { track("chat_started", { mode: "guide" }, true); setS(Object.assign(o, { stage: "start" })); return; }
       if (start === "ask") { track("chat_started", { mode: "question" }, true); setS(Object.assign(o, { askMore: true })); setTimeout(function () { inRef.current && inRef.current.focus(); }, 300); return; }
       if (start === "quote") {
         track("chat_started", { mode: "quote" }, true);
@@ -1089,7 +1313,7 @@ export default function AIInsureGenie() {
           if (!rs.length && said.length > 1) o.note = T("Thanks, I've got your answers from the homepage.", "Gracias, ya tengo sus respuestas de la página principal.") + (left ? T(" Just " + left + " more " + (left === 1 ? "question" : "questions") + ".", " Solo " + left + (left === 1 ? " pregunta más." : " preguntas más.")) : ""); }
         setS(o);
       }
-    }, 200);
+    }, 0); // Initialize entry context before the visitor can type; 200ms delay lost early messages.
     return function () { clearTimeout(t); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1106,6 +1330,14 @@ export default function AIInsureGenie() {
     Q = [T("Anything special about your situation?", "¿Algo especial en su situación?"), T("Pick all that apply. Not every insurer handles SR-22s or rideshare.", "Elija todo lo que aplique. No todas las aseguradoras manejan SR-22 o plataformas.")];
     chips = SIT.map(function (x) { var on = s.sits.indexOf(x.k) >= 0; return ch(x.l, function () { var n = s.sits.slice(); if (x.k === "none") n = on ? [] : ["none"]; else { n = n.filter(function (y) { return y !== "none"; }); n = on ? n.filter(function (y) { return y !== x.k; }) : n.concat([x.k]); } go({ sits: n }, true); }, "", on); });
     if (s.sits.some(function (k) { return k === "sr22" || k === "dui"; })) chips.push(ch(T("How fast can an SR-22 be filed?", "¿Qué tan rápido se presenta una SR-22?"), function () { ask(T("How fast can an SR-22 be filed?", "¿Qué tan rápido se presenta una SR-22?")); }, "act"));
+  } else if (stage === "vehicle") {
+    Q = [T("Do you own, finance, or lease a vehicle, or need non-owner insurance?", "¿Tiene un vehículo, lo financia, lo alquila, o necesita un seguro sin auto?"), T("This helps us avoid asking vehicle questions that do not apply.", "Así evitamos preguntas sobre un vehículo que no tiene.")];
+    chips = [
+      ch(T("I own a vehicle", "Tengo un vehículo"), function () { answer(T("I own a vehicle", "Tengo un vehículo"), { vehicleStatus: "owned" }); }),
+      ch(T("I finance a vehicle", "Financio un vehículo"), function () { answer(T("I finance a vehicle", "Financio un vehículo"), { vehicleStatus: "financed" }); }),
+      ch(T("I lease a vehicle", "Alquilo un vehículo"), function () { answer(T("I lease a vehicle", "Alquilo un vehículo"), { vehicleStatus: "leased" }); }),
+      ch(T("I need non-owner coverage", "Necesito cobertura sin auto"), function () { answer(T("I need non-owner coverage", "Necesito cobertura sin auto"), { vehicleStatus: "no_vehicle", make: "", model: "", year: "", carAge: "" }); })
+    ];
   } else if (stage === "make") {
     Q = s.otherMake ? [T("Type your car's make below.", "Escriba abajo la marca de su auto."), ""] : [T("What car do you drive?", "¿Qué auto maneja?"), T("Swipe for more makes, or type it below.", "Deslice para ver más marcas, o escríbala abajo.")];
     if (!s.otherMake) { rowMode = true; chips = Object.keys(MODEL_LIST).map(function (m) { return ch(m, function () { answer(m, { make: m }); }); }); extra = [ch(T("Other make", "Otra marca"), function () { go({ otherMake: true }, true); setTimeout(function () { inRef.current && inRef.current.focus(); }, 100); }, "soft")]; }
@@ -1118,22 +1350,25 @@ export default function AIInsureGenie() {
     extra = [ch(T("I'm not sure", "No estoy seguro"), function () { answer(T("I'm not sure", "No estoy seguro"), { year: "unsure" }); }, "soft")];
   } else if (stage === "cov") {
     Q = [T("What coverage do you need?", "¿Qué cobertura necesita?"), T("State minimum is the cheapest legal option. Full coverage also pays to fix your own car.", "El mínimo del estado es la opción legal más barata. La cobertura total también paga la reparación de su auto.")];
-    chips = [ch(COVS.min, function () { answer(COVS.min, { cov: "min" }); }), ch(COVS.full, function () { answer(COVS.full, { cov: "full" }); }), ch(T("I don't know", "No sé"), function () { answer(T("I don't know", "No sé"), { cov: "unsure" }); }, "soft"), ch(T("What's full coverage?", "¿Qué es cobertura total?"), function () { ask(T("What does full coverage include?", "¿Qué incluye la cobertura total?")); }, "act")];
+    if (s.vehicleStatus === "no_vehicle") Q = [T("What coverage do you need?", "¿Qué cobertura necesita?"), T("Non-owner policies cover liability only (damage or injuries you cause), so there's no full-coverage option.", "Las pólizas sin vehículo solo cubren responsabilidad civil, así que no hay opción de cobertura total.")];
+    chips = [ch(COVS.min, function () { answer(COVS.min, { cov: "min" }); })].concat(s.vehicleStatus === "no_vehicle" ? [] : [ch(COVS.full, function () { answer(COVS.full, { cov: "full" }); })]).concat([ ch(T("I don't know", "No sé"), function () { answer(T("I don't know", "No sé"), { cov: "unsure" }); }, "soft"), ch(T("What's full coverage?", "¿Qué es cobertura total?"), function () { ask(T("What does full coverage include?", "¿Qué incluye la cobertura total?")); }, "act")]);
   } else if (stage === "when") {
     Q = [T("When do you need it to start?", "¿Cuándo la necesita?"), T("This helps us sort your matches.", "Esto nos ayuda a ordenar sus opciones.")];
     chips = Object.keys(WHENS).map(function (k) { return ch(WHENS[k], function () { answer(WHENS[k], { when: k }); }); });
   }
-  var showFlow = !s.qa && !typing;
+  var showFlow = s.journey === "quote" && !s.qa && !typing && !s.reviewOpen;
   var partnersHere = list.filter(function (ins) { return fits(ins, { state: s.st || null }); }).length;
-  var sub = stage === "done" && Array.isArray(s.results) ? (s.results.length ? s.results.length + T(s.results.length === 1 ? " partner fits you" : " partners fit you", s.results.length === 1 ? " socio encaja" : " socios encajan") : T("AI insurance assistant", "Asistente de seguros con IA"))
+  var sub = s.journey === "advisor" ? T("Personal insurance guidance", "Asesoría de seguro de auto") : stage === "done" && Array.isArray(s.results) ? (s.results.length ? s.results.length + T(s.results.length === 1 ? " partner fits you" : " partners fit you", s.results.length === 1 ? " socio encaja" : " socios encajan") : T("AI insurance assistant", "Asistente de seguros con IA"))
     : (s.st && partnersHere ? partnersHere + T(partnersHere === 1 ? " partner quotes in " : " partners quote in ", partnersHere === 1 ? " socio cotiza en " : " socios cotizan en ") + stName(s.st) : T("AI insurance assistant", "Asistente de seguros con IA"));
-  var details = [s.st ? stName(s.st) : "", s.sitDone ? SIT.filter(function (x) { return s.sits.indexOf(x.k) >= 0; }).map(function (x) { return x.s; }).join(" + ") : "", at > ORDER.indexOf("year") ? carName(s) : "", s.cov ? COVS[s.cov] : (s.pri === "price" ? T("Lowest price", "Precio más bajo") : "")].filter(Boolean);
-  var pct = [0, 0, 25, 50, 50, 50, 75, 90, 100][at] + "%";
-  var prev = { sit: { stage: "state", st: "", changing: false }, make: { stage: "sit", sitDone: false }, model: { stage: "make", make: "" }, year: { stage: MODEL_LIST[s.make] ? "model" : "make", model: "", make: MODEL_LIST[s.make] ? s.make : "" }, cov: { stage: "year", year: "" }, when: { stage: "cov", cov: "" } };
+  var details = [s.st ? stName(s.st) : "", s.vehicleStatus === "no_vehicle" ? T("Non-owner coverage", "Seguro sin auto") : "", s.sitDone ? SIT.filter(function (x) { return s.sits.indexOf(x.k) >= 0; }).map(function (x) { return x.s; }).join(" + ") : "", at > ORDER.indexOf("year") ? carName(s) : "", s.cov ? COVS[s.cov] : (s.pri === "price" ? T("Lowest price", "Precio más bajo") : "")].filter(Boolean);
+  var pct = [0, 0, 25, 38, 50, 50, 50, 75, 90, 100][at] + "%";
+  var prev = { sit: { stage: "state", st: "", changing: false }, vehicle: { stage: "sit", sitDone: false }, make: { stage: "vehicle", vehicleStatus: "" }, model: { stage: "make", make: "" }, year: { stage: MODEL_LIST[s.make] ? "model" : "make", model: "", make: MODEL_LIST[s.make] ? s.make : "" }, cov: { stage: "year", year: "" }, when: { stage: "cov", cov: "" } };
   var canBack = at > 1 && stage !== "done" && showFlow;
+  if (s.vehicleStatus === "no_vehicle" && stage === "cov") prev.cov = { stage: "vehicle", vehicleStatus: "" };
   var goHome = function () { track("chat_left", { stage: stage }); window.location.href = SITE; };
   var askClose = function () { if (step >= 2 && stage !== "done") setLeave(true); else goHome(); };
-  var startOver = function () { setS(Object.assign(fresh(), { stage: "state" })); };
+  var startOver = function () { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} setS(Object.assign(fresh(), { journey: "quote", stage: "state" })); };
+  var rejectCandidate = function () { go({ qa: null, askMore: false, note: T("No details were saved. You can correct them below.", "No se guardaron datos. Puede corregirlos abajo."), stage: sRef.current.stage === "start" ? "state" : sRef.current.stage }, true); };
 
   var results = Array.isArray(s.results) ? s.results : null;
   var starters = [
@@ -1152,6 +1387,8 @@ export default function AIInsureGenie() {
             <img className="hd-logo" src={LOGO} alt="" />
             <div className="hd-txt"><span className="hd-name pj">Genie</span><span className="hd-sub">{sub}</span></div>
             {step >= 1 ? <span className="hd-step">{stage === "done" ? T("Done", "Listo") : step + " / 4"}</span> : null}
+            {s.journey === "quote" && !s.reviewOpen ? <button type="button" className="ib" aria-label={T("Ask Genie", "Preguntar a Genie")} title={T("Ask Genie about insurance", "Preguntar a Genie")} onClick={resumeAdvice}><Svg d={I_INFO} /></button> : null}
+            {s.journey === "advisor" && hasConfirmedDetails(s) && !s.qa ? <button type="button" className="ib" aria-label={T("Get quote", "Obtener cotización")} title={T("Review my quote profile", "Revisar datos de cotización")} onClick={beginQuote}><Svg d={I_CHECK}/></button> : null}
             <button type="button" className="ib call" aria-label={T("Talk to a licensed agent", "Hablar con un agente con licencia")} onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} /></button>
             <button type="button" className="ib" aria-label={T("Minimise chat", "Minimizar el chat")} onClick={goHome}><Svg d={<path d="M6 9l6 6 6-6" />} size={22} sw={2} /></button>
             <button type="button" className="ib" aria-label={T("Close chat", "Cerrar el chat")} onClick={askClose}><Svg d={<path d="M6 6l12 12M18 6L6 18" />} size={20} sw={2} /></button>
@@ -1166,19 +1403,28 @@ export default function AIInsureGenie() {
 
         <main className="log" ref={logRef} aria-live="polite">
           <div className="log-in">
-            {stage === "start" && !s.qa && !s.askMore ? (
+            {stage === "start" && !s.qa && !s.askMore && !s.reviewOpen && !(s.advisorTurns || []).length ? (
               <>
                 <div className="hello">
                   <img src={LOGO} alt="" />
-                  <h1 className="pj">{T("What can I help", "¿En qué le puedo")}<br />{T("you with today?", "ayudar hoy?")}</h1>
-                  <p>{T("I'll match you with the licensed quoting partner that fits, in 4 quick steps. No phone number needed to see your match.", "Le conecto con el socio de cotización con licencia que le conviene, en 4 pasos rápidos. No necesita dar su teléfono para ver su opción.")}</p>
+                  <h1 className="pj">{entryWelcome ? entryWelcome.title : s.journey === "advisor" ? T("Tell me what's going on with your insurance.", "Cuénteme sobre su seguro de auto.") : T("What can I help you with today?", "¿En qué le puedo ayudar hoy?")}</h1>
+                  <p>{entryWelcome ? entryWelcome.description : s.journey === "advisor" ? T("Ask naturally. I'll explain your options and help prepare for quotes whenever you want.", "Pregunte con naturalidad. Le ayudaré a entender sus opciones.") : T("I can help you understand auto insurance and find a suitable quoting partner in a few quick steps.", "Puedo ayudarle a entender el seguro de auto y encontrar un socio de cotización adecuado en unos pasos rápidos.")}</p>
                 </div>
                 <div className="starts">
-                  {starters.map(function (x) { return <button type="button" key={x.ic} className="st" onClick={x.fn}><span className="st-ic"><Svg d={START_ICONS[x.ic]} /></span><span className="st-l">{x.l}</span><span className="chev"><Svg d={I_CHEV} size={16} /></span></button>; })}
+                  {s.journey === "advisor" ? <button type="button" className="st" onClick={beginQuote}><span className="st-ic"><Svg d={START_ICONS.tag}/></span><span className="st-l">{T("Get quote now", "Obtener cotización ahora")}</span><span className="chev"><Svg d={I_CHEV} size={16}/></span></button> : null}
+                  {(entryWelcome && entryWelcome.kind === "guide" ? [] : starters).map(function (x) { return <button type="button" key={x.ic} className="st" onClick={x.fn}><span className="st-ic"><Svg d={START_ICONS[x.ic]} /></span><span className="st-l">{x.l}</span><span className="chev"><Svg d={I_CHEV} size={16} /></span></button>; })}
                 </div>
               </>
             ) : null}
 
+            {stage === "start" && !s.qa && !s.askMore && entryWelcome && entryWelcome.kind === "guide" ? (
+              <div className="starts">
+                <button type="button" className="st" onClick={function () { ask(entryContext.topic ? "What should I know about " + GUIDE_TOPICS[entryContext.topic] + "?" : "How does auto insurance work?"); }}><span className="st-l">{T("Explain this topic", "Explicar este tema")}</span></button>
+                <button type="button" className="st" onClick={function () { ask(entryContext.topic ? "How can I tell if " + GUIDE_TOPICS[entryContext.topic] + " applies to my situation?" : "How do I choose the right auto insurance coverage?"); }}><span className="st-l">{T("Help me understand my situation", "Ayúdeme a entender mi situación")}</span></button>
+                <button type="button" className="st" onClick={beginQuote}><span className="st-l">{T("Explore insurance quotes", "Explorar cotizaciones")}</span></button>
+              </div>
+            ) : null}
+            {(s.advisorTurns || []).length ? (s.advisorTurns || []).map(function (h, i) { return <Fragment key={"ad"+i}><div className="u">{h.q}</div><div className="g past"><img className="ga" src={LOGO} alt=""/><div className="gt"><Bold text={h.a}/></div></div></Fragment>; }) : null}
             {(s.hist || []).length ? s.hist.map(function (h, i) { return (
               <Fragment key={i}>
                 {h.q ? <div className="g past"><img className="ga" src={LOGO} alt="" /><div className="gt">{h.q}</div></div> : null}
@@ -1195,7 +1441,7 @@ export default function AIInsureGenie() {
               </div>
             ) : null}
 
-            {Q && !typing ? <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{Q[0]}{Q[1] ? <span className="gh"><Svg d={I_INFO} size={14} /><span>{Q[1]}</span></span> : null}</div></div> : null}
+            {Q && !typing && !s.reviewOpen && s.journey === "quote" ? <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{Q[0]}{Q[1] ? <span className="gh"><Svg d={I_INFO} size={14} /><span>{Q[1]}</span></span> : null}</div></div> : null}
 
             {s.qa ? (
               <>
@@ -1205,10 +1451,10 @@ export default function AIInsureGenie() {
                     <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt"><Bold text={s.qa.a} />
                       {s.qa.agent ? <div style={{ marginTop: 10 }}><button type="button" className="c" onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} size={15} />{T("Ask a licensed agent, free", "Pregunte a un agente con licencia, gratis")}</button></div> : null}
                     </div></div>
-                    {stage !== "done" ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt" style={{ color: "#33415c" }}>{(s.sits.indexOf("dui") >= 0 || s.sits.indexOf("sr22") >= 0) ? T("Want me to find a partner for drivers like you", "¿Quiere que le busque un socio para conductores como usted") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?" : T("Want me to find the partner that fits you", "¿Quiere que le busque el socio que le conviene") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?"}
-                      {s.qa.noted ? <span className="gh"><Svg d={I_CHECK} size={14} sw={2.2} /><span>{T("I noted ", "Anoté ") + s.qa.noted + T(" from your question, so your match is shorter now.", " de su pregunta, así su búsqueda es más corta.")}</span></span> : null}
+                    {stage !== "done" ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt" style={{ color: "#33415c" }}>{s.journey === "advisor" ? T("We can keep talking, or explore quoting options when you're ready.", "Podemos seguir hablando o explorar cotizaciones cuando quiera.") : (s.sits.indexOf("dui") >= 0 || s.sits.indexOf("sr22") >= 0) ? T("Want me to find a partner for drivers like you", "¿Quiere que le busque un socio para conductores como usted") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?" : T("Want me to find the partner that fits you", "¿Quiere que le busque el socio que le conviene") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?"}
+                      {s.qa.noted ? <span className="gh"><Svg d={I_CHECK} size={14} sw={2.2} /><span>{T("Please confirm: ", "Confirme: ") + s.qa.noted + T(". These details will be used only if you continue to quotes.", ". Estos datos solo se usarán si continúa a cotizaciones.")}</span></span> : null}
                     </div></div> : null}
-                    <div className="ans"><button type="button" className="c on" onClick={keepGoing}>{stage === "done" ? T("Back to my match", "Volver a mi opción") : T("Continue my match", "Seguir con mi búsqueda")}</button><button type="button" className="c" onClick={function () { go({ qa: null, askMore: true }, true); setTimeout(function () { inRef.current && inRef.current.focus(); }, 100); }}>{T("Ask another question", "Hacer otra pregunta")}</button></div>
+                    <div className="ans"><button type="button" className="c on" onClick={keepGoing}>{s.qa.quoteAfterConfirmation ? T("Confirm details and review quotes", "Confirmar detalles y revisar cotizaciones") : s.qa.noted ? (s.journey === "advisor" ? T("Confirm details and keep talking", "Confirmar datos y seguir hablando") : T("Confirm details and continue", "Confirmar datos y continuar")) : s.journey === "advisor" ? T("Keep talking with Genie", "Seguir hablando con Genie") : stage === "done" ? T("Back to my match", "Volver a mi opción") : T("Continue my match", "Seguir con mi búsqueda")}</button>{s.qa.noted ? <button type="button" className="c" onClick={rejectCandidate}>{T("Correct these details", "Corregir estos datos")}</button> : null}<button type="button" className="c" onClick={function () { go({ qa: null, askMore: true }, true); setTimeout(function () { inRef.current && inRef.current.focus(); }, 100); }}>{T("Ask another question", "Hacer otra pregunta")}</button>{s.journey === "advisor" ? <button type="button" className="c" onClick={beginQuote}>{T("Explore quotes", "Explorar cotizaciones")}</button> : null}</div>
                   </>
                 )}
               </>
@@ -1216,10 +1462,11 @@ export default function AIInsureGenie() {
             {s.askMore && !s.qa ? (
               <>
                 <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Sure, ask me anything about car insurance below. I'll keep your match where you left it.", "Claro, pregúnteme lo que quiera sobre seguro de auto abajo. Guardo su búsqueda donde la dejó.")}</div></div>
-                <div className="ans"><button type="button" className="c" onClick={keepGoing}>{stage === "start" ? T("Find my match instead", "Mejor buscar mi opción") : T("Back to my match", "Volver a mi opción")}</button></div>
+                <div className="ans"><button type="button" className="c" onClick={s.journey === "advisor" ? beginQuote : keepGoing}>{s.journey === "advisor" ? T("Explore quotes whenever you're ready", "Explorar cotizaciones") : stage === "start" ? T("Find my match instead", "Mejor buscar mi opción") : T("Back to my match", "Volver a mi opción")}</button></div>
               </>
             ) : null}
 
+            {s.reviewOpen && !s.qa && !typing ? <QuoteReview profile={s} stateName={stName} hasModels={function (make) { return !!MODEL_LIST[make]; }} onEdit={editReviewField} onContinue={continueReviewed} onAdvice={resumeAdvice}/> : null}
             {typing ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="dots" aria-label={T("Genie is typing", "Genie está escribiendo")}><i /><i /><i /></div></div> : null}
 
             {showFlow && chips.length ? (
@@ -1239,7 +1486,7 @@ export default function AIInsureGenie() {
             {showFlow && multi ? <button type="button" className="p1" style={{ marginLeft: 36 }} aria-disabled={s.sits.length ? "false" : "true"} onClick={function () { if (s.sits.length) answer(SIT.filter(function (x) { return s.sits.indexOf(x.k) >= 0; }).map(function (x) { return x.l; }).join(", "), { sitDone: true }); }}>{s.sits.length ? T("Continue", "Continuar") : T("Pick at least one", "Elija al menos una")}</button> : null}
             {canBack ? <button type="button" className="lk back" onClick={function () { go(Object.assign({ said: "", note: "", hist: (s.hist || []).slice(0, -1) }, prev[stage] || {}), true); }}>{T("Change my last answer", "Cambiar mi última respuesta")}</button> : null}
 
-            {stage === "done" && !typing && !s.qa ? (
+            {stage === "done" && !typing && !s.qa && !s.reviewOpen && s.quoteReviewed ? (
               !results ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Checking partners in ", "Buscando socios en ") + stName(s.st) + "…"}<div className="dots"><i /><i /><i /></div></div></div>
               : results.length ? (
                 <>
@@ -1255,8 +1502,8 @@ export default function AIInsureGenie() {
                 </>
               ) : (
                 <>
-                  <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{T("I don't have a quoting partner for ", "Todavía no tengo un socio de cotización para ") + stName(s.st) + T(" yet. I can email you as soon as one covers your state, or a licensed agent can call you.", ". Puedo avisarle por correo en cuanto uno cubra su estado, o un agente con licencia puede llamarle.")}</div></div>
-                  <EmailCard profile={toProfile(s)} source="no_match" />
+                  <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{s.vehicleStatus === "no_vehicle" ? T("Our quoting partners don't offer non-owner policies online yet. A licensed agent can quote a non-owner policy (and file your SR-22 if you need one), or I can email you when an online option is available in ", "Nuestros socios aún no ofrecen pólizas sin vehículo en línea. Un agente con licencia puede cotizarle una (y presentar su SR-22 si lo necesita), o puedo avisarle por correo cuando haya una opción en línea en ") + stName(s.st) + "." : T("I don't have a quoting partner for ", "Todavía no tengo un socio de cotización para ") + stName(s.st) + T(" yet. I can email you as soon as one covers your state, or a licensed agent can call you.", ". Puedo avisarle por correo en cuanto uno cubra su estado, o un agente con licencia puede llamarle.")}</div></div>
+                  <EmailCard profile={toProfile(s)} source={s.vehicleStatus === "no_vehicle" ? "no_match_nonowner" : "no_match"} />
                   <button type="button" className="p2" style={{ marginLeft: 36 }} onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} size={17} />{T("Talk to a licensed agent", "Hablar con un agente con licencia")}</button>
                 </>
               )

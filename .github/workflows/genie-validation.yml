@@ -1,0 +1,178 @@
+name: Genie 2.0 validation
+on:
+  pull_request:
+    branches: [cloudflare]
+    paths:
+      - 'backend/lib/genie-*.js'
+      - 'backend/test/genie-*.test.js'
+      - 'backend/test/trustedform-integration.test.js'
+      - 'backend/test/genie-chat-contract.test.js'
+      - 'backend/api/leads.js'
+      - 'backend/api/callback.js'
+      - 'dashboard/**'
+      - 'chatbot/**'
+      - 'backend/api/chat.js'
+      - 'backend/api/plan.js'
+      - 'backend/worker.js'
+      - 'backend/test/genie-worker-router.test.cjs'
+      - 'backend/wrangler.jsonc'
+      - 'backend/staging-worker.js'
+      - 'backend/test/genie-staging-api.test.cjs'
+      - '.github/workflows/genie-validation.yml'
+  workflow_dispatch:
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test Genie logic
+        run: node --test backend/test/genie-*.test.js backend/test/trustedform-integration.test.js chatbot/test/genie-flow.test.js chatbot/test/genie-journeys.test.js
+  production-api-dry-run:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compile production API without deploying
+        run: |
+          npx --yes wrangler@4.167.0 deploy --dry-run --outdir dist
+          test -s dist/worker.js
+        working-directory: backend
+      - name: Test compiled Worker inside isolated local Cloudflare runtime
+        run: |
+          npx --yes wrangler@4.167.0 dev --local --ip 127.0.0.1 --port 8799 --persist-to /tmp/genie-local-d1 > /tmp/genie-local-worker.log 2>&1 &
+          WORKER_PID=$!
+          trap 'kill $WORKER_PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 35); do
+            if curl -fsS http://127.0.0.1:8799/api/geo >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          cat /tmp/genie-local-worker.log
+          node --test test/genie-worker-router.test.cjs
+        working-directory: backend
+  production-live-readonly-smoke:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Verify production API health without lead submissions
+        run: |
+          set -euo pipefail
+          for host in https://api.aiinsuregenie.com https://aiinsuregenie-api.in-naushco.workers.dev; do
+            response=$(curl --fail-with-body --silent --show-error --max-time 20 --retry 2 --retry-delay 2 "$host/api/health")
+            printf '%s' "$response" | node -e "let s=''; process.stdin.on('data',x=>s+=x).on('end',()=>{const j=JSON.parse(s);if(j.status!=='ok') process.exit(1);console.log('Health verified for current Worker')})"
+          done
+          curl --fail-with-body --silent --show-error --max-time 20 -X OPTIONS \
+            -H 'Origin: https://chat.aiinsuregenie.com' \
+            -H 'Access-Control-Request-Method: POST' \
+            https://api.aiinsuregenie.com/api/chat > /dev/null
+  dashboard-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+        working-directory: dashboard
+      - name: Build dashboard
+        run: npm run build
+        working-directory: dashboard
+  chatbot-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: chatbot/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+        working-directory: chatbot
+      - name: Build chatbot
+        run: npm run build
+        working-directory: chatbot
+  browser-smoke:
+    # Pin supported image: ubuntu-latest currently resolves to 26.04, unsupported by Playwright.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: chatbot/package-lock.json
+      - name: Install chatbot dependencies
+        run: npm ci
+        working-directory: chatbot
+      - name: Install isolated browser test runner
+        run: npm install --no-save --package-lock=false @playwright/test@1.58.2
+        working-directory: chatbot
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: chatbot
+      - name: Exercise mock-backed browser journeys
+        run: npx playwright test --config=playwright.config.cjs
+        working-directory: chatbot
+
+  publish-staging-assets:
+    concurrency:
+      group: genie-staging-assets
+      cancel-in-progress: true
+    # Only our trusted feature branch may publish compiled assets for isolated preview.
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feature/genie-2-intelligence' }}
+    needs: [backend-tests, production-api-dry-run, dashboard-build, chatbot-build, browser-smoke]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: chatbot/package-lock.json
+      - name: Install and build actual Genie frontend
+        run: npm ci && npm run build
+        working-directory: chatbot
+      - name: Bundle isolated Genie staging API
+        run: |
+          mkdir -p backend/dist
+          npx --yes --package=esbuild@0.25.12 esbuild backend/staging-worker.js --bundle --format=esm --platform=browser --target=es2022 --outfile=backend/dist/staging-worker.js
+          test -s backend/dist/staging-worker.js
+      - name: Prepare production API bundle without deploying it
+        run: |
+          npx --yes wrangler@4.167.0 deploy --dry-run --outdir dist
+          test -s dist/worker.js
+        working-directory: backend
+      - name: Verify staging API and synthetic consent contract
+        run: node --test backend/test/genie-staging-api.test.cjs
+      - name: Store build in isolated preview-assets branch
+        run: |
+          tar -C chatbot/dist -cf /tmp/genie-staging-dist.tar .
+          cp backend/dist/staging-worker.js /tmp/genie-staging-worker.js
+          cp backend/dist/worker.js /tmp/genie-production-api-bundle.js
+          git fetch origin genie-staging-assets
+          git checkout -B genie-staging-assets origin/genie-staging-assets
+          mkdir -p chatbot/dist
+          find chatbot/dist -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+          tar -C chatbot/dist -xf /tmp/genie-staging-dist.tar
+          mkdir -p backend/dist
+          cp /tmp/genie-staging-worker.js backend/dist/staging-worker.js
+          cp /tmp/genie-production-api-bundle.js backend/dist/worker.js
+          git add -f chatbot/dist backend/dist/staging-worker.js backend/dist/worker.js
+          if git diff --cached --quiet; then
+            echo "Preview assets already current"
+            exit 0
+          fi
+          git -c user.name="genie-staging-bot" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "build: stage Genie preview frontend"
+          git push origin HEAD:genie-staging-assets

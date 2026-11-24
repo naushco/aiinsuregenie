@@ -4,6 +4,8 @@
 
 const { cors } = require("../lib/http");
 const MINIMUMS = require("../lib/minimums.js");
+const { factsBlock } = require("../lib/facts.js");
+const { buildIntelligence } = require("../lib/genie-runtime");
 
 // Legal minimums come only from the checked table, never from the model's memory.
 function minimumsBlock() {
@@ -111,8 +113,13 @@ module.exports = async function handler(req, res) {
       cleaned.push({ role: "user", content: message });
     }
 
-    var system = SYSTEM_PROMPT + cleanProfile(body.profile) + cleanResults(body.results) + minimumsBlock();
+    var system = SYSTEM_PROMPT + cleanProfile(body.profile) + cleanResults(body.results) + minimumsBlock() + factsBlock();
     system += "\n\nSTYLE: Answer in under 120 words. No greetings like \"Great question\". If you use a number example, check the arithmetic (e.g. $3,000 damage with a $500 deductible: you pay $500, insurer pays $2,500).";
+    // Genie 2.2: advisors give practical guidance first; quote journeys can
+    // prioritize fast qualification. This never authorizes contact collection.
+    if (req.genieV2Enabled === true && body.genie_v2 === true && body.journey === "advisor") {
+      system += "\n\nADVISOR MODE: The visitor is here for helpful insurance advice, not a lead form. Address the actual question first; acknowledge important context without assuming unconfirmed details. Explain relevant tradeoffs and actionable next steps in simple language. If useful, ask at most one natural, situation-specific follow-up question. Never recite a qualification checklist, ask for contact details, claim to know a carrier's eligibility or rate, or push a quote unless the visitor expresses shopping intent. The quote interface is available separately whenever the visitor chooses it.";
+    }
     if (body.lang === "es") system += "\n\nLANGUAGE: The user is browsing in Spanish. Always reply in clear, neutral Latin American Spanish, using \"usted\". Keep insurance terms like SR-22 as-is.";
 
     var controller = new AbortController();
@@ -146,6 +153,10 @@ module.exports = async function handler(req, res) {
     (data.content || []).forEach(function (b) { if (b.type === "text" && b.text) text += b.text; });
     if (!text) return res.status(502).json({ error: "No answer generated." });
 
+    // Explicit opt-in AND server-side feature flag; existing chat response is unchanged otherwise.
+    if (req.genieV2Enabled === true && body.genie_v2 === true) {
+      return res.status(200).json({ answer: text, genie_v2: buildIntelligence(body.genie_facts, message) });
+    }
     return res.status(200).json({ answer: text });
   } catch (err) {
     console.error("Chat error:", err && err.message);
