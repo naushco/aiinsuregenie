@@ -1011,7 +1011,7 @@ export default function AIInsureGenie() {
         // Reconcile only the current qualification step; never overwrite the
         // visitor's confirmed answers, consent, results or raw conversation.
         if (selected === cur.stage) return cur;
-        return Object.assign({}, cur, { stage: selected, results: selected === "done" ? cur.results : null });
+        return Object.assign({}, cur, { stage: selected, reviewOpen: selected === "done" && !cur.quoteReviewed, results: selected === "done" ? cur.results : null });
       });
     }).catch(function () { /* retain the equivalent local plan */ });
   };
@@ -1124,7 +1124,7 @@ export default function AIInsureGenie() {
   };
 
   // A question typed or tapped at any point: answer it, keep the match where it is.
-  var ask = function (text, explicitlySelected) {
+  var ask = function (text, explicitlySelected, quoteAfterConfirmation) {
     // Only explicit first-person declarations can populate quote qualification.
     // Questions, hypothetical scenarios and guide topics are not personal facts.
     var cur = sRef.current, merge = {}, noted = [];
@@ -1137,6 +1137,7 @@ export default function AIInsureGenie() {
     }
     var qa = { q: text, a: null, noted: noted.join(", "), agent: /(dui|dwi|sr-?22|accident|ticket|rate|price|cost|raise|multa|accidente|precio)/i.test(text) };
     qa.candidate = merge; // Pending until visitor explicitly confirms before quote qualification.
+    qa.quoteAfterConfirmation = !!quoteAfterConfirmation;
     setS(Object.assign({}, cur, { qa: qa, askMore: false }));
     track("question_asked", { stage: cur.stage }, false);
     getAnswer(text, toProfile(cur), Array.isArray(cur.results) ? cur.results : [], genieConfirmed(cur)).then(function (response) {
@@ -1162,6 +1163,19 @@ export default function AIInsureGenie() {
     var fromStart = cur.stage === "start";
     var confirmed = cur.qa && cur.qa.candidate ? cur.qa.candidate : {};
     var merged = Object.assign({}, cur, confirmed);
+    if (cur.qa && cur.qa.quoteAfterConfirmation) {
+      go(Object.assign({}, confirmed, { journey: "quote", qa: null, askMore: false, stage: fromStart ? "start" : cur.stage,
+        reviewOpen: true, quoteReviewed: false, results: null,
+        note: T("Check these details before we prepare your quote options.", "Revise estos datos antes de preparar su cotización.") }), true);
+      return;
+    }
+    if (cur.journey === "advisor") {
+      go(Object.assign({}, confirmed, { qa: null, askMore: true, journey: "advisor", stage: "start", said: "",
+        reviewOpen: false, quoteReviewed: false, note: Object.keys(confirmed).length
+          ? T("Thanks. I've added your confirmed details. What else can I help you understand?", "Gracias. He añadido sus datos confirmados. ¿En qué más puedo ayudarle?")
+          : T("I'm here to help. Ask another question or explore quote options whenever you're ready.", "Estoy aquí para ayudarle. Pregunte o explore cotizaciones cuando quiera.") }), true);
+      return;
+    }
     go(Object.assign({}, confirmed, { qa: null, askMore: false, stage: fromStart || Object.keys(confirmed).length ? nextStage(merged) : cur.stage, said: fromStart ? (cur.qa ? cur.qa.q : "") : cur.said, note: fromStart && cur.qa && cur.qa.noted ? T("Confirmed: ", "Confirmado: ") + cur.qa.noted + "." : "" }));
   };
 
@@ -1169,7 +1183,15 @@ export default function AIInsureGenie() {
   var send = function () {
     var text = draft.trim(); if (!text || typing) return; setDraft("");
     var cur = sRef.current;
-    // Educational guide conversations must confirm personal facts before quote qualification.
+    // Explicit quote requests can begin from either journey. Unverified facts
+    // must be confirmed before the insurance profile review.
+    if (quoteIntent(text)) {
+      var quoteFacts = extract(text, cur).got;
+      if (Object.keys(quoteFacts).length) ask(text, quoteFacts, true);
+      else beginQuote();
+      return;
+    }
+    if (cur.journey === "advisor") { ask(text); return; }
     if (cur.stage === "start" && entryWelcome && entryWelcome.kind === "guide") { ask(text); return; }
     if (cur.stage === "make" && cur.otherMake && !isQuestion(text, "qualifying", "vmake")) { var mk = text.charAt(0).toUpperCase() + text.slice(1); answer(mk, { make: mk.slice(0, 30), model: "unsure" }); return; }
     if (isQuestion(text, "qualifying", null)) { ask(text); return; }
@@ -1192,8 +1214,13 @@ export default function AIInsureGenie() {
       try {
         var saved = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
         if (!DO_NOT_SELL && saved && saved.s && saved.t <= Date.now() && Date.now() - saved.t < 7 * 864e5 && (stepOf(saved.s.stage) >= 2 || saved.s.st || saved.s.sitDone || saved.s.make || saved.s.pri)) {
-          setS(Object.assign(fresh(), saved.s, { stage: nextStage(saved.s), said: "", note: saved.s.stage === "done" ? T("Welcome back! Your match is still here.", "¡Bienvenido de nuevo! Su opción sigue aquí.") : T("Welcome back! Let's pick up where you left off.", "¡Bienvenido de nuevo! Sigamos donde lo dejó.") }));
-          if (saved.s.stage === "done") showMatch(saved.s);
+          var savedJourney = saved.s.journey === "quote" ? "quote" : "advisor";
+          var restored = Object.assign(fresh(), saved.s, { journey: savedJourney,
+            stage: savedJourney === "quote" ? nextStage(saved.s) : "start",
+            reviewOpen: savedJourney === "quote" && nextStage(saved.s) === "done",
+            quoteReviewed: false, results: null, said: "",
+            note: T("Welcome back! Your confirmed details are saved.", "¡Bienvenido de nuevo! Sus datos confirmados están guardados.") });
+          setS(restored);
           track("chat_resumed", { stage: saved.s.stage }, true);
         }
       } catch (e) {}
@@ -1203,7 +1230,7 @@ export default function AIInsureGenie() {
     try { window.history.replaceState(null, "", window.location.pathname + window.location.search); } catch (e) {}
     var start = p.get("start"), q = (p.get("q") || "").trim().slice(0, 200);
     var t = setTimeout(function () {
-      var o = Object.assign(fresh(), { stage: "start" }), said = [];
+      var o = Object.assign(fresh(), { stage: "start", journey: start === "quote" ? "quote" : "advisor" }), said = [];
       var stN = (p.get("state") || "").trim(), ab = STATE_ABBR[stN.toLowerCase()];
       if (ab) { o.st = ab; said.push(stName(ab)); }
       var goal = p.get("goal");
