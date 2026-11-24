@@ -67,3 +67,34 @@
 .aig3 .aig3-review .aig3-profile-meter{margin:16px 0 8px}
 @media(max-width:799px){.aig3 .aig3-profile{position:absolute;inset:0 0 0 auto;z-index:10;width:min(100%,390px);box-shadow:-12px 0 36px rgba(11,42,91,.12)}}
 @media(max-width:480px){.aig3 .aig3-review{padding:16px}.aig3 .aig3-review h2{font-size:24px}.aig3 .hd-name{font-size:14px}.aig3 .hd-sub{display:none}.aig3 .hd-txt{min-width:112px}.aig3 .hd-in{gap:3px}.aig3 .ib.call{margin:0}.aig3 .aig3-profile{width:100%}}
+
+.aig3 .aig3-welcome-label{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;color:var(--navy)}
+.aig3 .aig3-welcome-label img{width:38px;height:38px}
+.aig3 .aig3-entry{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.aig3 .aig3-entry p{grid-column:1/-1;color:#52627d;font-size:13px;line-height:1.5}
+.aig3 .aig3-topic-heading{font-size:14px;font-weight:700;color:#52627d;margin:8px 0 -10px}
+.aig3 .aig3-topics .st:first-child{background:#fff;border:1px solid #dce3ec;color:var(--ink);font-weight:500}
+.aig3 .aig3-kicker{display:block;font-size:12px;font-weight:700;letter-spacing:.04em;line-height:1.5;text-transform:uppercase;color:#52627d;margin-bottom:12px}
+.aig3-focused .log-in{margin-top:0;margin-bottom:auto;padding-top:clamp(32px,6vh,64px);max-width:680px}
+.aig3-focused .aig3-question .ga{display:none}
+.aig3-focused .aig3-question .gt{font-size:clamp(26px,4vw,36px);line-height:1.2}
+.aig3-focused .ans,.aig3-focused .selwrap,.aig3-focused .txt{padding-left:0}
+.aig3-focused .back{margin-left:0;min-height:44px}
+.aig3-focused .log-in>.p1{margin-left:0!important}
+.aig3-focused .aig3-answers:not(.row){grid-template-columns:1fr}
+.aig3-focused .aig3-answers .c{min-height:56px}
+.aig3 .aig3-insight{margin-left:40px;padding:20px;border:1px solid #dce3ec;border-radius:16px;background:#f8fafc}
+.aig3 .aig3-insight h2{font-size:20px;color:var(--navy)}
+.aig3 .aig3-insight ul{padding-left:20px;margin:14px 0;color:var(--ink2);font-size:15px;line-height:1.6}
+.aig3 .aig3-insight li+li{margin-top:8px}
+.aig3 .aig3-insight small{display:block;margin-top:12px;color:#52627d;line-height:1.5}
+.aig3 .aig3-insight .p2{width:100%;text-align:center;font-size:14px;padding:10px 14px}
+.aig3 .aig3-menu{position:absolute;right:16px;top:calc(100% + 6px);z-index:30;display:grid;width:245px;background:white;border:1px solid #dce3ec;border-radius:14px;padding:6px;box-shadow:0 8px 28px rgba(11,42,91,.14)}
+.aig3 .aig3-menu button,.aig3 .aig3-menu a{font:inherit;text-align:left;border:0;background:white;color:var(--navy);padding:12px;min-height:44px;cursor:pointer;border-radius:8px;text-decoration:none;font-size:14px}
+.aig3 .aig3-menu button:hover,.aig3 .aig3-menu a:hover{background:#eef3fb}
+.aig3 .hd-in{flex-wrap:nowrap}
+.aig3 .hd-txt{min-width:0}
+.aig3 .hd-name{font-size:clamp(14px,3.6vw,20px)}
+.aig3 .m-facts svg{color:#52627d}
+@media(max-width:480px){.aig3 .aig3-entry{grid-template-columns:1fr}.aig3 .aig3-insight{margin-left:0;padding:16px}.aig3 .hd-step{font-size:11px}.aig3 .hd-logo{width:26px;height:26px}.aig3 .hd-name{font-size:14px}.aig3 .aig3-quote-cta{font-size:12px;padding-inline:9px}.aig3 .aig3-profile-toggle{width:44px}.aig3 .hd-in{gap:2px}}
+@media(max-width:350px){.aig3 .hd-in{flex-wrap:wrap}}
