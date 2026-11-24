@@ -120,6 +120,14 @@ jobs:
       - name: Exercise mock-backed browser journeys
         run: npx playwright test --config=playwright.config.cjs
         working-directory: chatbot
+      - name: Retain screenshots and browser failure details
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-insuregenie-3-0-visual-qa
+          path: chatbot/test-results/
+          if-no-files-found: warn
+          retention-days: 14
 
   publish-staging-assets:
     concurrency:
