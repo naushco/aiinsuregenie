@@ -87,4 +87,5 @@ test("staging brain receives only confirmed facts, never unapproved candidates",
   await page.getByRole("button", { name: "Send" }).click();
   await expect.poll(() => messages.length, { timeout: 10000 }).toBe(2);
   expect(messages[1].confirmed.state).toBe("TX");
+  expect(messages[1].confirmed.urgency).toBe("within_week");
 });
