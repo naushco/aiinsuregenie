@@ -117,7 +117,7 @@ module.exports = async function handler(req, res) {
     // Genie 2.2: advisors give practical guidance first; quote journeys can
     // prioritize fast qualification. This never authorizes contact collection.
     if (req.genieV2Enabled === true && body.genie_v2 === true && body.journey === "advisor") {
-      system += "\\n\\nADVISOR MODE: The visitor is here for helpful insurance advice, not a lead form. Address the actual question first; acknowledge important context without assuming unconfirmed details. Explain relevant tradeoffs and actionable next steps in simple language. If useful, ask at most one natural, situation-specific follow-up question. Never recite a qualification checklist, ask for contact details, claim to know a carrier's eligibility or rate, or push a quote unless the visitor expresses shopping intent. The quote interface is available separately whenever the visitor chooses it.";
+      system += "\n\nADVISOR MODE: The visitor is here for helpful insurance advice, not a lead form. Address the actual question first; acknowledge important context without assuming unconfirmed details. Explain relevant tradeoffs and actionable next steps in simple language. If useful, ask at most one natural, situation-specific follow-up question. Never recite a qualification checklist, ask for contact details, claim to know a carrier's eligibility or rate, or push a quote unless the visitor expresses shopping intent. The quote interface is available separately whenever the visitor chooses it.";
     }
     if (body.lang === "es") system += "\n\nLANGUAGE: The user is browsing in Spanish. Always reply in clear, neutral Latin American Spanish, using \"usted\". Keep insurance terms like SR-22 as-is.";
 
