@@ -81,8 +81,10 @@ test("staging brain receives only confirmed facts, never unapproved candidates",
   await expect(page.getByRole("button", { name: "Confirm details and continue" })).toBeVisible();
   expect(messages[0]?.confirmed?.state || null).toBeNull();
   await page.getByRole("button", { name: "Confirm details and continue" }).click();
-  await page.getByPlaceholder("Ask anything about car insurance").fill("What is a deductible?");
+  // The quote stage briefly shows a typing transition. Do not submit into that pause.
+  await page.waitForTimeout(700);
+  await page.getByPlaceholder("Ask anything about car insurance").fill("Why might insurance cost more for drivers who park outside?");
   await page.getByRole("button", { name: "Send" }).click();
-  await expect.poll(() => messages.length).toBe(2);
+  await expect.poll(() => messages.length, { timeout: 10000 }).toBe(2);
   expect(messages[1].confirmed.state).toBe("TX");
 });
