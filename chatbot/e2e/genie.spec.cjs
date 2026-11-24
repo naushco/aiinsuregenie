@@ -2,6 +2,13 @@ const { test, expect } = require("@playwright/test");
 
 // Browser-level smoke tests never send any leads to ActiveProspect or real buyers.
 test.beforeEach(async ({ page }) => {
+  // CI exercises the gated Genie 2.0 interface without changing the checked-in
+  // operator flag. The public production configuration remains disabled.
+  await page.route("**/config.js", async route => {
+    const response = await route.fetch();
+    const body = (await response.text()) + "\nwindow.AIG_CONFIG.genieV2Enabled = true;\n";
+    await route.fulfill({ response, body });
+  });
   await page.route(/trustedform\.com/, route => route.abort());
   await page.route(/\/api\//, route => {
     const url = new URL(route.request().url());
@@ -88,4 +95,16 @@ test("staging brain receives only confirmed facts, never unapproved candidates",
   await expect.poll(() => messages.length, { timeout: 10000 }).toBe(2);
   expect(messages[1].confirmed.state).toBe("TX");
   expect(messages[1].confirmed.urgency).toBe("within_week");
+});
+
+test("without operator flag, actual legacy chatbot loads instead of Genie 2.0", async ({ page }) => {
+  await page.unroute("**/config.js");
+  await page.goto("/");
+  await expect.poll(() => page.evaluate(() => window.AIG_CONFIG?.genieV2Enabled)).toBe(false);
+  await expect(page.getByPlaceholder("Ask anything about car insurance")).toBeVisible();
+  const scripts = await page.locator("script[src]").evaluateAll(elements => elements.map(e => e.src));
+  expect(scripts.some(url => url.includes("config.js"))).toBe(true);
+  // The page offers no client-side flag override from query parameters.
+  await page.goto("/?genie_v2=1#start=guide&topic=coverage");
+  expect(await page.evaluate(() => window.AIG_CONFIG?.genieV2Enabled)).toBe(false);
 });
