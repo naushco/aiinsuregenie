@@ -12,6 +12,8 @@ on:
       - 'dashboard/**'
       - 'chatbot/**'
       - 'backend/api/chat.js'
+      - 'backend/worker.js'
+      - 'backend/wrangler.jsonc'
       - 'backend/staging-worker.js'
       - 'backend/test/genie-staging-api.test.cjs'
       - '.github/workflows/genie-validation.yml'
@@ -26,6 +28,18 @@ jobs:
           node-version: '22'
       - name: Test Genie logic
         run: node --test backend/test/genie-*.test.js backend/test/trustedform-integration.test.js
+  production-api-dry-run:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compile production API without deploying
+        run: |
+          npx --yes wrangler@4.50.0 deploy --dry-run --outdir dist
+          test -s dist/worker.js
+        working-directory: backend
   dashboard-build:
     runs-on: ubuntu-latest
     steps:
@@ -85,7 +99,7 @@ jobs:
       cancel-in-progress: true
     # Only our trusted feature branch may publish compiled assets for isolated preview.
     if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feature/genie-2-intelligence' }}
-    needs: [backend-tests, dashboard-build, chatbot-build, browser-smoke]
+    needs: [backend-tests, production-api-dry-run, dashboard-build, chatbot-build, browser-smoke]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
