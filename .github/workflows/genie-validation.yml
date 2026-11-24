@@ -38,12 +38,12 @@ jobs:
           node-version: '22'
       - name: Compile production API without deploying
         run: |
-          npx --yes wrangler@4.50.0 deploy --dry-run --outdir dist
+          npx --yes wrangler@4.167.0 deploy --dry-run --outdir dist
           test -s dist/worker.js
         working-directory: backend
       - name: Test compiled Worker inside isolated local Cloudflare runtime
         run: |
-          npx --yes wrangler@4.50.0 dev --local --ip 127.0.0.1 --port 8799 --persist-to /tmp/genie-local-d1 > /tmp/genie-local-worker.log 2>&1 &
+          npx --yes wrangler@4.167.0 dev --local --ip 127.0.0.1 --port 8799 --persist-to /tmp/genie-local-d1 > /tmp/genie-local-worker.log 2>&1 &
           WORKER_PID=$!
           trap 'kill $WORKER_PID 2>/dev/null || true' EXIT
           for i in $(seq 1 35); do
@@ -136,7 +136,7 @@ jobs:
           test -s backend/dist/staging-worker.js
       - name: Prepare production API bundle without deploying it
         run: |
-          npx --yes wrangler@4.50.0 deploy --dry-run --outdir dist
+          npx --yes wrangler@4.167.0 deploy --dry-run --outdir dist
           test -s dist/worker.js
         working-directory: backend
       - name: Verify staging API and synthetic consent contract
