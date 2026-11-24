@@ -112,3 +112,36 @@ test("without operator flag, actual legacy chatbot loads instead of Genie 2.0", 
   await page.goto("/?genie_v2=1#start=guide&topic=coverage");
   expect(await page.evaluate(() => window.AIG_CONFIG?.genieV2Enabled)).toBe(false);
 });
+
+test("Genie 2.1 skips irrelevant car questions for a confirmed non-owner", async ({page}) => {
+  await page.goto("/");
+  await page.getByRole("button",{name:"I need an SR-22"}).click();
+  await page.getByRole("button",{name:/Texas/}).first().click();
+  await expect(page.getByText(/Do you own, finance, or lease a vehicle/)).toBeVisible();
+  await page.getByRole("button",{name:"I need non-owner coverage"}).click();
+  await expect(page.getByText("What coverage do you need?")).toBeVisible();
+  await page.getByRole("button",{name:"I don't know"}).click();
+  await expect(page.getByText("When do you need it to start?")).toBeVisible();
+  await page.getByRole("button",{name:"Just comparing"}).click();
+  await expect.poll(()=>JSON.parse(localStorage.getItem("aig-chat-v2")||"null")?.s?.stage).toBe("done");
+  const saved=JSON.parse(await page.evaluate(()=>localStorage.getItem("aig-chat-v2")));
+  expect(saved.s.st).toBe("TX");
+  expect(saved.s.vehicleStatus).toBe("no_vehicle");
+  expect(saved.s.make).toBe("");
+  expect(saved.s.cov).toBe("unsure");
+  expect(saved.s.when).toBe("compare");
+  await page.reload();
+  expect((await page.evaluate(()=>JSON.parse(localStorage.getItem("aig-chat-v2")))).s.vehicleStatus).toBe("no_vehicle");
+});
+test("Genie 2.1 permits interruption without forgetting qualification state", async ({page}) => {
+  await page.goto("/");
+  await page.getByRole("button",{name:"I need an SR-22"}).click();
+  await page.getByRole("button",{name:/Texas/}).first().click();
+  await expect(page.getByText(/Do you own, finance, or lease a vehicle/)).toBeVisible();
+  await page.getByPlaceholder("Ask anything about car insurance").fill("What is non-owner insurance?");
+  await page.getByRole("button",{name:"Send"}).click();
+  await expect(page.getByText("Insurance rules vary by state. Ask about available options.")).toBeVisible();
+  await page.getByRole("button",{name:"Continue my match"}).click();
+  await expect(page.getByText(/Do you own, finance, or lease a vehicle/)).toBeVisible();
+  expect((await page.evaluate(()=>JSON.parse(localStorage.getItem("aig-chat-v2")))).s.sits).toContain("sr22");
+});
