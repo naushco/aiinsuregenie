@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, Fragment } from "react";
 import MINIMUMS from "./minimums.js";
+import { quoteIntent, hasConfirmedDetails, reviewProfile, profileReady, safeAttribution } from "./genie-journeys.js";
 import { confirmedFacts, localStage, stageFromPlan, candidateToWizard, candidateDescription } from "./genie-flow.js";
 
 var STORAGE_KEY = "aiinsuregenie-partners-v3";
@@ -433,9 +434,17 @@ var API_BASE = (typeof window !== "undefined" && window.AIG_CONFIG && window.AIG
 // Privacy-friendly event log: no cookies, no names, phones or emails. Only the event, the session ID,
 // and non-personal context (state, partner, campaign). Sent with sendBeacon so it never slows the chat.
 var UTM = (function () {
-  var q = {};
-  try { var u = new URLSearchParams(window.location.search); ["utm_source","utm_medium","utm_campaign","utm_content","pub"].forEach(function (k) { if (u.get(k)) q[k] = u.get(k).slice(0, 80); }); } catch (e) {}
-  return q;
+  // Keep first-party campaign IDs across advisor <-> quote switching and refresh,
+  // but never copy arbitrary query fields or contact data into analytics.
+  if (DO_NOT_SELL) {
+    try { sessionStorage.removeItem("aig-attribution-v1"); } catch (e) {}
+    return {};
+  }
+  var previous = {};
+  try { previous = JSON.parse(sessionStorage.getItem("aig-attribution-v1") || "{}"); } catch (e) {}
+  var attribution = safeAttribution(window.location.search, previous);
+  try { sessionStorage.setItem("aig-attribution-v1", JSON.stringify(attribution)); } catch (e) {}
+  return attribution;
 })();
 var sentOnce = {};
 function track(type, extra, once) {
@@ -933,7 +942,7 @@ function pageWelcome() {
 }
 
 function fresh() {
-  return { stage: "start", st: "", changing: false, sits: [], sitDone: false, vehicleStatus: "", make: "", model: "", year: "", cov: "", when: "", pri: "", carAge: "", hist: [], said: "", note: "", otherMake: false, qa: null, askMore: false, results: null, showAll: false, showEmail: "" };
+  return { journey: "advisor", reviewOpen: false, quoteReviewed: false, stage: "start", st: "", changing: false, sits: [], sitDone: false, vehicleStatus: "", make: "", model: "", year: "", cov: "", when: "", pri: "", carAge: "", hist: [], said: "", note: "", otherMake: false, qa: null, askMore: false, results: null, showAll: false, showEmail: "" };
 }
 
 export default function AIInsureGenie() {
@@ -972,10 +981,10 @@ export default function AIInsureGenie() {
     // Only confirmed qualification fields are persisted. Never persist raw advisor
     // questions, conversation history, unconfirmed candidates or partner results.
     if (DO_NOT_SELL) { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} return; } // honor GPC / opt-out and remove old progress
-    if (s.stage === "start" && !s.st && !s.sitDone && !s.make && !s.cov && !s.when && !s.pri) return;
+    if (s.stage === "start" && !hasConfirmedDetails(s)) return;
     try {
       var keep = {
-        stage: s.stage, st: s.st, sits: s.sits, sitDone: s.sitDone, vehicleStatus: s.vehicleStatus,
+        stage: s.stage, journey: s.journey, st: s.st, sits: s.sits, sitDone: s.sitDone, vehicleStatus: s.vehicleStatus,
         make: s.make, model: s.model, year: s.year, cov: s.cov,
         when: s.when, pri: s.pri, carAge: s.carAge
       };
@@ -988,7 +997,7 @@ export default function AIInsureGenie() {
   // deterministic local plan preserves usability on network failures.
   // Nothing from this endpoint is stored in D1, and it makes no model/buyer call.
   var syncPlan = function (proposed) {
-    if (!window.AIG_CONFIG?.genieV2Enabled || proposed.qa || proposed.stage === "start") return;
+    if (!window.AIG_CONFIG?.genieV2Enabled || proposed.qa || proposed.stage === "start" || proposed.reviewOpen) return;
     var stamp = JSON.stringify(genieConfirmed(proposed));
     var requestId = ++planRef.current;
     fetch(API_BASE + "/api/plan", {
@@ -997,7 +1006,7 @@ export default function AIInsureGenie() {
     }).then(function (r) { return r.ok ? r.json() : null; }).then(function (plan) {
       if (!plan || plan.version !== "2.1" || !plan.next || planRef.current !== requestId) return;
       setS(function (cur) {
-        if (cur.qa || JSON.stringify(genieConfirmed(cur)) !== stamp) return cur;
+        if (cur.qa || cur.reviewOpen || cur.journey !== "quote" || JSON.stringify(genieConfirmed(cur)) !== stamp) return cur;
         var selected = stageFromPlan(cur, plan.next, function (make) { return !!MODEL_LIST[make]; });
         // Reconcile only the current qualification step; never overwrite the
         // visitor's confirmed answers, consent, results or raw conversation.
@@ -1013,15 +1022,58 @@ export default function AIInsureGenie() {
     if (!quiet) { setTyping(true); clearTimeout(tRef.current); tRef.current = setTimeout(function () { setTyping(false); }, 500); }
     var cur0 = sRef.current;
     if (next.stage !== cur0.stage) track("step_answered", { step: cur0.stage, state: next.st || null });
-    if (next.stage === "done" && cur0.stage !== "done") track("qualification_complete", { version: "2.1", vehicle_confirmed: !!next.vehicleStatus, coverage_confirmed: !!next.cov }, true);
+    if (next.stage === "done" && cur0.stage !== "done") track("qualification_complete", { version: "2.2", journey: next.journey, vehicle_confirmed: !!next.vehicleStatus, coverage_confirmed: !!next.cov }, true);
     if (next.stage !== cur0.stage && o.said) next.hist = (cur0.hist || []).concat([{ q: QH[cur0.stage] || null, a: o.said }]).slice(-12);
-    if (next.stage === "done" && !next.results) next = Object.assign(next, { results: "loading" });
+    // No partner handoff until the visitor reviews the insurance profile.
+    if (next.stage === "done" && !next.quoteReviewed) next = Object.assign(next, { reviewOpen: true, results: null });
+    if (next.stage === "done" && next.quoteReviewed && !next.results) next = Object.assign(next, { results: "loading" });
     setS(next);
     if (next.results === "loading") showMatch(next);
-    syncPlan(next);
+    if (next.journey === "quote") syncPlan(next);
   };
-  var answer = function (said, o) { var n = Object.assign({}, sRef.current, o); go(Object.assign({ said: said, note: "", otherMake: false }, o, { stage: nextStage(n) })); };
+  var answer = function (said, o) { var n = Object.assign({}, sRef.current, o); go(Object.assign({ said: said, note: "", otherMake: false }, o, { stage: nextStage(n), journey: "quote" })); };
 
+  // The shared summary is presented before quote qualification or partner
+  // handoff. Review never submits a lead, and advisory facts remain editable.
+  var beginQuote = function () {
+    var cur = sRef.current;
+    if (cur.qa && cur.qa.candidate && Object.keys(cur.qa.candidate).length) {
+      track("quote_requested_pending_confirmation", { journey: cur.journey }, false);
+      return; // the confirmation card must be addressed first
+    }
+    track("quote_requested", { origin: cur.journey }, false);
+    go({ journey: "quote", qa: null, askMore: false, reviewOpen: true, quoteReviewed: false,
+      note: T("Please review what I understood before we look at quoting options.", "Revise los datos antes de explorar cotizaciones.") }, true);
+  };
+  var editReviewField = function (field) {
+    var cleared = {};
+    var toStage = { st: "state", sits: "sit", vehicleStatus: "vehicle", car: "make", cov: "cov", when: "when", pri: "cov" }[field] || "state";
+    if (field === "st") cleared = { st: "", changing: true };
+    if (field === "sits") cleared = { sitDone: false };
+    if (field === "vehicleStatus") cleared = { vehicleStatus: "", make: "", model: "", year: "", carAge: "" };
+    if (field === "car") cleared = { make: "", model: "", year: "", carAge: "" };
+    if (field === "cov") cleared = { cov: "" };
+    if (field === "when") cleared = { when: "" };
+    if (field === "pri") cleared = { pri: "", cov: "" };
+    go(Object.assign({ journey: "quote", reviewOpen: false, quoteReviewed: false,
+      stage: toStage, results: null, qa: null, note: "" }, cleared), true);
+  };
+  var continueReviewed = function () {
+    var cur = sRef.current;
+    if (!profileReady(cur, function (make) { return !!MODEL_LIST[make]; })) {
+      track("quote_review_continue", { complete: false }, false);
+      go({ reviewOpen: false, quoteReviewed: false, journey: "quote", stage: nextStage(cur), results: null,
+        note: T("I'll ask only for the missing information.", "Solo preguntaré por los datos que faltan.") }, true);
+      return;
+    }
+    track("quote_review_confirmed", { complete: true }, false);
+    go({ journey: "quote", reviewOpen: false, quoteReviewed: true, stage: "done", results: null, note: "" }, true);
+  };
+  var resumeAdvice = function () {
+    track("quote_to_advisor", { stage: sRef.current.stage }, false);
+    go({ journey: "advisor", reviewOpen: false, quoteReviewed: false, stage: "start", qa: null, askMore: true,
+      results: null, note: T("Ask me anything about auto insurance. Your confirmed details are kept for when you want quotes.", "Pregúnteme sobre seguros. Conservamos sus datos confirmados para cuando quiera cotizaciones.") }, true);
+  };
   var showMatch = async function (n) {
     // No connected buyer is verified to offer non-owner policies. Do not
     // present an ordinary vehicle-policy partner as eligible for this case.
