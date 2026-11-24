@@ -17,7 +17,7 @@ export default function QuoteReview({profile,stateName,hasModels,onEdit,onContin
     <dl>{fields.map(f=><div key={f.key} className="aig3-profile-row"><div><dt>{es?labels[f.key]||f.label:f.label}</dt><dd>{value(f)}</dd></div><button type="button" className="lk" aria-label={t("Change "+f.label,"Cambiar "+(labels[f.key]||f.label))} onClick={()=>onEdit(f.key)}>{t("Edit","Editar")}</button></div>)}</dl>
     <p>{complete?t("Your confirmed information is ready for a quoting-partner search.","Sus datos confirmados están listos para buscar socios."):t("We will ask only for the missing details.","Solo preguntaremos por los datos faltantes.")} {t("This is not a price quote.","Esto no es una cotización de precio.")}</p>
     <button type="button" className="p1" onClick={onContinue}>{complete?t("Confirm and view quoting options","Confirmar y ver opciones"):t("Continue with quote questions","Continuar con preguntas")}</button>
-    <button type="button" className="p2" style={{marginTop:10}} onClick={onAdvice}>{t("Keep talking with Genie","Seguir hablando con Genie")}</button>
+    <button type="button" className="p2" style={{marginTop:10}} onClick={onAdvice}>{t("Keep talking with AI InsureGenie","Seguir hablando con AI InsureGenie")}</button>
     <p className="fine">{t("Nothing is sent to an insurance buyer from this review. Contact requests require separate consent. Actual prices and eligibility are determined by the provider.","No enviamos datos a compradores de seguros en esta revisión. Las solicitudes de contacto requieren consentimiento separado. El proveedor determina los precios y la elegibilidad.")}</p>
   </section>;
 }
