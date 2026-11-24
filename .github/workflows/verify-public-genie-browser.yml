@@ -1,0 +1,61 @@
+name: Browser smoke — public Genie 2.0
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/verify-public-genie-browser.yml']
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/genie-2-public-20261124
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: chatbot/package-lock.json
+      - run: npm ci && npm install --no-save --package-lock=false @playwright/test@1.58.2
+        working-directory: chatbot
+      - run: npx playwright install --with-deps chromium
+        working-directory: chatbot
+      - name: Exercise live chatbot without submitting a lead
+        working-directory: chatbot
+        run: |
+          set -euo pipefail
+          cat > live-public.config.cjs <<'CONFIG'
+          const { defineConfig } = require('@playwright/test');
+          module.exports = defineConfig({testDir:'./e2e',timeout:60000,workers:1,retries:0,use:{baseURL:'https://chat.aiinsuregenie.com',browserName:'chromium',trace:'retain-on-failure'}});
+          CONFIG
+          cat > e2e/live-public.spec.cjs <<'TEST'
+          const {test,expect} = require('@playwright/test');
+          test.beforeEach(async ({page}) => {
+            await page.route(/\/api\/(leads|callback|subscribe|event)(\?|$)/, async route => { throw new Error('Live browser smoke attempted an outbound lead/event write'); });
+            await page.route(/trustedform\.com/, route => route.abort());
+          });
+          test('Public Genie 2.0 appears and saves only structured SR-22 state', async ({page}) => {
+            await page.goto('/');
+            await expect.poll(()=>page.evaluate(()=>window.AIG_CONFIG?.genieV2Enabled)).toBe(true);
+            await expect(page.locator('#xxTrustedFormCertUrl')).toHaveCount(1);
+            await expect(page.getByRole('button',{name:'I need an SR-22'})).toBeVisible();
+            await page.getByRole('button',{name:'I need an SR-22'}).click();
+            await expect.poll(()=>page.evaluate(()=>localStorage.getItem('aig-chat-v2'))).not.toBeNull();
+            const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('aig-chat-v2')));
+            expect(saved.s.sits).toContain('sr22');
+            expect(JSON.stringify(saved.s)).not.toMatch(/email|phone|history|transcript/i);
+          });
+          test('Natural-language statement requires confirmation and sends Genie backend flag', async ({page}) => {
+            const payloads=[];
+            page.on('request',r=>{if(r.url().includes('/api/chat')&&r.method()==='POST'){try{payloads.push(r.postDataJSON());}catch{}}});
+            await page.goto('/#start=guide&topic=coverage');
+            await page.getByPlaceholder('Ask anything about car insurance').fill("I'm in Texas and need insurance this week.");
+            await page.getByRole('button',{name:'Send'}).click();
+            await expect(page.getByRole('button',{name:'Confirm details and continue'})).toBeVisible({timeout:45000});
+            expect(payloads.length).toBeGreaterThan(0);
+            expect(payloads[0].genie_v2).toBe(true);
+            expect(payloads[0].genie_facts.state).toBe(null);
+          });
+          TEST
+          npx playwright test e2e/live-public.spec.cjs --config=live-public.config.cjs --reporter=line
