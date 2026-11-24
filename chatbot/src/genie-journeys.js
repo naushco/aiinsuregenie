@@ -37,6 +37,26 @@ export function profileReady(s, hasModels=()=>false) {
   return !!((v.make||v.carAge)&&v.year&&(!hasModels(v.make)||v.model));
 }
 
+// This measures structured *completeness*, not conversion probability, quote
+// price, underwriting eligibility or consumer value. No PII or raw text.
+export function qualificationSummary(s,hasModels=()=>false) {
+  const v=s||{};
+  const required=["st","sits","vehicleStatus","cov","when"];
+  if(v.vehicleStatus && v.vehicleStatus!=="no_vehicle") required.push("car");
+  const rows=reviewProfile(v);
+  const completeFields=required.filter(key=>rows.some(row=>row.key===key && row.ready && (key!=="car" || (!!v.year && (!hasModels(v.make)||!!v.model)))));
+  const unconfirmed=required.filter(key=>!completeFields.includes(key));
+  return {
+    ready: profileReady(v,hasModels),
+    confirmed_count: completeFields.length,
+    required_count: required.length,
+    missing_fields: unconfirmed,
+    situation: v.sitDone && Array.isArray(v.sits) ? v.sits.filter(key=>key!=="none" && Object.prototype.hasOwnProperty.call(RISK_LABELS,key)) : [],
+    urgency: WHEN_LABELS[v.when] || null,
+    buyer_routing:"not_configured"
+  };
+}
+
 // Attribution is *session-scoped* and only used for campaign reconciliation;
 // never store contact fields or raw conversation as metadata.
 // Click IDs remain first-party session attribution; do not automatically pass
