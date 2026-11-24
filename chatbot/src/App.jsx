@@ -242,9 +242,16 @@ async function aiAnswer(msg, profile, results, confirmed) {
     results: (results || []).map(function (r) { return { n: r.n }; }),
     lang: LANG
   };
-  // Only the isolated staging API receives the explicit confirmed/candidate split.
-  if (typeof window !== "undefined" && window.AIG_CONFIG && window.AIG_CONFIG.staging)
-    payload.confirmed = confirmed || {};
+  // The production brain is always opt-in twice: a deployment-only frontend flag,
+  // plus a separate server-side Cloudflare Worker flag. Staging sends its own
+  // confirmed payload for deterministic isolated testing.
+  if (typeof window !== "undefined" && window.AIG_CONFIG) {
+    if (window.AIG_CONFIG.staging) payload.confirmed = confirmed || {};
+    else if (window.AIG_CONFIG.genieV2Enabled === true) {
+      payload.genie_v2 = true;
+      payload.genie_facts = confirmed || {};
+    }
+  }
 
   // 1) Production path: your secure backend proxy
   try {
