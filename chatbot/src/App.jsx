@@ -1341,6 +1341,8 @@ export default function AIInsureGenie() {
             <img className="hd-logo" src={LOGO} alt="" />
             <div className="hd-txt"><span className="hd-name pj">Genie</span><span className="hd-sub">{sub}</span></div>
             {step >= 1 ? <span className="hd-step">{stage === "done" ? T("Done", "Listo") : step + " / 4"}</span> : null}
+            {s.journey === "quote" && !s.reviewOpen ? <button type="button" className="ib" aria-label={T("Ask Genie", "Preguntar a Genie")} title={T("Ask Genie about insurance", "Preguntar a Genie")} onClick={resumeAdvice}><Svg d={I_INFO} /></button> : null}
+            {s.journey === "advisor" && hasConfirmedDetails(s) && !s.qa ? <button type="button" className="ib" aria-label={T("Get quote", "Obtener cotización")} title={T("Review my quote profile", "Revisar datos de cotización")} onClick={beginQuote}><Svg d={I_CHECK}/></button> : null}
             <button type="button" className="ib call" aria-label={T("Talk to a licensed agent", "Hablar con un agente con licencia")} onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} /></button>
             <button type="button" className="ib" aria-label={T("Minimise chat", "Minimizar el chat")} onClick={goHome}><Svg d={<path d="M6 9l6 6 6-6" />} size={22} sw={2} /></button>
             <button type="button" className="ib" aria-label={T("Close chat", "Cerrar el chat")} onClick={askClose}><Svg d={<path d="M6 6l12 12M18 6L6 18" />} size={20} sw={2} /></button>
