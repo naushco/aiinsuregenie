@@ -2,18 +2,12 @@
 // Read-only or OPTIONS requests; no D1, secrets, partner calls, or external network.
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
-const built = path.resolve(__dirname, "../dist/worker.js");
-const workerPromise = import("data:text/javascript;base64," + fs.readFileSync(built).toString("base64")).then(m => m.default);
-
+// This suite runs against wrangler dev --local (local D1 only), not production.
 async function request(pathname, method = "GET") {
-  const worker = await workerPromise;
-  const request = new Request("https://api.aiinsuregenie.com" + pathname, {
+  return fetch("http://127.0.0.1:8799" + pathname, {
     method,
     headers: { Origin: "https://chat.aiinsuregenie.com" }
   });
-  return worker.fetch(request, {}, {});
 }
 
 test("the compiled production Worker resolves health and root routes", async () => {
