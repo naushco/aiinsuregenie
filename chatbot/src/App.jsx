@@ -237,13 +237,14 @@ function safeProfile(p) {
   return out;
 }
 
-async function aiAnswer(msg, profile, results, confirmed) {
+async function aiAnswer(msg, profile, results, confirmed, journey) {
   var payload = {
     message: msg,
     history: convoHistory.slice(-8),
     profile: safeProfile(profile),
     results: (results || []).map(function (r) { return { n: r.n }; }),
-    lang: LANG
+    lang: LANG,
+    journey: journey === "advisor" ? "advisor" : "quote"
   };
   // The production brain is always opt-in twice: a deployment-only frontend flag,
   // plus a separate server-side Cloudflare Worker flag. Staging sends its own
@@ -274,10 +275,10 @@ async function aiAnswer(msg, profile, results, confirmed) {
   return null;
 }
 
-async function getAnswer(text, profile, results, confirmed) {
+async function getAnswer(text, profile, results, confirmed, journey) {
   var mins = minimumsAnswer(text, profile);
   if (mins) return { answer: mins, intelligence: null };
-  var result = await aiAnswer(text, profile, results, confirmed);
+  var result = await aiAnswer(text, profile, results, confirmed, journey);
   var answer = result && result.answer ? result.answer : (typeof result === "string" ? result : staticAnswer(text));
   if (!answer) answer = T("Sorry, I couldn't answer that just now. Try asking another way, tap **Get instant quote** to find your match, or talk to a licensed agent.", "Perdón, no pude responder eso ahora. Pruebe a preguntar de otra forma o hable con un agente con licencia.");
   convoHistory.push({ role: "user", content: text });
@@ -1151,7 +1152,7 @@ export default function AIInsureGenie() {
     setS(Object.assign({}, cur, { qa: qa, askMore: false,
       advisorTurns: (cur.advisorTurns || []).concat(prior).slice(-8) }));
     track("question_asked", { stage: cur.stage }, false);
-    getAnswer(text, toProfile(cur), Array.isArray(cur.results) ? cur.results : [], genieConfirmed(cur)).then(function (response) {
+    getAnswer(text, toProfile(cur), Array.isArray(cur.results) ? cur.results : [], genieConfirmed(cur), cur.journey).then(function (response) {
       setS(function (c) {
         if (!c.qa || c.qa.q !== text) return c;
         var brain = response.intelligence;
