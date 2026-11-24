@@ -102,6 +102,9 @@ export default {
     if (USES_STORAGE[name] && env.DB) await migrateIfNeeded(env.DB);
 
     const req = await toReq(request, url);
+    // Authoritative deployment switch. No query, cookie, request header, or
+    // browser payload can enable the new brain on an otherwise-disabled Worker.
+    req.genieV2Enabled = env.GENIE_V2_ENABLED === "true";
     const { res, done, isSent } = toRes();
     try {
       await handler(req, res);
