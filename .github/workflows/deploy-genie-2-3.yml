@@ -1,0 +1,72 @@
+name: Deploy Genie 2.3 (API + chatbot)
+on:
+  push:
+    branches:
+      - deploy/genie-2-3
+    paths:
+      - .github/workflows/deploy-genie-2-3.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: genie-production-chat-deployment
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # Versions live before this deploy (rollback targets).
+      PRIOR_API_VERSION: 37f921c8-e6b5-4a94-b8b2-f05bd3b06464
+      PRIOR_CHAT_VERSION: b4cf3ddf-42f4-4b81-a185-4d889a167439
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 04f98492d15a22c66c06d335bbe1ad8291a6cca7   # cloudflare after PR #30
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check credentials
+        run: test -n "$CLOUDFLARE_API_TOKEN" && test -n "$CLOUDFLARE_ACCOUNT_ID"
+      - name: Unit tests
+        run: node --test backend/test/genie-*.test.js backend/test/trustedform-integration.test.js chatbot/test/genie-flow.test.js chatbot/test/genie-journeys.test.js
+      - name: Deploy API
+        working-directory: backend
+        run: npx --yes wrangler@4.167.0 deploy
+      - name: Verify API
+        run: |
+          set -euo pipefail
+          sleep 10
+          curl --fail --silent --show-error "https://api.aiinsuregenie.com/api/health" | grep -q '"status":"ok"'
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST https://api.aiinsuregenie.com/api/event -H 'Content-Type: text/plain' --data '{"type":"quote_review_confirmed","session_id":"sdeploycheck23"}')
+          test "$code" = "200"
+      - name: Build and deploy chatbot
+        working-directory: chatbot
+        run: |
+          npm ci
+          npm run build
+          npx --yes wrangler@4.167.0 deploy
+      - name: Verify chatbot
+        run: |
+          set -euo pipefail
+          sleep 10
+          html=$(curl --fail --silent "https://chat.aiinsuregenie.com/?v=${GITHUB_RUN_ID}")
+          echo "$html" | grep -q 'xxTrustedFormCertUrl'
+          main=$(echo "$html" | grep -o 'assets/index-[A-Za-z0-9_-]*\.js' | head -1)
+          chunk=$(curl --fail --silent "https://chat.aiinsuregenie.com/$main" | grep -o 'App-[A-Za-z0-9_-]*\.js' | head -1)
+          curl --fail --silent "https://chat.aiinsuregenie.com/assets/$chunk" | grep -q "offer non-owner policies online"
+      - name: Roll back on failure
+        if: failure()
+        run: |
+          for pair in "aiinsuregenie-api:$PRIOR_API_VERSION" "aiinsuregenie-chat:$PRIOR_CHAT_VERSION"; do
+            name=${pair%%:*}; ver=${pair#*:}
+            curl --silent --show-error -X POST \
+              "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/scripts/${name}/deployments" \
+              -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" -H "Content-Type: application/json" \
+              --data "{\"strategy\":\"percentage\",\"versions\":[{\"version_id\":\"${ver}\",\"percentage\":100}]}"
+          done
