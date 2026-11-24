@@ -1,0 +1,49 @@
+name: Verify deployed live chatbot disabled
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/verify-live-chatbot.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Check deployed static files, TrustedForm markup and Genie flag
+        run: |
+          set -euo pipefail
+          for HOST in "https://chat.aiinsuregenie.com" "https://aiinsuregenie-chat.in-naushco.workers.dev"; do
+            curl -fsSL --max-time 25 "$HOST/?verify=${GITHUB_RUN_ID}" -o /tmp/chat-index.html
+            curl -fsSL --max-time 25 "$HOST/config.js?verify=${GITHUB_RUN_ID}" -o /tmp/chat-config.js
+            grep -q 'api.trustedform.com/trustedform.js' /tmp/chat-index.html
+            grep -q 'xxTrustedFormCertUrl' /tmp/chat-index.html
+            grep -q 'id="root"' /tmp/chat-index.html
+            grep -q 'assets/index-K1q9MOmf.js' /tmp/chat-index.html
+            grep -q 'genieV2Enabled: staging' /tmp/chat-config.js
+            curl -fsSL --max-time 25 "$HOST/assets/index-K1q9MOmf.js" -o /tmp/chat-main.js
+            curl -fsSL --max-time 25 "$HOST/assets/App-BUrwHU2o.js" -o /tmp/chat-genie.js
+            test -s /tmp/chat-main.js
+            test -s /tmp/chat-genie.js
+            node - <<'NODE'
+          const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+          const context={location:{hostname:'chat.aiinsuregenie.com',origin:'https://chat.aiinsuregenie.com'},window:{}};
+          vm.runInNewContext(fs.readFileSync('/tmp/chat-config.js','utf8'),context);
+          assert.equal(context.window.AIG_CONFIG.genieV2Enabled,false);
+          assert.equal(context.window.AIG_CONFIG.staging,false);
+          assert.equal(context.window.AIG_CONFIG.apiBase,'https://api.aiinsuregenie.com');
+          console.log('Live chatbot configuration: Genie OFF, production API intact');
+          NODE
+          done
+      - name: Verify backend health and chat CORS without sending a lead
+        run: |
+          set -euo pipefail
+          curl -fsSL --max-time 25 "https://api.aiinsuregenie.com/api/health" -o /tmp/aig-health.json
+          node -e "const d=require('/tmp/aig-health.json');if(d.status!=='ok')process.exit(1)"
+          curl -fsSL -X OPTIONS \
+            -H 'Origin: https://chat.aiinsuregenie.com' \
+            -H 'Access-Control-Request-Method: POST' \
+            https://api.aiinsuregenie.com/api/chat >/dev/null
