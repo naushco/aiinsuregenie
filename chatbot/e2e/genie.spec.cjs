@@ -169,7 +169,7 @@ test("advisor confirms inferred details then reviews before quote questions",asy
   await expect(page.getByRole("button",{name:"Explore quotes whenever you're ready"})).toBeVisible();
   await page.getByRole("button",{name:"Explore quotes whenever you're ready"}).click();
   await expect(page.getByRole("region",{name:"Review your insurance profile"})).toBeVisible();
-  await expect(page.getByText("Texas")).toBeVisible();
+  await expect(page.getByRole("region",{name:"Review your insurance profile"}).getByText("Texas",{exact:true})).toBeVisible();
   await expect(page.getByText("Within a week")).toBeVisible();
   await page.getByRole("button",{name:"Continue with quote questions"}).click();
   await expect(page.getByText("Anything special about your situation?")).toBeVisible();
@@ -187,7 +187,7 @@ test("immediate get quote waits for review before displaying partner options",as
   await page.getByRole("button",{name:"I don't know"}).click();
   await page.getByRole("button",{name:"Just comparing"}).click();
   await expect(page.getByRole("region",{name:"Review your insurance profile"})).toBeVisible();
-  await expect(page.getByText("Non-owner coverage")).toBeVisible();
+  await expect(page.getByRole("region",{name:"Review your insurance profile"}).getByText("Non-owner coverage",{exact:true})).toBeVisible();
   await expect(page.getByRole("button",{name:"Confirm and view quoting options"})).toBeVisible();
   await expect(page.locator(".mcard")).toHaveCount(0);
   await page.getByRole("button",{name:"Confirm and view quoting options"}).click();
@@ -196,6 +196,7 @@ test("immediate get quote waits for review before displaying partner options",as
 });
 test("first-party campaign metadata survives quote -> advisor switch, without contact fields",async({page})=>{
   await page.goto("/?utm_source=meta&utm_campaign=SR22_2026&pub=aff12&fbclid=valid123&email=someone%40example.com");
+  await expect.poll(()=>page.evaluate(()=>sessionStorage.getItem("aig-attribution-v1"))).not.toBeNull();
   const initial=await page.evaluate(()=>JSON.parse(sessionStorage.getItem("aig-attribution-v1")));
   expect(initial.utm_source).toBe("meta");
   expect(initial.utm_campaign).toBe("SR22_2026");
