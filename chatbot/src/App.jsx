@@ -1396,10 +1396,10 @@ export default function AIInsureGenie() {
                     <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt"><Bold text={s.qa.a} />
                       {s.qa.agent ? <div style={{ marginTop: 10 }}><button type="button" className="c" onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} size={15} />{T("Ask a licensed agent, free", "Pregunte a un agente con licencia, gratis")}</button></div> : null}
                     </div></div>
-                    {stage !== "done" ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt" style={{ color: "#33415c" }}>{(s.sits.indexOf("dui") >= 0 || s.sits.indexOf("sr22") >= 0) ? T("Want me to find a partner for drivers like you", "¿Quiere que le busque un socio para conductores como usted") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?" : T("Want me to find the partner that fits you", "¿Quiere que le busque el socio que le conviene") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?"}
+                    {stage !== "done" ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt" style={{ color: "#33415c" }}>{s.journey === "advisor" ? T("We can keep talking, or explore quoting options when you're ready.", "Podemos seguir hablando o explorar cotizaciones cuando quiera.") : (s.sits.indexOf("dui") >= 0 || s.sits.indexOf("sr22") >= 0) ? T("Want me to find a partner for drivers like you", "¿Quiere que le busque un socio para conductores como usted") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?" : T("Want me to find the partner that fits you", "¿Quiere que le busque el socio que le conviene") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?"}
                       {s.qa.noted ? <span className="gh"><Svg d={I_CHECK} size={14} sw={2.2} /><span>{T("Please confirm: ", "Confirme: ") + s.qa.noted + T(". These details will be used only if you continue to quotes.", ". Estos datos solo se usarán si continúa a cotizaciones.")}</span></span> : null}
                     </div></div> : null}
-                    <div className="ans"><button type="button" className="c on" onClick={keepGoing}>{s.qa.noted ? T("Confirm details and continue", "Confirmar datos y continuar") : stage === "done" ? T("Back to my match", "Volver a mi opción") : T("Continue my match", "Seguir con mi búsqueda")}</button>{s.qa.noted ? <button type="button" className="c" onClick={rejectCandidate}>{T("Correct these details", "Corregir estos datos")}</button> : null}<button type="button" className="c" onClick={function () { go({ qa: null, askMore: true }, true); setTimeout(function () { inRef.current && inRef.current.focus(); }, 100); }}>{T("Ask another question", "Hacer otra pregunta")}</button></div>
+                    <div className="ans"><button type="button" className="c on" onClick={keepGoing}>{s.qa.quoteAfterConfirmation ? T("Confirm details and review quotes", "Confirmar detalles y revisar cotizaciones") : s.qa.noted ? (s.journey === "advisor" ? T("Confirm details and keep talking", "Confirmar datos y seguir hablando") : T("Confirm details and continue", "Confirmar datos y continuar")) : s.journey === "advisor" ? T("Keep talking with Genie", "Seguir hablando con Genie") : stage === "done" ? T("Back to my match", "Volver a mi opción") : T("Continue my match", "Seguir con mi búsqueda")}</button>{s.qa.noted ? <button type="button" className="c" onClick={rejectCandidate}>{T("Correct these details", "Corregir estos datos")}</button> : null}<button type="button" className="c" onClick={function () { go({ qa: null, askMore: true }, true); setTimeout(function () { inRef.current && inRef.current.focus(); }, 100); }}>{T("Ask another question", "Hacer otra pregunta")}</button>{s.journey === "advisor" ? <button type="button" className="c" onClick={beginQuote}>{T("Explore quotes", "Explorar cotizaciones")}</button> : null}</div>
                   </>
                 )}
               </>
@@ -1407,10 +1407,11 @@ export default function AIInsureGenie() {
             {s.askMore && !s.qa ? (
               <>
                 <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Sure, ask me anything about car insurance below. I'll keep your match where you left it.", "Claro, pregúnteme lo que quiera sobre seguro de auto abajo. Guardo su búsqueda donde la dejó.")}</div></div>
-                <div className="ans"><button type="button" className="c" onClick={keepGoing}>{stage === "start" ? T("Find my match instead", "Mejor buscar mi opción") : T("Back to my match", "Volver a mi opción")}</button></div>
+                <div className="ans"><button type="button" className="c" onClick={s.journey === "advisor" ? beginQuote : keepGoing}>{s.journey === "advisor" ? T("Explore quotes whenever you're ready", "Explorar cotizaciones") : stage === "start" ? T("Find my match instead", "Mejor buscar mi opción") : T("Back to my match", "Volver a mi opción")}</button></div>
               </>
             ) : null}
 
+            {s.reviewOpen && !s.qa && !typing ? <QuoteReview profile={s} stateName={stName} hasModels={function (make) { return !!MODEL_LIST[make]; }} onEdit={editReviewField} onContinue={continueReviewed} onAdvice={resumeAdvice}/> : null}
             {typing ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="dots" aria-label={T("Genie is typing", "Genie está escribiendo")}><i /><i /><i /></div></div> : null}
 
             {showFlow && chips.length ? (
@@ -1430,7 +1431,7 @@ export default function AIInsureGenie() {
             {showFlow && multi ? <button type="button" className="p1" style={{ marginLeft: 36 }} aria-disabled={s.sits.length ? "false" : "true"} onClick={function () { if (s.sits.length) answer(SIT.filter(function (x) { return s.sits.indexOf(x.k) >= 0; }).map(function (x) { return x.l; }).join(", "), { sitDone: true }); }}>{s.sits.length ? T("Continue", "Continuar") : T("Pick at least one", "Elija al menos una")}</button> : null}
             {canBack ? <button type="button" className="lk back" onClick={function () { go(Object.assign({ said: "", note: "", hist: (s.hist || []).slice(0, -1) }, prev[stage] || {}), true); }}>{T("Change my last answer", "Cambiar mi última respuesta")}</button> : null}
 
-            {stage === "done" && !typing && !s.qa ? (
+            {stage === "done" && !typing && !s.qa && !s.reviewOpen && s.quoteReviewed ? (
               !results ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Checking partners in ", "Buscando socios en ") + stName(s.st) + "…"}<div className="dots"><i /><i /><i /></div></div></div>
               : results.length ? (
                 <>
