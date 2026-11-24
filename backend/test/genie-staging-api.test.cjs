@@ -61,3 +61,22 @@ test("all real lead endpoints are blocked", async () => {
     assert.equal(r.status, 403);
   }
 });
+
+test("mock partner rules route qualifying situations without sending a lead", async () => {
+  const base = { fixture: "SYNTHETIC_ONLY", state: "TX", situation: "sr22", demo_buyers: [
+    { id: "DEMO_GENERAL", states: ["TX", "CA"], situations: ["accident"] },
+    { id: "DEMO_SPECIALTY", states: ["TX", "FL"], situations: ["sr22", "dui"] }
+  ] };
+  const matched = await run("/__test/partner-route", "POST", base);
+  assert.equal(matched.status, 200);
+  assert.deepEqual(matched.data.eligible_demo_buyers, ["DEMO_SPECIALTY"]);
+  assert.equal(matched.data.buyer_delivery, false);
+  assert.equal(matched.data.eligible_for_real_insurance, null);
+  const unmatched = await run("/__test/partner-route", "POST", { ...base, state: "CA" });
+  assert.equal(unmatched.status, 200);
+  assert.equal(unmatched.data.recommended_demo_buyer, null);
+  const rejected = await run("/__test/partner-route", "POST", { ...base, phone: "5555555555" });
+  assert.equal(rejected.status, 400);
+  const realBuyer = await run("/__test/partner-route", "POST", { ...base, demo_buyers: [{ id: "REAL_CARRIER", states: ["TX"], situations: ["sr22"] }] });
+  assert.equal(realBuyer.status, 400);
+});
