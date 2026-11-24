@@ -32,7 +32,10 @@ jobs:
           cat > e2e/live-public.spec.cjs <<'TEST'
           const {test,expect} = require('@playwright/test');
           test.beforeEach(async ({page}) => {
-            await page.route(/\/api\/(leads|callback|subscribe|event)(\?|$)/, async route => { throw new Error('Live browser smoke attempted an outbound lead/event write'); });
+            const blockedWrites=[];
+            page.on('request', req => { if (/\\/api\\/(leads|callback|subscribe)(\\?|$)/.test(new URL(req.url()).pathname)) blockedWrites.push(req.url()); });
+            await page.route(/\\/api\\/(leads|callback|subscribe|event)(\\?|$)/, route => route.fulfill({status:204,body:''}));
+            page.__blockedWrites=blockedWrites;
             await page.route(/trustedform\.com/, route => route.abort());
           });
           test('Public Genie 2.0 appears and saves only structured SR-22 state', async ({page}) => {
@@ -45,6 +48,7 @@ jobs:
             const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('aig-chat-v2')));
             expect(saved.s.sits).toContain('sr22');
             expect(JSON.stringify(saved.s)).not.toMatch(/email|phone|history|transcript/i);
+            expect(page.__blockedWrites).toHaveLength(0);
           });
           test('Natural-language statement requires confirmation and sends Genie backend flag', async ({page}) => {
             const payloads=[];
@@ -56,6 +60,7 @@ jobs:
             expect(payloads.length).toBeGreaterThan(0);
             expect(payloads[0].genie_v2).toBe(true);
             expect(payloads[0].genie_facts.state).toBe(null);
+            expect(page.__blockedWrites).toHaveLength(0);
           });
           TEST
           npx playwright test e2e/live-public.spec.cjs --config=live-public.config.cjs --reporter=line
