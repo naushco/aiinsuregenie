@@ -210,3 +210,12 @@ test("first-party campaign metadata survives quote -> advisor switch, without co
   const later=await page.evaluate(()=>JSON.parse(sessionStorage.getItem("aig-attribution-v1")));
   expect(later).toEqual(initial);
 });
+
+test("existing Genie 2.1 saved quote progress migrates into fast quote, not advisor",async({page})=>{
+  await page.goto("/");
+  await page.evaluate(()=>localStorage.setItem("aig-chat-v2",JSON.stringify({t:Date.now(),s:{stage:"vehicle",st:"TX",sits:["sr22"],sitDone:true,vehicleStatus:"",make:"",model:"",year:"",cov:"",when:"",pri:""}})));
+  await page.reload();
+  await expect(page.getByRole("button",{name:"Ask Genie"})).toBeVisible();
+  await expect(page.getByText(/Do you own, finance, or lease a vehicle/)).toBeVisible();
+  await expect(page.getByRole("region",{name:"Review your insurance profile"})).toHaveCount(0);
+});
