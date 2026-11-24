@@ -7,7 +7,7 @@ test("state first, then driving situation, vehicle, coverage, urgency",()=>{
   assert.equal(nextQuestion({state:"TX"}).field,"situation");
   assert.equal(nextQuestion({state:"TX",situation_confirmed:true}).field,"vehicle_status");
   assert.equal(nextQuestion({state:"TX",situation_confirmed:true,vehicle_status:"no_vehicle"}).field,"coverage_goal");
-  assert.equal(nextQuestion({state:"TX",situation_confirmed:true,vehicle_status:"no_vehicle",coverage_goal_confirmed:true}).field,"urgency");
+  assert.equal(nextQuestion({state:"TX",situation_confirmed:true,vehicle_status:"no_vehicle",coverage_goal:"unsure",coverage_goal_confirmed:true}).field,"urgency");
 });
 test("explicitly confirmed none or unsure are accepted, never inferred",()=>{
   const f={state:"TX",situation:[],situation_confirmed:true,vehicle_status:"no_vehicle",coverage_goal:"unsure",coverage_goal_confirmed:true,urgency:"today"};
