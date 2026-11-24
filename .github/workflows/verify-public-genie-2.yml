@@ -1,0 +1,57 @@
+name: Verify public Genie 2.0 rollout
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/verify-public-genie-2.yml']
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Verify live public UI and backend
+        run: |
+          set -euo pipefail
+          for HOST in https://chat.aiinsuregenie.com https://aiinsuregenie-chat.in-naushco.workers.dev; do
+            curl -fsSL --max-time 25 "$HOST/config.js?verify=${GITHUB_RUN_ID}" -o /tmp/genie-live-config.js
+            curl -fsSL --max-time 25 "$HOST/?verify=${GITHUB_RUN_ID}" -o /tmp/genie-live.html
+            grep -q 'genieV2Enabled: true' /tmp/genie-live-config.js
+            grep -q 'api.trustedform.com/trustedform.js' /tmp/genie-live.html
+            grep -q 'xxTrustedFormCertUrl' /tmp/genie-live.html
+            grep -q 'id="root"' /tmp/genie-live.html
+            node <<'NODE'
+          const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+          const code=fs.readFileSync('/tmp/genie-live-config.js','utf8');
+          const ctx={location:{hostname:'chat.aiinsuregenie.com',origin:'https://chat.aiinsuregenie.com'},window:{}};
+          vm.runInNewContext(code,ctx);
+          assert.equal(ctx.window.AIG_CONFIG?.genieV2Enabled,true);
+          assert.equal(ctx.window.AIG_CONFIG?.staging,false);
+          assert.equal(ctx.window.AIG_CONFIG?.apiBase,'https://api.aiinsuregenie.com');
+          console.log('Public Genie 2.0 flag and production API routing verified');
+          NODE
+            MAIN=$(grep -oE 'src="/assets/index-[^"]+\.js"' /tmp/genie-live.html | head -1 | cut -d'"' -f2)
+            test -n "$MAIN"
+            curl -fsSL --max-time 25 "$HOST$MAIN" -o /tmp/genie-main.js
+            test -s /tmp/genie-main.js
+          done
+      - name: Verify API works with confirmed facts and will not invent premiums
+        run: |
+          set -euo pipefail
+          curl -fsSL --max-time 20 https://api.aiinsuregenie.com/api/health -o /tmp/genie-health.json
+          node -e "const h=require('/tmp/genie-health.json');if(h.status!=='ok'||!h.setup.ai_chat_key_set)process.exit(1)"
+          curl -fsS --max-time 50 -H 'Content-Type: application/json' \
+            -H 'Origin: https://chat.aiinsuregenie.com' \
+            --data '{"message":"Why do people need an SR-22 filing?","genie_v2":true,"genie_facts":{"state":"TX","situation":["sr22"],"urgency":"within_week"}}' \
+            https://api.aiinsuregenie.com/api/chat -o /tmp/genie-response.json
+          node <<'NODE'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const r=JSON.parse(fs.readFileSync('/tmp/genie-response.json','utf8'));
+          assert.ok(typeof r.answer==='string'&&r.answer.length>30);
+          assert.equal(r.genie_v2?.version,'2.0');
+          assert.equal(r.genie_v2?.confirmed?.state,'TX');
+          assert.equal(r.genie_v2?.confirmed?.urgency,'within_week');
+          assert.ok(r.genie_v2?.confirmed?.situation.includes('sr22'));
+          assert.equal(r.genie_v2?.buyer_routing,'not_in_advisor_engine');
+          console.log('Confirmed facts, AI response and no buyer-routing verified');
+          NODE
