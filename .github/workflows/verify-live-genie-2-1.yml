@@ -46,6 +46,8 @@ jobs:
             await expect.poll(()=>page.evaluate(()=>window.AIG_CONFIG?.genieV2Enabled)).toBe(true);
             await expect(page.locator('#xxTrustedFormCertUrl')).toHaveCount(1);
             await page.getByRole('button',{name:'I need an SR-22'}).click();
+            const change=page.getByRole('button',{name:/Change state/});
+            if (await change.isVisible().catch(()=>false)) await change.click();
             await page.getByRole('button',{name:/Texas/}).first().click();
             await expect(page.getByText(/Do you own, finance, or lease a vehicle/)).toBeVisible();
             await page.getByRole('button',{name:'I need non-owner coverage'}).click();
