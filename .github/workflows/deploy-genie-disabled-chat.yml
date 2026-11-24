@@ -1,5 +1,8 @@
 name: Deploy Genie code with live chatbot DISABLED
 on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/deploy-genie-disabled-chat.yml']
   workflow_dispatch:
     inputs:
       confirmation:
@@ -16,7 +19,7 @@ concurrency:
 
 jobs:
   deploy-disabled-chatbot:
-    if: ${{ inputs.confirmation == 'DEPLOY_DISABLED_ONLY' }}
+    if: ${{ (github.event_name == 'push' && github.event.head_commit.message == 'ops: trigger one-time disabled chatbot deployment') || (github.event_name == 'workflow_dispatch' && inputs.confirmation == 'DEPLOY_DISABLED_ONLY') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -51,6 +54,7 @@ jobs:
             exit 1
           fi
       - name: Deploy chatbot static assets with Genie 2.0 disabled
+        id: deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -81,3 +85,15 @@ jobs:
           done
           echo "Post-deploy validation did not confirm the disabled/legacy shell. Review Cloudflare Deployments and roll back chatbot immediately."
           exit 1
+      - name: Restore previous known-good chatbot version if verification fails
+        if: ${{ failure() && steps.deploy.outcome != 'skipped' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error -X POST \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/scripts/aiinsuregenie-chat/deployments" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data '{"strategy":"percentage","versions":[{"version_id":"3e2ef721-2001-4ceb-a6db-ac6bcb570406","percentage":100}],"annotations":{"workers/message":"Rollback after disabled-only Genie chatbot verification failure"}}'
