@@ -1032,7 +1032,7 @@ export default function AIInsureGenie() {
     if (next.stage === "done" && !next.quoteReviewed) next = Object.assign(next, { reviewOpen: true, results: null });
     if (next.stage === "done" && next.quoteReviewed && !next.results) next = Object.assign(next, { results: "loading" });
     setS(next);
-    if (next.results === "loading") showMatch(next);
+    if (next.results === "loading" && cur0.results !== "loading") showMatch(next);
     if (next.journey === "quote") syncPlan(next);
   };
   var answer = function (said, o) { var n = Object.assign({}, sRef.current, o); go(Object.assign({ said: said, note: "", otherMake: false }, o, { stage: nextStage(n), journey: "quote" })); };
@@ -1090,16 +1090,18 @@ export default function AIInsureGenie() {
     // No connected buyer is verified to offer non-owner policies. Do not
     // present an ordinary vehicle-policy partner as eligible for this case.
     if (n.vehicleStatus === "no_vehicle") {
-      setTimeout(function () { setS(function (cur) { return Object.assign({}, cur, { results: [] }); }); }, 400);
+      setTimeout(function () { setS(function (cur) { return cur.journey === "quote" && cur.quoteReviewed && cur.results === "loading" ? Object.assign({}, cur, { results: [] }) : cur; }); }, 400);
       track("no_match", { vehicle_type: "non_owner" });
       return;
     }
-    if (!INSURERS.length) { var l = await loadInsurers(); if (l) { INSURERS = l; setList(l); } }
+    var l = await loadInsurers();
+    if (l === null) { setS(function(cur){return cur.journey === "quote" && cur.quoteReviewed && cur.results === "loading" ? Object.assign({},cur,{results:"error"}) : cur;}); return; }
+    INSURERS=l; setList(l);
     var p = toProfile(n);
     var r = pickPartners(p).map(function (ins) { return Object.assign({}, ins, { rUrl: buildUrl(ins, p) }); });
     if (r.length) track("match_shown", { partner_id: r[0].id, state: p.state || null, goal: p.priority || null, options: r.length });
     else track("no_match", { state: p.state || null, goal: p.priority || null });
-    setTimeout(function () { setS(function (cur) { return Object.assign({}, cur, { results: r }); }); }, 700);
+    setTimeout(function () { setS(function (cur) { return cur.journey === "quote" && cur.quoteReviewed && cur.results === "loading" ? Object.assign({}, cur, { results: r }) : cur; }); }, 700);
   };
 
   // Pull answers out of a sentence: "cheapest insurance for my 2019 hyundai sonata in Texas".
@@ -1332,7 +1334,7 @@ export default function AIInsureGenie() {
   var profileRows = reviewProfile(s, stName).filter(function(f){return (f.key !== "pri" || f.value) && (f.key !== "car" || s.vehicleStatus !== "no_vehicle");});
   var starters = [
     { ic: "doc", l: T("I need an SR-22", "Necesito una SR-22"), fn: function () { track("chat_started", { mode: "starter_sr22" }, true); answer(T("I need an SR-22", "Necesito una SR-22"), { sits: ["sr22"], sitDone: true }); } },
-    { ic: "tag", l: T("Cheapest price for my car", "El precio más bajo para mi auto"), fn: function () { track("chat_started", { mode: "starter_price" }, true); answer(T("Cheapest price for my car", "El precio más bajo para mi auto"), { pri: "price" }); } },
+    { ic: "tag", l: T("Lower my insurance costs", "Reducir mi costo de seguro"), fn: function () { track("chat_started", { mode: "starter_price" }, true); ask(T("How can I lower my insurance costs?", "¿Cómo puedo reducir mi costo de seguro?")); } },
     { ic: "car", l: T("I'm a rideshare driver", "Manejo para Uber o Lyft"), fn: function () { track("chat_started", { mode: "starter_rideshare" }, true); answer(T("I'm a rideshare driver", "Manejo para Uber o Lyft"), { sits: ["ride"], sitDone: true }); } },
     { ic: "clock", l: T("I need coverage today", "Necesito seguro hoy"), fn: function () { track("chat_started", { mode: "starter_today" }, true); answer(T("I need coverage today", "Necesito seguro hoy"), { when: "today" }); } }
   ];
@@ -1406,7 +1408,7 @@ export default function AIInsureGenie() {
             {s.qa ? (
               <>
                 <div className="u">{s.qa.q}</div>
-                {s.qa.a == null ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="dots" aria-label={T("Genie is typing", "Genie está escribiendo")}><i /><i /><i /></div></div> : (
+                {s.qa.a == null ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="dots" aria-label={T("AI InsureGenie is typing", "AI InsureGenie está escribiendo")}><i /><i /><i /></div></div> : (
                   <>
                     <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt"><Bold text={s.qa.a} />
                       {s.qa.agent ? <div style={{ marginTop: 10 }}><button type="button" className="c" onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} size={15} />{T("Ask a licensed agent, free", "Pregunte a un agente con licencia, gratis")}</button></div> : null}
@@ -1447,7 +1449,7 @@ export default function AIInsureGenie() {
             {canBack ? <button type="button" className="lk back" onClick={function () { go(Object.assign({ said: "", note: "", hist: (s.hist || []).slice(0, -1) }, prev[stage] || {}), true); }}>{T("Change my last answer", "Cambiar mi última respuesta")}</button> : null}
 
             {stage === "done" && !typing && !s.qa && !s.reviewOpen && s.quoteReviewed ? (
-              !results ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Checking partners in ", "Buscando socios en ") + stName(s.st) + "…"}<div className="dots"><i /><i /><i /></div></div></div>
+              s.results === "error" ? <div className="aig3-review" role="alert"><h2>{T("We couldn’t load partner options","No pudimos cargar las opciones")}</h2><p>{T("Your confirmed answers are still here. Please try again.","Sus respuestas siguen aquí. Intente de nuevo.")}</p><button type="button" className="p1" onClick={function(){go({results:null},true);}}>{T("Retry","Reintentar")}</button></div> : !results ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Checking partners in ", "Buscando socios en ") + stName(s.st) + "…"}<div className="dots"><i /><i /><i /></div></div></div>
               : results.length ? (
                 <>
                   <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Your insurance options", "Sus opciones de seguro")}</div></div>
