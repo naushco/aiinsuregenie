@@ -5,11 +5,12 @@ var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __esm = (fn, res) => function __init() {
-  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
-};
 var __commonJS = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  try {
+    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  } catch (e) {
+    throw mod = 0, e;
+  }
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
@@ -28,1132 +29,9 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// ../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/_internal/utils.mjs
-// @__NO_SIDE_EFFECTS__
-function createNotImplementedError(name) {
-  return new Error(`[unenv] ${name} is not implemented yet!`);
-}
-// @__NO_SIDE_EFFECTS__
-function notImplemented(name) {
-  const fn = /* @__PURE__ */ __name(() => {
-    throw /* @__PURE__ */ createNotImplementedError(name);
-  }, "fn");
-  return Object.assign(fn, { __unenv__: true });
-}
-// @__NO_SIDE_EFFECTS__
-function notImplementedClass(name) {
-  return class {
-    __unenv__ = true;
-    constructor() {
-      throw new Error(`[unenv] ${name} is not implemented yet!`);
-    }
-  };
-}
-var init_utils = __esm({
-  "../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/_internal/utils.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    __name(createNotImplementedError, "createNotImplementedError");
-    __name(notImplemented, "notImplemented");
-    __name(notImplementedClass, "notImplementedClass");
-  }
-});
-
-// ../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/node/internal/perf_hooks/performance.mjs
-var _timeOrigin, _performanceNow, nodeTiming, PerformanceEntry, PerformanceMark, PerformanceMeasure, PerformanceResourceTiming, PerformanceObserverEntryList, Performance, PerformanceObserver, performance;
-var init_performance = __esm({
-  "../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/node/internal/perf_hooks/performance.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    init_utils();
-    _timeOrigin = globalThis.performance?.timeOrigin ?? Date.now();
-    _performanceNow = globalThis.performance?.now ? globalThis.performance.now.bind(globalThis.performance) : () => Date.now() - _timeOrigin;
-    nodeTiming = {
-      name: "node",
-      entryType: "node",
-      startTime: 0,
-      duration: 0,
-      nodeStart: 0,
-      v8Start: 0,
-      bootstrapComplete: 0,
-      environment: 0,
-      loopStart: 0,
-      loopExit: 0,
-      idleTime: 0,
-      uvMetricsInfo: {
-        loopCount: 0,
-        events: 0,
-        eventsWaiting: 0
-      },
-      detail: void 0,
-      toJSON() {
-        return this;
-      }
-    };
-    PerformanceEntry = class {
-      static {
-        __name(this, "PerformanceEntry");
-      }
-      __unenv__ = true;
-      detail;
-      entryType = "event";
-      name;
-      startTime;
-      constructor(name, options) {
-        this.name = name;
-        this.startTime = options?.startTime || _performanceNow();
-        this.detail = options?.detail;
-      }
-      get duration() {
-        return _performanceNow() - this.startTime;
-      }
-      toJSON() {
-        return {
-          name: this.name,
-          entryType: this.entryType,
-          startTime: this.startTime,
-          duration: this.duration,
-          detail: this.detail
-        };
-      }
-    };
-    PerformanceMark = class PerformanceMark2 extends PerformanceEntry {
-      static {
-        __name(this, "PerformanceMark");
-      }
-      entryType = "mark";
-      constructor() {
-        super(...arguments);
-      }
-      get duration() {
-        return 0;
-      }
-    };
-    PerformanceMeasure = class extends PerformanceEntry {
-      static {
-        __name(this, "PerformanceMeasure");
-      }
-      entryType = "measure";
-    };
-    PerformanceResourceTiming = class extends PerformanceEntry {
-      static {
-        __name(this, "PerformanceResourceTiming");
-      }
-      entryType = "resource";
-      serverTiming = [];
-      connectEnd = 0;
-      connectStart = 0;
-      decodedBodySize = 0;
-      domainLookupEnd = 0;
-      domainLookupStart = 0;
-      encodedBodySize = 0;
-      fetchStart = 0;
-      initiatorType = "";
-      name = "";
-      nextHopProtocol = "";
-      redirectEnd = 0;
-      redirectStart = 0;
-      requestStart = 0;
-      responseEnd = 0;
-      responseStart = 0;
-      secureConnectionStart = 0;
-      startTime = 0;
-      transferSize = 0;
-      workerStart = 0;
-      responseStatus = 0;
-    };
-    PerformanceObserverEntryList = class {
-      static {
-        __name(this, "PerformanceObserverEntryList");
-      }
-      __unenv__ = true;
-      getEntries() {
-        return [];
-      }
-      getEntriesByName(_name, _type) {
-        return [];
-      }
-      getEntriesByType(type) {
-        return [];
-      }
-    };
-    Performance = class {
-      static {
-        __name(this, "Performance");
-      }
-      __unenv__ = true;
-      timeOrigin = _timeOrigin;
-      eventCounts = /* @__PURE__ */ new Map();
-      _entries = [];
-      _resourceTimingBufferSize = 0;
-      navigation = void 0;
-      timing = void 0;
-      timerify(_fn, _options) {
-        throw createNotImplementedError("Performance.timerify");
-      }
-      get nodeTiming() {
-        return nodeTiming;
-      }
-      eventLoopUtilization() {
-        return {};
-      }
-      markResourceTiming() {
-        return new PerformanceResourceTiming("");
-      }
-      onresourcetimingbufferfull = null;
-      now() {
-        if (this.timeOrigin === _timeOrigin) {
-          return _performanceNow();
-        }
-        return Date.now() - this.timeOrigin;
-      }
-      clearMarks(markName) {
-        this._entries = markName ? this._entries.filter((e) => e.name !== markName) : this._entries.filter((e) => e.entryType !== "mark");
-      }
-      clearMeasures(measureName) {
-        this._entries = measureName ? this._entries.filter((e) => e.name !== measureName) : this._entries.filter((e) => e.entryType !== "measure");
-      }
-      clearResourceTimings() {
-        this._entries = this._entries.filter((e) => e.entryType !== "resource" || e.entryType !== "navigation");
-      }
-      getEntries() {
-        return this._entries;
-      }
-      getEntriesByName(name, type) {
-        return this._entries.filter((e) => e.name === name && (!type || e.entryType === type));
-      }
-      getEntriesByType(type) {
-        return this._entries.filter((e) => e.entryType === type);
-      }
-      mark(name, options) {
-        const entry = new PerformanceMark(name, options);
-        this._entries.push(entry);
-        return entry;
-      }
-      measure(measureName, startOrMeasureOptions, endMark) {
-        let start;
-        let end;
-        if (typeof startOrMeasureOptions === "string") {
-          start = this.getEntriesByName(startOrMeasureOptions, "mark")[0]?.startTime;
-          end = this.getEntriesByName(endMark, "mark")[0]?.startTime;
-        } else {
-          start = Number.parseFloat(startOrMeasureOptions?.start) || this.now();
-          end = Number.parseFloat(startOrMeasureOptions?.end) || this.now();
-        }
-        const entry = new PerformanceMeasure(measureName, {
-          startTime: start,
-          detail: {
-            start,
-            end
-          }
-        });
-        this._entries.push(entry);
-        return entry;
-      }
-      setResourceTimingBufferSize(maxSize) {
-        this._resourceTimingBufferSize = maxSize;
-      }
-      addEventListener(type, listener, options) {
-        throw createNotImplementedError("Performance.addEventListener");
-      }
-      removeEventListener(type, listener, options) {
-        throw createNotImplementedError("Performance.removeEventListener");
-      }
-      dispatchEvent(event2) {
-        throw createNotImplementedError("Performance.dispatchEvent");
-      }
-      toJSON() {
-        return this;
-      }
-    };
-    PerformanceObserver = class {
-      static {
-        __name(this, "PerformanceObserver");
-      }
-      __unenv__ = true;
-      static supportedEntryTypes = [];
-      _callback = null;
-      constructor(callback2) {
-        this._callback = callback2;
-      }
-      takeRecords() {
-        return [];
-      }
-      disconnect() {
-        throw createNotImplementedError("PerformanceObserver.disconnect");
-      }
-      observe(options) {
-        throw createNotImplementedError("PerformanceObserver.observe");
-      }
-      bind(fn) {
-        return fn;
-      }
-      runInAsyncScope(fn, thisArg, ...args) {
-        return fn.call(thisArg, ...args);
-      }
-      asyncId() {
-        return 0;
-      }
-      triggerAsyncId() {
-        return 0;
-      }
-      emitDestroy() {
-        return this;
-      }
-    };
-    performance = globalThis.performance && "addEventListener" in globalThis.performance ? globalThis.performance : new Performance();
-  }
-});
-
-// ../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/node/perf_hooks.mjs
-var init_perf_hooks = __esm({
-  "../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/node/perf_hooks.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    init_performance();
-  }
-});
-
-// ../../../../.npm/_npx/a321175ec1de963a/node_modules/@cloudflare/unenv-preset/dist/runtime/polyfill/performance.mjs
-var init_performance2 = __esm({
-  "../../../../.npm/_npx/a321175ec1de963a/node_modules/@cloudflare/unenv-preset/dist/runtime/polyfill/performance.mjs"() {
-    init_perf_hooks();
-    globalThis.performance = performance;
-    globalThis.Performance = Performance;
-    globalThis.PerformanceEntry = PerformanceEntry;
-    globalThis.PerformanceMark = PerformanceMark;
-    globalThis.PerformanceMeasure = PerformanceMeasure;
-    globalThis.PerformanceObserver = PerformanceObserver;
-    globalThis.PerformanceObserverEntryList = PerformanceObserverEntryList;
-    globalThis.PerformanceResourceTiming = PerformanceResourceTiming;
-  }
-});
-
-// ../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/mock/noop.mjs
-var noop_default;
-var init_noop = __esm({
-  "../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/mock/noop.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    noop_default = Object.assign(() => {
-    }, { __unenv__: true });
-  }
-});
-
-// ../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/node/console.mjs
-import { Writable } from "node:stream";
-var _console, _ignoreErrors, _stderr, _stdout, log, info, trace, debug, table, error, warn, createTask, clear, count, countReset, dir, dirxml, group, groupEnd, groupCollapsed, profile, profileEnd, time, timeEnd, timeLog, timeStamp, Console, _times, _stdoutErrorHandler, _stderrErrorHandler;
-var init_console = __esm({
-  "../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/node/console.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    init_noop();
-    init_utils();
-    _console = globalThis.console;
-    _ignoreErrors = true;
-    _stderr = new Writable();
-    _stdout = new Writable();
-    log = _console?.log ?? noop_default;
-    info = _console?.info ?? log;
-    trace = _console?.trace ?? info;
-    debug = _console?.debug ?? log;
-    table = _console?.table ?? log;
-    error = _console?.error ?? log;
-    warn = _console?.warn ?? error;
-    createTask = _console?.createTask ?? /* @__PURE__ */ notImplemented("console.createTask");
-    clear = _console?.clear ?? noop_default;
-    count = _console?.count ?? noop_default;
-    countReset = _console?.countReset ?? noop_default;
-    dir = _console?.dir ?? noop_default;
-    dirxml = _console?.dirxml ?? noop_default;
-    group = _console?.group ?? noop_default;
-    groupEnd = _console?.groupEnd ?? noop_default;
-    groupCollapsed = _console?.groupCollapsed ?? noop_default;
-    profile = _console?.profile ?? noop_default;
-    profileEnd = _console?.profileEnd ?? noop_default;
-    time = _console?.time ?? noop_default;
-    timeEnd = _console?.timeEnd ?? noop_default;
-    timeLog = _console?.timeLog ?? noop_default;
-    timeStamp = _console?.timeStamp ?? noop_default;
-    Console = _console?.Console ?? /* @__PURE__ */ notImplementedClass("console.Console");
-    _times = /* @__PURE__ */ new Map();
-    _stdoutErrorHandler = noop_default;
-    _stderrErrorHandler = noop_default;
-  }
-});
-
-// ../../../../.npm/_npx/a321175ec1de963a/node_modules/@cloudflare/unenv-preset/dist/runtime/node/console.mjs
-var workerdConsole, assert, clear2, context, count2, countReset2, createTask2, debug2, dir2, dirxml2, error2, group2, groupCollapsed2, groupEnd2, info2, log2, profile2, profileEnd2, table2, time2, timeEnd2, timeLog2, timeStamp2, trace2, warn2, console_default;
-var init_console2 = __esm({
-  "../../../../.npm/_npx/a321175ec1de963a/node_modules/@cloudflare/unenv-preset/dist/runtime/node/console.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    init_console();
-    workerdConsole = globalThis["console"];
-    ({
-      assert,
-      clear: clear2,
-      context: (
-        // @ts-expect-error undocumented public API
-        context
-      ),
-      count: count2,
-      countReset: countReset2,
-      createTask: (
-        // @ts-expect-error undocumented public API
-        createTask2
-      ),
-      debug: debug2,
-      dir: dir2,
-      dirxml: dirxml2,
-      error: error2,
-      group: group2,
-      groupCollapsed: groupCollapsed2,
-      groupEnd: groupEnd2,
-      info: info2,
-      log: log2,
-      profile: profile2,
-      profileEnd: profileEnd2,
-      table: table2,
-      time: time2,
-      timeEnd: timeEnd2,
-      timeLog: timeLog2,
-      timeStamp: timeStamp2,
-      trace: trace2,
-      warn: warn2
-    } = workerdConsole);
-    Object.assign(workerdConsole, {
-      Console,
-      _ignoreErrors,
-      _stderr,
-      _stderrErrorHandler,
-      _stdout,
-      _stdoutErrorHandler,
-      _times
-    });
-    console_default = workerdConsole;
-  }
-});
-
-// ../../../../.npm/_npx/a321175ec1de963a/node_modules/wrangler/_virtual_unenv_global_polyfill-@cloudflare-unenv-preset-node-console
-var init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console = __esm({
-  "../../../../.npm/_npx/a321175ec1de963a/node_modules/wrangler/_virtual_unenv_global_polyfill-@cloudflare-unenv-preset-node-console"() {
-    init_console2();
-    globalThis.console = console_default;
-  }
-});
-
-// ../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/node/internal/process/hrtime.mjs
-var hrtime;
-var init_hrtime = __esm({
-  "../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/node/internal/process/hrtime.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    hrtime = /* @__PURE__ */ Object.assign(/* @__PURE__ */ __name(function hrtime2(startTime) {
-      const now = Date.now();
-      const seconds = Math.trunc(now / 1e3);
-      const nanos = now % 1e3 * 1e6;
-      if (startTime) {
-        let diffSeconds = seconds - startTime[0];
-        let diffNanos = nanos - startTime[0];
-        if (diffNanos < 0) {
-          diffSeconds = diffSeconds - 1;
-          diffNanos = 1e9 + diffNanos;
-        }
-        return [diffSeconds, diffNanos];
-      }
-      return [seconds, nanos];
-    }, "hrtime"), { bigint: /* @__PURE__ */ __name(function bigint() {
-      return BigInt(Date.now() * 1e6);
-    }, "bigint") });
-  }
-});
-
-// ../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/node/internal/tty/read-stream.mjs
-var ReadStream;
-var init_read_stream = __esm({
-  "../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/node/internal/tty/read-stream.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    ReadStream = class {
-      static {
-        __name(this, "ReadStream");
-      }
-      fd;
-      isRaw = false;
-      isTTY = false;
-      constructor(fd) {
-        this.fd = fd;
-      }
-      setRawMode(mode) {
-        this.isRaw = mode;
-        return this;
-      }
-    };
-  }
-});
-
-// ../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/node/internal/tty/write-stream.mjs
-var WriteStream;
-var init_write_stream = __esm({
-  "../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/node/internal/tty/write-stream.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    WriteStream = class {
-      static {
-        __name(this, "WriteStream");
-      }
-      fd;
-      columns = 80;
-      rows = 24;
-      isTTY = false;
-      constructor(fd) {
-        this.fd = fd;
-      }
-      clearLine(dir3, callback2) {
-        callback2 && callback2();
-        return false;
-      }
-      clearScreenDown(callback2) {
-        callback2 && callback2();
-        return false;
-      }
-      cursorTo(x, y, callback2) {
-        callback2 && typeof callback2 === "function" && callback2();
-        return false;
-      }
-      moveCursor(dx, dy, callback2) {
-        callback2 && callback2();
-        return false;
-      }
-      getColorDepth(env2) {
-        return 1;
-      }
-      hasColors(count3, env2) {
-        return false;
-      }
-      getWindowSize() {
-        return [this.columns, this.rows];
-      }
-      write(str, encoding, cb) {
-        if (str instanceof Uint8Array) {
-          str = new TextDecoder().decode(str);
-        }
-        try {
-          console.log(str);
-        } catch {
-        }
-        cb && typeof cb === "function" && cb();
-        return false;
-      }
-    };
-  }
-});
-
-// ../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/node/tty.mjs
-var init_tty = __esm({
-  "../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/node/tty.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    init_read_stream();
-    init_write_stream();
-  }
-});
-
-// ../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/node/internal/process/node-version.mjs
-var NODE_VERSION;
-var init_node_version = __esm({
-  "../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/node/internal/process/node-version.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    NODE_VERSION = "22.14.0";
-  }
-});
-
-// ../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/node/internal/process/process.mjs
-import { EventEmitter } from "node:events";
-var Process;
-var init_process = __esm({
-  "../../../../.npm/_npx/a321175ec1de963a/node_modules/unenv/dist/runtime/node/internal/process/process.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    init_tty();
-    init_utils();
-    init_node_version();
-    Process = class _Process extends EventEmitter {
-      static {
-        __name(this, "Process");
-      }
-      env;
-      hrtime;
-      nextTick;
-      constructor(impl) {
-        super();
-        this.env = impl.env;
-        this.hrtime = impl.hrtime;
-        this.nextTick = impl.nextTick;
-        for (const prop of [...Object.getOwnPropertyNames(_Process.prototype), ...Object.getOwnPropertyNames(EventEmitter.prototype)]) {
-          const value = this[prop];
-          if (typeof value === "function") {
-            this[prop] = value.bind(this);
-          }
-        }
-      }
-      // --- event emitter ---
-      emitWarning(warning, type, code) {
-        console.warn(`${code ? `[${code}] ` : ""}${type ? `${type}: ` : ""}${warning}`);
-      }
-      emit(...args) {
-        return super.emit(...args);
-      }
-      listeners(eventName) {
-        return super.listeners(eventName);
-      }
-      // --- stdio (lazy initializers) ---
-      #stdin;
-      #stdout;
-      #stderr;
-      get stdin() {
-        return this.#stdin ??= new ReadStream(0);
-      }
-      get stdout() {
-        return this.#stdout ??= new WriteStream(1);
-      }
-      get stderr() {
-        return this.#stderr ??= new WriteStream(2);
-      }
-      // --- cwd ---
-      #cwd = "/";
-      chdir(cwd2) {
-        this.#cwd = cwd2;
-      }
-      cwd() {
-        return this.#cwd;
-      }
-      // --- dummy props and getters ---
-      arch = "";
-      platform = "";
-      argv = [];
-      argv0 = "";
-      execArgv = [];
-      execPath = "";
-      title = "";
-      pid = 200;
-      ppid = 100;
-      get version() {
-        return `v${NODE_VERSION}`;
-      }
-      get versions() {
-        return { node: NODE_VERSION };
-      }
-      get allowedNodeEnvironmentFlags() {
-        return /* @__PURE__ */ new Set();
-      }
-      get sourceMapsEnabled() {
-        return false;
-      }
-      get debugPort() {
-        return 0;
-      }
-      get throwDeprecation() {
-        return false;
-      }
-      get traceDeprecation() {
-        return false;
-      }
-      get features() {
-        return {};
-      }
-      get release() {
-        return {};
-      }
-      get connected() {
-        return false;
-      }
-      get config() {
-        return {};
-      }
-      get moduleLoadList() {
-        return [];
-      }
-      constrainedMemory() {
-        return 0;
-      }
-      availableMemory() {
-        return 0;
-      }
-      uptime() {
-        return 0;
-      }
-      resourceUsage() {
-        return {};
-      }
-      // --- noop methods ---
-      ref() {
-      }
-      unref() {
-      }
-      // --- unimplemented methods ---
-      umask() {
-        throw createNotImplementedError("process.umask");
-      }
-      getBuiltinModule() {
-        return void 0;
-      }
-      getActiveResourcesInfo() {
-        throw createNotImplementedError("process.getActiveResourcesInfo");
-      }
-      exit() {
-        throw createNotImplementedError("process.exit");
-      }
-      reallyExit() {
-        throw createNotImplementedError("process.reallyExit");
-      }
-      kill() {
-        throw createNotImplementedError("process.kill");
-      }
-      abort() {
-        throw createNotImplementedError("process.abort");
-      }
-      dlopen() {
-        throw createNotImplementedError("process.dlopen");
-      }
-      setSourceMapsEnabled() {
-        throw createNotImplementedError("process.setSourceMapsEnabled");
-      }
-      loadEnvFile() {
-        throw createNotImplementedError("process.loadEnvFile");
-      }
-      disconnect() {
-        throw createNotImplementedError("process.disconnect");
-      }
-      cpuUsage() {
-        throw createNotImplementedError("process.cpuUsage");
-      }
-      setUncaughtExceptionCaptureCallback() {
-        throw createNotImplementedError("process.setUncaughtExceptionCaptureCallback");
-      }
-      hasUncaughtExceptionCaptureCallback() {
-        throw createNotImplementedError("process.hasUncaughtExceptionCaptureCallback");
-      }
-      initgroups() {
-        throw createNotImplementedError("process.initgroups");
-      }
-      openStdin() {
-        throw createNotImplementedError("process.openStdin");
-      }
-      assert() {
-        throw createNotImplementedError("process.assert");
-      }
-      binding() {
-        throw createNotImplementedError("process.binding");
-      }
-      // --- attached interfaces ---
-      permission = { has: /* @__PURE__ */ notImplemented("process.permission.has") };
-      report = {
-        directory: "",
-        filename: "",
-        signal: "SIGUSR2",
-        compact: false,
-        reportOnFatalError: false,
-        reportOnSignal: false,
-        reportOnUncaughtException: false,
-        getReport: /* @__PURE__ */ notImplemented("process.report.getReport"),
-        writeReport: /* @__PURE__ */ notImplemented("process.report.writeReport")
-      };
-      finalization = {
-        register: /* @__PURE__ */ notImplemented("process.finalization.register"),
-        unregister: /* @__PURE__ */ notImplemented("process.finalization.unregister"),
-        registerBeforeExit: /* @__PURE__ */ notImplemented("process.finalization.registerBeforeExit")
-      };
-      memoryUsage = Object.assign(() => ({
-        arrayBuffers: 0,
-        rss: 0,
-        external: 0,
-        heapTotal: 0,
-        heapUsed: 0
-      }), { rss: /* @__PURE__ */ __name(() => 0, "rss") });
-      // --- undefined props ---
-      mainModule = void 0;
-      domain = void 0;
-      // optional
-      send = void 0;
-      exitCode = void 0;
-      channel = void 0;
-      getegid = void 0;
-      geteuid = void 0;
-      getgid = void 0;
-      getgroups = void 0;
-      getuid = void 0;
-      setegid = void 0;
-      seteuid = void 0;
-      setgid = void 0;
-      setgroups = void 0;
-      setuid = void 0;
-      // internals
-      _events = void 0;
-      _eventsCount = void 0;
-      _exiting = void 0;
-      _maxListeners = void 0;
-      _debugEnd = void 0;
-      _debugProcess = void 0;
-      _fatalException = void 0;
-      _getActiveHandles = void 0;
-      _getActiveRequests = void 0;
-      _kill = void 0;
-      _preload_modules = void 0;
-      _rawDebug = void 0;
-      _startProfilerIdleNotifier = void 0;
-      _stopProfilerIdleNotifier = void 0;
-      _tickCallback = void 0;
-      _disconnect = void 0;
-      _handleQueue = void 0;
-      _pendingMessage = void 0;
-      _channel = void 0;
-      _send = void 0;
-      _linkedBinding = void 0;
-    };
-  }
-});
-
-// ../../../../.npm/_npx/a321175ec1de963a/node_modules/@cloudflare/unenv-preset/dist/runtime/node/process.mjs
-var globalProcess, getBuiltinModule, workerdProcess, isWorkerdProcessV2, unenvProcess, exit, features, platform, env, hrtime3, nextTick, _channel, _disconnect, _events, _eventsCount, _handleQueue, _maxListeners, _pendingMessage, _send, assert2, disconnect, mainModule, _debugEnd, _debugProcess, _exiting, _fatalException, _getActiveHandles, _getActiveRequests, _kill, _linkedBinding, _preload_modules, _rawDebug, _startProfilerIdleNotifier, _stopProfilerIdleNotifier, _tickCallback, abort, addListener, allowedNodeEnvironmentFlags, arch, argv, argv0, availableMemory, binding, channel, chdir, config, connected, constrainedMemory, cpuUsage, cwd, debugPort, dlopen, domain, emit, emitWarning, eventNames, execArgv, execPath, exitCode, finalization, getActiveResourcesInfo, getegid, geteuid, getgid, getgroups, getMaxListeners, getuid, hasUncaughtExceptionCaptureCallback, initgroups, kill, listenerCount, listeners, loadEnvFile, memoryUsage, moduleLoadList, off, on, once, openStdin, permission, pid, ppid, prependListener, prependOnceListener, rawListeners, reallyExit, ref, release, removeAllListeners, removeListener, report, resourceUsage, send, setegid, seteuid, setgid, setgroups, setMaxListeners, setSourceMapsEnabled, setuid, setUncaughtExceptionCaptureCallback, sourceMapsEnabled, stderr, stdin, stdout, throwDeprecation, title, traceDeprecation, umask, unref, uptime, version, versions, _process, process_default;
-var init_process2 = __esm({
-  "../../../../.npm/_npx/a321175ec1de963a/node_modules/@cloudflare/unenv-preset/dist/runtime/node/process.mjs"() {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
-    init_hrtime();
-    init_process();
-    globalProcess = globalThis["process"];
-    getBuiltinModule = globalProcess.getBuiltinModule;
-    workerdProcess = getBuiltinModule("node:process");
-    isWorkerdProcessV2 = globalThis.Cloudflare.compatibilityFlags.enable_nodejs_process_v2;
-    unenvProcess = new Process({
-      env: globalProcess.env,
-      // `hrtime` is only available from workerd process v2
-      hrtime: isWorkerdProcessV2 ? workerdProcess.hrtime : hrtime,
-      // `nextTick` is available from workerd process v1
-      nextTick: workerdProcess.nextTick
-    });
-    ({ exit, features, platform } = workerdProcess);
-    ({
-      env: (
-        // Always implemented by workerd
-        env
-      ),
-      hrtime: (
-        // Only implemented in workerd v2
-        hrtime3
-      ),
-      nextTick: (
-        // Always implemented by workerd
-        nextTick
-      )
-    } = unenvProcess);
-    ({
-      _channel,
-      _disconnect,
-      _events,
-      _eventsCount,
-      _handleQueue,
-      _maxListeners,
-      _pendingMessage,
-      _send,
-      assert: assert2,
-      disconnect,
-      mainModule
-    } = unenvProcess);
-    ({
-      _debugEnd: (
-        // @ts-expect-error `_debugEnd` is missing typings
-        _debugEnd
-      ),
-      _debugProcess: (
-        // @ts-expect-error `_debugProcess` is missing typings
-        _debugProcess
-      ),
-      _exiting: (
-        // @ts-expect-error `_exiting` is missing typings
-        _exiting
-      ),
-      _fatalException: (
-        // @ts-expect-error `_fatalException` is missing typings
-        _fatalException
-      ),
-      _getActiveHandles: (
-        // @ts-expect-error `_getActiveHandles` is missing typings
-        _getActiveHandles
-      ),
-      _getActiveRequests: (
-        // @ts-expect-error `_getActiveRequests` is missing typings
-        _getActiveRequests
-      ),
-      _kill: (
-        // @ts-expect-error `_kill` is missing typings
-        _kill
-      ),
-      _linkedBinding: (
-        // @ts-expect-error `_linkedBinding` is missing typings
-        _linkedBinding
-      ),
-      _preload_modules: (
-        // @ts-expect-error `_preload_modules` is missing typings
-        _preload_modules
-      ),
-      _rawDebug: (
-        // @ts-expect-error `_rawDebug` is missing typings
-        _rawDebug
-      ),
-      _startProfilerIdleNotifier: (
-        // @ts-expect-error `_startProfilerIdleNotifier` is missing typings
-        _startProfilerIdleNotifier
-      ),
-      _stopProfilerIdleNotifier: (
-        // @ts-expect-error `_stopProfilerIdleNotifier` is missing typings
-        _stopProfilerIdleNotifier
-      ),
-      _tickCallback: (
-        // @ts-expect-error `_tickCallback` is missing typings
-        _tickCallback
-      ),
-      abort,
-      addListener,
-      allowedNodeEnvironmentFlags,
-      arch,
-      argv,
-      argv0,
-      availableMemory,
-      binding: (
-        // @ts-expect-error `binding` is missing typings
-        binding
-      ),
-      channel,
-      chdir,
-      config,
-      connected,
-      constrainedMemory,
-      cpuUsage,
-      cwd,
-      debugPort,
-      dlopen,
-      domain: (
-        // @ts-expect-error `domain` is missing typings
-        domain
-      ),
-      emit,
-      emitWarning,
-      eventNames,
-      execArgv,
-      execPath,
-      exitCode,
-      finalization,
-      getActiveResourcesInfo,
-      getegid,
-      geteuid,
-      getgid,
-      getgroups,
-      getMaxListeners,
-      getuid,
-      hasUncaughtExceptionCaptureCallback,
-      initgroups: (
-        // @ts-expect-error `initgroups` is missing typings
-        initgroups
-      ),
-      kill,
-      listenerCount,
-      listeners,
-      loadEnvFile,
-      memoryUsage,
-      moduleLoadList: (
-        // @ts-expect-error `moduleLoadList` is missing typings
-        moduleLoadList
-      ),
-      off,
-      on,
-      once,
-      openStdin: (
-        // @ts-expect-error `openStdin` is missing typings
-        openStdin
-      ),
-      permission,
-      pid,
-      ppid,
-      prependListener,
-      prependOnceListener,
-      rawListeners,
-      reallyExit: (
-        // @ts-expect-error `reallyExit` is missing typings
-        reallyExit
-      ),
-      ref,
-      release,
-      removeAllListeners,
-      removeListener,
-      report,
-      resourceUsage,
-      send,
-      setegid,
-      seteuid,
-      setgid,
-      setgroups,
-      setMaxListeners,
-      setSourceMapsEnabled,
-      setuid,
-      setUncaughtExceptionCaptureCallback,
-      sourceMapsEnabled,
-      stderr,
-      stdin,
-      stdout,
-      throwDeprecation,
-      title,
-      traceDeprecation,
-      umask,
-      unref,
-      uptime,
-      version,
-      versions
-    } = isWorkerdProcessV2 ? workerdProcess : unenvProcess);
-    _process = {
-      abort,
-      addListener,
-      allowedNodeEnvironmentFlags,
-      hasUncaughtExceptionCaptureCallback,
-      setUncaughtExceptionCaptureCallback,
-      loadEnvFile,
-      sourceMapsEnabled,
-      arch,
-      argv,
-      argv0,
-      chdir,
-      config,
-      connected,
-      constrainedMemory,
-      availableMemory,
-      cpuUsage,
-      cwd,
-      debugPort,
-      dlopen,
-      disconnect,
-      emit,
-      emitWarning,
-      env,
-      eventNames,
-      execArgv,
-      execPath,
-      exit,
-      finalization,
-      features,
-      getBuiltinModule,
-      getActiveResourcesInfo,
-      getMaxListeners,
-      hrtime: hrtime3,
-      kill,
-      listeners,
-      listenerCount,
-      memoryUsage,
-      nextTick,
-      on,
-      off,
-      once,
-      pid,
-      platform,
-      ppid,
-      prependListener,
-      prependOnceListener,
-      rawListeners,
-      release,
-      removeAllListeners,
-      removeListener,
-      report,
-      resourceUsage,
-      setMaxListeners,
-      setSourceMapsEnabled,
-      stderr,
-      stdin,
-      stdout,
-      title,
-      throwDeprecation,
-      traceDeprecation,
-      umask,
-      uptime,
-      version,
-      versions,
-      // @ts-expect-error old API
-      domain,
-      initgroups,
-      moduleLoadList,
-      reallyExit,
-      openStdin,
-      assert: assert2,
-      binding,
-      send,
-      exitCode,
-      channel,
-      getegid,
-      geteuid,
-      getgid,
-      getgroups,
-      getuid,
-      setegid,
-      seteuid,
-      setgid,
-      setgroups,
-      setuid,
-      permission,
-      mainModule,
-      _events,
-      _eventsCount,
-      _exiting,
-      _maxListeners,
-      _debugEnd,
-      _debugProcess,
-      _fatalException,
-      _getActiveHandles,
-      _getActiveRequests,
-      _kill,
-      _preload_modules,
-      _rawDebug,
-      _startProfilerIdleNotifier,
-      _stopProfilerIdleNotifier,
-      _tickCallback,
-      _disconnect,
-      _handleQueue,
-      _pendingMessage,
-      _channel,
-      _send,
-      _linkedBinding
-    };
-    process_default = _process;
-  }
-});
-
-// ../../../../.npm/_npx/a321175ec1de963a/node_modules/wrangler/_virtual_unenv_global_polyfill-@cloudflare-unenv-preset-node-process
-var init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process = __esm({
-  "../../../../.npm/_npx/a321175ec1de963a/node_modules/wrangler/_virtual_unenv_global_polyfill-@cloudflare-unenv-preset-node-process"() {
-    init_process2();
-    globalThis.process = process_default;
-  }
-});
-
 // lib/kv.js
 var require_kv = __commonJS({
   "lib/kv.js"(exports) {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
     function upstashConf() {
       var url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
       var token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -1286,9 +164,6 @@ var require_kv = __commonJS({
 // lib/http.js
 var require_http = __commonJS({
   "lib/http.js"(exports) {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
     exports.cors = function(req, res, methods) {
       var allow = (process.env.ALLOWED_ORIGIN || "*").split(",").map(function(s) {
         return s.trim();
@@ -1313,9 +188,6 @@ var require_http = __commonJS({
 import libDefault from "crypto";
 var require_crypto = __commonJS({
   "node-built-in-modules:crypto"(exports, module) {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
     module.exports = libDefault;
   }
 });
@@ -1323,9 +195,6 @@ var require_crypto = __commonJS({
 // lib/auth.js
 var require_auth = __commonJS({
   "lib/auth.js"(exports) {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
     var crypto = require_crypto();
     var { ip } = require_http();
     var fails = {};
@@ -1362,9 +231,6 @@ var require_auth = __commonJS({
 // api/admin.js
 var require_admin = __commonJS({
   "api/admin.js"(exports, module) {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
     var { kv, kvConfigured } = require_kv();
     var { cors } = require_http();
     var { adminGate } = require_auth();
@@ -1506,9 +372,6 @@ var require_admin = __commonJS({
 // api/privacy.js
 var require_privacy = __commonJS({
   "api/privacy.js"(exports, module) {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
     var crypto = require_crypto();
     var { kv, kvConfigured } = require_kv();
     var { cors, ip } = require_http();
@@ -1571,9 +434,6 @@ var require_privacy = __commonJS({
 // api/callback.js
 var require_callback = __commonJS({
   "api/callback.js"(exports, module) {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
     var crypto = require_crypto();
     var { cors } = require_http();
     var { kv, kvConfigured } = require_kv();
@@ -1676,9 +536,6 @@ var require_callback = __commonJS({
 // lib/minimums.js
 var require_minimums = __commonJS({
   "lib/minimums.js"(exports, module) {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
     module.exports = { "checked": "2026-11-04", "limits": { "AL": "25/50/25", "AK": "50/100/25", "AZ": "25/50/15", "AR": "25/50/25", "CA": "30/60/15", "CO": "25/50/15", "CT": "25/50/25", "DE": "25/50/10", "DC": "25/50/10", "FL": "0/0/10", "GA": "25/50/25", "HI": "40/80/20", "ID": "25/50/15", "IL": "25/50/20", "IN": "25/50/25", "IA": "20/40/15", "KS": "25/50/25", "KY": "25/50/25", "LA": "15/30/25", "ME": "50/100/25", "MD": "30/60/15", "MA": "25/50/30", "MI": "50/100/10", "MN": "30/60/10", "MS": "25/50/25", "MO": "25/50/25", "MT": "25/50/20", "NE": "25/50/25", "NV": "25/50/20", "NH": "25/50/25", "NJ": "35/70/25", "NM": "25/50/10", "NY": "25/50/10", "NC": "50/100/50", "ND": "25/50/25", "OH": "25/50/25", "OK": "25/50/25", "OR": "25/50/20", "PA": "15/30/5", "RI": "25/50/25", "SC": "25/50/25", "SD": "25/50/25", "TN": "25/50/25", "TX": "30/60/25", "UT": "30/65/25", "VT": "25/50/10", "VA": "50/100/25", "WA": "25/50/10", "WV": "25/50/25", "WI": "25/50/10", "WY": "25/50/20" }, "notes": { "FL": ["Florida requires $10,000 of personal injury protection (PIP) and $10,000 of property damage liability; bodily injury liability is not required for most drivers.", "Florida exige $10,000 de protecci\xF3n contra lesiones personales (PIP) y $10,000 de responsabilidad por da\xF1os a la propiedad; la mayor\xEDa de los conductores no est\xE1 obligada a tener responsabilidad por lesiones."], "MI": ["$50,000/$100,000 is the lowest bodily injury limit a driver can choose in writing; Michigan policies default to $250,000/$500,000.", "$50,000/$100,000 es el l\xEDmite m\xE1s bajo que se puede elegir por escrito; las p\xF3lizas de Michigan vienen por defecto con $250,000/$500,000."], "NH": ["New Hampshire does not require car insurance, but drivers who buy it must carry at least these limits, and uninsured drivers must still prove they can pay for damage they cause.", "New Hampshire no exige seguro de auto, pero quien lo compra debe tener al menos estos l\xEDmites, y quien no tiene seguro debe demostrar que puede pagar los da\xF1os que cause."] }, "sources": ["Insurance Research Council / III, Automobile financial responsibility limits by state (July 2024)", "MoneyGeek state minimum table (verified May 2026)", "State updates: California SB 1107, New Jersey DOBI Bulletin 25-06, Massachusetts DOI, North Carolina DOI, Utah HB 113, Hawaii DCCA, Virginia (Jan 1, 2025)"] };
   }
 });
@@ -1687,9 +544,6 @@ var require_minimums = __commonJS({
 var require_genie_intent = __commonJS({
   "lib/genie-intent.js"(exports, module) {
     "use strict";
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
     var TAXONOMY_VERSION = "1.0.0";
     var RULES = {
       situation: {
@@ -1745,9 +599,6 @@ var require_genie_intent = __commonJS({
 var require_genie_planner = __commonJS({
   "lib/genie-planner.js"(exports, module) {
     "use strict";
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
     var FIELD_ORDER = ["state", "situation", "urgency", "vehicle_status", "coverage_goal"];
     var DEFAULT_REQUIRED = ["state", "urgency", "vehicle_status", "coverage_goal"];
     var QUESTIONS = {
@@ -1787,9 +638,6 @@ var require_genie_planner = __commonJS({
 var require_genie_conversation = __commonJS({
   "lib/genie-conversation.js"(exports, module) {
     "use strict";
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
     var { extractIntent } = require_genie_intent();
     var { nextQuestion } = require_genie_planner();
     var SITUATIONS = /* @__PURE__ */ new Set(["coverage_lapse", "sr22", "fr44", "dui", "ticket", "accident", "non_owner", "rideshare", "new_driver"]);
@@ -1821,9 +669,6 @@ var require_genie_conversation = __commonJS({
 var require_genie_runtime = __commonJS({
   "lib/genie-runtime.js"(exports, module) {
     "use strict";
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
     var { processTurn } = require_genie_conversation();
     var { nextQuestion } = require_genie_planner();
     var SITUATIONS = /* @__PURE__ */ new Set(["coverage_lapse", "sr22", "fr44", "dui", "ticket", "accident", "non_owner", "rideshare", "new_driver"]);
@@ -1870,9 +715,6 @@ var require_genie_runtime = __commonJS({
 // api/chat.js
 var require_chat = __commonJS({
   "api/chat.js"(exports, module) {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
     var { cors } = require_http();
     var MINIMUMS = require_minimums();
     var { buildIntelligence } = require_genie_runtime();
@@ -2009,9 +851,6 @@ var require_chat = __commonJS({
 // lib/migrate.js
 var require_migrate = __commonJS({
   "lib/migrate.js"(exports) {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
     var { upstash, upstashConfigured, ensureSchema } = require_kv();
     var DONE_KEY = "_migrated_from_upstash";
     var running = null;
@@ -2100,9 +939,6 @@ var require_migrate = __commonJS({
 // api/health.js
 var require_health = __commonJS({
   "api/health.js"(exports, module) {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
     var { kvConfigured, upstashConfigured } = require_kv();
     var { migrationStatus } = require_migrate();
     var { cors } = require_http();
@@ -2139,9 +975,6 @@ var require_health = __commonJS({
 // api/leads.js
 var require_leads = __commonJS({
   "api/leads.js"(exports, module) {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
     var crypto = require_crypto();
     var { kv, kvConfigured } = require_kv();
     var { cors, ip } = require_http();
@@ -2278,9 +1111,6 @@ var require_leads = __commonJS({
 // api/partners.js
 var require_partners = __commonJS({
   "api/partners.js"(exports, module) {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
     var { kv, kvConfigured } = require_kv();
     var { cors } = require_http();
     var { adminGate } = require_auth();
@@ -2378,9 +1208,6 @@ var require_partners = __commonJS({
 // api/event.js
 var require_event = __commonJS({
   "api/event.js"(exports, module) {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
     var { kv, kvConfigured } = require_kv();
     var { cors, ip } = require_http();
     var TYPES = ["chat_started", "chat_resumed", "step_answered", "question_asked", "chat_left", "match_shown", "no_match", "partner_click", "call_request", "email_signup"];
@@ -2473,9 +1300,6 @@ var require_event = __commonJS({
 // api/subscribe.js
 var require_subscribe = __commonJS({
   "api/subscribe.js"(exports, module) {
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-    init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-    init_performance2();
     var crypto = require_crypto();
     var { kv, kvConfigured } = require_kv();
     var { cors, ip } = require_http();
@@ -2552,9 +1376,6 @@ var require_subscribe = __commonJS({
 });
 
 // worker.js
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
-init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
-init_performance2();
 var import_admin = __toESM(require_admin());
 var import_callback = __toESM(require_callback());
 var import_chat = __toESM(require_chat());
@@ -2639,7 +1460,7 @@ function toRes() {
 }
 __name(toRes, "toRes");
 var worker_default = {
-  async fetch(request, env2, ctx) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname === "/" ? "/api/health" : url.pathname.replace(/\/+$/, "");
     if (path === "/api/geo") {
@@ -2661,10 +1482,10 @@ var worker_default = {
         headers: { "content-type": "application/json; charset=utf-8" }
       });
     }
-    globalThis.__AIG_D1 = env2.DB || null;
-    if (USES_STORAGE[name] && env2.DB) await (0, import_migrate.migrateIfNeeded)(env2.DB);
+    globalThis.__AIG_D1 = env.DB || null;
+    if (USES_STORAGE[name] && env.DB) await (0, import_migrate.migrateIfNeeded)(env.DB);
     const req = await toReq(request, url);
-    req.genieV2Enabled = env2.GENIE_V2_ENABLED === "true";
+    req.genieV2Enabled = env.GENIE_V2_ENABLED === "true";
     const { res, done, isSent } = toRes();
     try {
       await handler(req, res);
