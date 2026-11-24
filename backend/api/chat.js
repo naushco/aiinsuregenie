@@ -4,6 +4,7 @@
 
 const { cors } = require("../lib/http");
 const MINIMUMS = require("../lib/minimums.js");
+const { factsBlock } = require("../lib/facts.js");
 const { buildIntelligence } = require("../lib/genie-runtime");
 
 // Legal minimums come only from the checked table, never from the model's memory.
@@ -112,7 +113,7 @@ module.exports = async function handler(req, res) {
       cleaned.push({ role: "user", content: message });
     }
 
-    var system = SYSTEM_PROMPT + cleanProfile(body.profile) + cleanResults(body.results) + minimumsBlock();
+    var system = SYSTEM_PROMPT + cleanProfile(body.profile) + cleanResults(body.results) + minimumsBlock() + factsBlock();
     system += "\n\nSTYLE: Answer in under 120 words. No greetings like \"Great question\". If you use a number example, check the arithmetic (e.g. $3,000 damage with a $500 deductible: you pay $500, insurer pays $2,500).";
     // Genie 2.2: advisors give practical guidance first; quote journeys can
     // prioritize fast qualification. This never authorizes contact collection.

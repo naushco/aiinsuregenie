@@ -22,6 +22,9 @@ function validatedConfirmed(input) {
   };
 }
 function hypothetical(text) {
+  // A message made only of questions ("How long do I need an SR-22?") states no personal facts.
+  var sentences = text.split(/(?<=[.!?])\s+/).filter(function (x) { return x.trim(); });
+  if (sentences.length && sentences.every(function (x) { return /\?\s*$/.test(x) || /^\s*(how|what|why|does|do|is|are|can|could|should|when|which|who|where)\b/i.test(x); })) return true;
   return /\b(what if|what happens if|if someone|suppose|hypothetically|for example|how does|what is|can someone)\b/i.test(text)
     && !/\b(i have|i had|i need|i live|i'm in|my car|my insurance)\b/i.test(text);
 }

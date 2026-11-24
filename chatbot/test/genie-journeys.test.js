@@ -54,3 +54,14 @@ test("qualification completeness is not a price or eligibility score",()=>{
  assert.ok(partial.missing_fields.includes("when"));
  assert.ok(partial.missing_fields.includes("car"));
 });
+import { statedPart } from "../src/genie-journeys.js";
+test("questions are not personal facts; statements are (Genie 2.3)",()=>{
+ for(const q of ["How long do I need an SR-22 in Texas?","How long do I need an SR-22 in Texas and how much does filing cost?","What happens if I have a DUI?","Do I need full coverage?"]) assert.equal(statedPart(q),"",q);
+ assert.match(statedPart("I live in Texas, got a DUI and my insurance lapsed last month. What should I do?"),/Texas/);
+ assert.doesNotMatch(statedPart("I live in Texas, got a DUI and my insurance lapsed last month. What should I do?"),/What should/);
+ assert.notEqual(statedPart("Texas, 2019 Camry, DUI, need SR-22"),"");
+ assert.equal(statedPart("If I got a DUI would I need an SR-22?"),"");
+});
+test("coverage label matches the button the visitor tapped",()=>{
+ assert.equal(reviewProfile({cov:"full"}).find(r=>r.key==="cov").value,"Full coverage");
+});

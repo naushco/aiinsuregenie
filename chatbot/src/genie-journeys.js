@@ -4,7 +4,7 @@ export const QUOTE_FIELDS = ["st","sitDone","vehicleStatus","make","model","year
 const RISK_LABELS = {sr22:"SR-22 filing",dui:"DUI / DWI",lapse:"Coverage lapse",ride:"Rideshare / delivery",record:"Tickets or accidents",new:"New driver",none:"No special driving issue"};
 const STATUS_LABELS = {owned:"Own a vehicle",financed:"Financing a vehicle",leased:"Leasing a vehicle",no_vehicle:"Non-owner coverage"};
 const WHEN_LABELS = {today:"Today",week:"Within a week",compare:"Comparing options"};
-const COVERAGE_LABELS = {min:"State minimum",full:"Broader coverage",unsure:"Not sure yet"};
+const COVERAGE_LABELS = {min:"State minimum",full:"Full coverage",unsure:"Not sure yet"};
 
 export function quoteIntent(message) {
   const text = String(message || "").trim().toLowerCase();
@@ -76,4 +76,20 @@ export function safeAttribution(search,previous={},optOut=false) {
 export function safeJourney(existing,mode) {
   if(mode==="quote"||mode==="advisor")return mode;
   return existing==="quote"?"quote":"advisor";
+}
+
+// The declarative part of a message: sentences where the visitor states something
+// about themselves. Questions ("How long do I need an SR-22?") and hypotheticals
+// are not personal facts. Returns "" when nothing was stated.
+export function statedPart(text) {
+  var parts = String(text || "").split(/(?<=[.!?])\s+|\n+/);
+  var kept = parts.filter(function (p) {
+    var t = p.trim();
+    if (!t || /\?\s*$/.test(t)) return false;
+    if (/^(how|what|why|does|do|is|are|can|could|should|would|will|when|which|who|where|que|qué|como|cómo|cuánto|cuanto|puedo|debo)\b/i.test(t)) return false;
+    if (/\b(if i|suppose|hypothetically|what if|for example|my friend|someone)\b/i.test(t)) return false;
+    return /\b(i am|i'm|im|i live|i need|i have|i've|i had|my car|my insurance|my license|i drive|i got|i was|i want|got a|live in|tengo|necesito|vivo)\b/i.test(t)
+      || /^\s*[a-z .]+,\s*\d{4}\b/i.test(t); // "Texas, 2019 Camry, DUI"
+  });
+  return kept.join(" ");
 }

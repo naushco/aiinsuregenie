@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, Fragment } from "react";
 import MINIMUMS from "./minimums.js";
 import { quoteIntent, hasConfirmedDetails, profileReady, safeAttribution } from "./genie-journeys.js";
 import QuoteReview from "./QuoteReview.jsx";
+import { statedPart } from "./genie-journeys.js";
 import { confirmedFacts, localStage, stageFromPlan, candidateToWizard, candidateDescription } from "./genie-flow.js";
 
 var STORAGE_KEY = "aiinsuregenie-partners-v3";
@@ -836,6 +837,22 @@ var SAVE_KEY = "aig-chat-v2";
 function stName(ab) { return ABBR_STATE[ab] || ab || ""; }
 function stepOf(stage) { return { start: 0, state: 1, sit: 2, vehicle: 3, make: 3, model: 3, year: 3, cov: 4, when: 4, done: 5 }[stage] || 0; }
 function bodyOf(make, model) { var m = (MODEL_LIST[make] || []).find(function (x) { return x[0] === model; }); return m ? m[1] : "sedan"; }
+// One readable line for details waiting for confirmation, e.g. "Texas · SR-22 + DUI · 2019 Toyota Camry".
+function describePending(p, cur) {
+  if (!p) return "";
+  var out = [];
+  if (p.st) out.push(stName(p.st));
+  if (p.sits && p.sits.length) {
+    var known = (cur && cur.sitDone && cur.sits) || [];
+    var added = p.sits.filter(function (k) { return k !== "none" && known.indexOf(k) < 0; });
+    if (added.length) out.push(SIT.filter(function (k) { return added.indexOf(k.k) >= 0; }).map(function (k) { return k.s; }).join(" + "));
+  }
+  if (p.make || p.year) out.push(carName(Object.assign({}, cur || {}, p)));
+  if (p.cov && COVS[p.cov]) out.push(COVS[p.cov]);
+  if (p.when && WHENS[p.when]) out.push(WHENS[p.when]);
+  if (p.pri === "price") out.push(T("lowest price", "precio más bajo"));
+  return out.filter(Boolean).join(" · ");
+}
 function carName(s) { if (s.carAge && !s.make) return s.carAge; return [s.year && s.year !== "unsure" ? (s.year === "old" ? T("2015 or older", "2015 o antes") : s.year) : "", s.make, s.model && s.model !== "unsure" ? s.model : ""].filter(Boolean).join(" "); }
 var QH = { state: T("Which state do you live in?", "¿En qué estado vive?"), sit: T("Anything special about your situation?", "¿Algo especial en su situación?"), vehicle: T("Do you own, finance or lease a vehicle, or need non-owner coverage?", "¿Tiene, financia o alquila un vehículo, o necesita cobertura sin auto?"), make: T("What car do you drive?", "¿Qué auto maneja?"), model: T("Which model?", "¿Qué modelo?"), year: T("And the year?", "¿Y el año?"), cov: T("What coverage do you need?", "¿Qué cobertura necesita?"), when: T("When do you need it to start?", "¿Cuándo la necesita?") };
 function questionsLeft(s) {
@@ -1013,7 +1030,9 @@ export default function AIInsureGenie() {
         // Reconcile only the current qualification step; never overwrite the
         // visitor's confirmed answers, consent, results or raw conversation.
         if (selected === cur.stage) return cur;
-        return Object.assign({}, cur, { stage: selected, reviewOpen: selected === "done" && !cur.quoteReviewed, results: selected === "done" ? cur.results : null });
+        var review = selected === "done" && !cur.quoteReviewed && !!cur.chatFacts;
+        if (selected === "done" && !review && !cur.quoteReviewed) { setTimeout(function () { go({ quoteReviewed: true, stage: "done" }, true); }, 0); return cur; }
+        return Object.assign({}, cur, { stage: selected, reviewOpen: review, results: selected === "done" ? cur.results : null });
       });
     }).catch(function () { /* retain the equivalent local plan */ });
   };
@@ -1027,6 +1046,9 @@ export default function AIInsureGenie() {
     if (next.stage === "done" && cur0.stage !== "done") track("qualification_complete", { version: "2.2", journey: next.journey, vehicle_confirmed: !!next.vehicleStatus, coverage_confirmed: !!next.cov }, true);
     if (next.stage !== cur0.stage && o.said) next.hist = (cur0.hist || []).concat([{ q: QH[cur0.stage] || null, a: o.said }]).slice(-12);
     // No partner handoff until the visitor reviews the insurance profile.
+    // Details confirmed from chat get one review; tap-only quote visitors go straight to their match
+    // (their answers stay editable in the "Your details" bar).
+    if (next.stage === "done" && !next.quoteReviewed && !next.chatFacts) next = Object.assign(next, { quoteReviewed: true });
     if (next.stage === "done" && !next.quoteReviewed) next = Object.assign(next, { reviewOpen: true, results: null });
     if (next.stage === "done" && next.quoteReviewed && !next.results) next = Object.assign(next, { results: "loading" });
     setS(next);
@@ -1045,14 +1067,15 @@ export default function AIInsureGenie() {
       return; // the confirmation card must be addressed first
     }
     track("quote_requested", { origin: cur.journey }, false);
+    var turns = (cur.advisorTurns || []).concat(cur.qa && cur.qa.a ? [{ q: cur.qa.q, a: cur.qa.a }] : []).slice(-8);
     // Fast Get Quote from paid ads or an empty conversation must not start with
     // an empty profile summary. Ask the first missing question immediately.
     if (!hasConfirmedDetails(cur)) {
-      go({ journey: "quote", qa: null, askMore: false, reviewOpen: false, quoteReviewed: false,
+      go({ journey: "quote", qa: null, askMore: false, reviewOpen: false, quoteReviewed: false, advisorTurns: turns,
         stage: nextStage(cur), results: null, note: "" }, true);
       return;
     }
-    go({ journey: "quote", qa: null, askMore: false, reviewOpen: true, quoteReviewed: false,
+    go({ journey: "quote", qa: null, askMore: false, reviewOpen: true, quoteReviewed: false, advisorTurns: turns,
       note: T("Please review what I understood before we look at quoting options.", "Revise los datos antes de explorar cotizaciones.") }, true);
   };
   var editReviewField = function (field) {
@@ -1072,7 +1095,7 @@ export default function AIInsureGenie() {
     var cur = sRef.current;
     if (!profileReady(cur, function (make) { return !!MODEL_LIST[make]; })) {
       track("quote_review_continue", { complete: false }, false);
-      go({ reviewOpen: false, quoteReviewed: false, journey: "quote", stage: nextStage(cur), results: null,
+      go({ reviewOpen: false, quoteReviewed: true, journey: "quote", stage: nextStage(cur), results: null,
         note: T("I'll ask only for the missing information.", "Solo preguntaré por los datos que faltan.") }, true);
       return;
     }
@@ -1134,33 +1157,38 @@ export default function AIInsureGenie() {
   };
 
   // A question typed or tapped at any point: answer it, keep the match where it is.
-  var ask = function (text, explicitlySelected, quoteAfterConfirmation) {
+  var ask = function (text, explicitlySelected, quoteAfterConfirmation, profileOnly) {
     // Only explicit first-person declarations can populate quote qualification.
     // Questions, hypothetical scenarios and guide topics are not personal facts.
     var cur = sRef.current, merge = {}, noted = [];
-    var declaration = /\b(i am|i'm|i live|i need|i have|i had|my car|my insurance|i drive|i got|i was|i want)\b/i.test(text)
-      && !/\b(if i|suppose|hypothetically|what if|for example)\b/i.test(text);
+    var stated = statedPart(text);
+    var declaration = !!stated;
     if (declaration || explicitlySelected) {
-      var extracted = extract(text, cur);
+      var extracted = extract(stated || text, cur);
       merge = Object.assign({}, extracted.got, explicitlySelected || {});
       noted = extracted.said.filter(Boolean);
     }
-    var qa = { q: text, a: null, noted: noted.join(", "), agent: /(dui|dwi|sr-?22|accident|ticket|rate|price|cost|raise|multa|accidente|precio)/i.test(text) };
+    var qa = { q: text, a: null, noted: describePending(merge, cur), agent: /(dui|dwi|sr-?22|accident|ticket|rate|price|cost|raise|multa|accidente|precio)/i.test(text) };
     qa.candidate = merge; // Pending until visitor explicitly confirms before quote qualification.
     qa.quoteAfterConfirmation = !!quoteAfterConfirmation;
     var prior = cur.qa && cur.qa.a ? [{ q: cur.qa.q, a: cur.qa.a }] : [];
     setS(Object.assign({}, cur, { qa: qa, askMore: false,
       advisorTurns: (cur.advisorTurns || []).concat(prior).slice(-8) }));
+    if (profileOnly) {
+      qa.a = T("Thanks. Here's what I understood. Please check it before I find your quote options.", "Gracias. Esto es lo que entendí. Revíselo antes de buscar sus opciones.");
+      qa.profileOnly = true;
+      setS(Object.assign({}, cur, { qa: qa, askMore: false, advisorTurns: (cur.advisorTurns || []).concat(prior).slice(-8) }));
+      return;
+    }
     track("question_asked", { stage: cur.stage }, false);
     getAnswer(text, toProfile(cur), Array.isArray(cur.results) ? cur.results : [], genieConfirmed(cur), cur.journey).then(function (response) {
       setS(function (c) {
         if (!c.qa || c.qa.q !== text) return c;
         var brain = response.intelligence;
-        var found = brain && brain.requires_confirmation ? candidateToWizard(brain.candidates || {}, cur) : {};
+        var found = declaration && brain && brain.requires_confirmation ? candidateToWizard(brain.candidates || {}, cur) : {};
         // Backend candidates are unverified and only shown for confirmation.
         var pending = Object.assign({}, c.qa.candidate || {}, found);
-        var extra = candidateDescription(found, ABBR_STATE);
-        var noted = [c.qa.noted, extra].filter(Boolean).join(" · ");
+        var noted = describePending(pending, cur);
         return Object.assign({}, c, { qa: Object.assign({}, c.qa, {
           a: response.answer, candidate: pending, noted: noted,
           nextQuestion: brain && brain.next ? brain.next.text : null
@@ -1173,11 +1201,20 @@ export default function AIInsureGenie() {
   var keepGoing = function () {
     var cur = sRef.current;
     var fromStart = cur.stage === "start";
-    var confirmed = cur.qa && cur.qa.candidate ? cur.qa.candidate : {};
+    var confirmed = cur.qa && cur.qa.candidate ? Object.assign({}, cur.qa.candidate) : {};
+    if (Object.keys(confirmed).length) confirmed.chatFacts = true;
     var merged = Object.assign({}, cur, confirmed);
+    if (cur.qa && cur.qa.profileOnly) {
+      // The visitor just confirmed exactly what they typed: no second review, ask only what's missing.
+      go(Object.assign({}, confirmed, { journey: "quote", qa: null, askMore: false, reviewOpen: false, quoteReviewed: true,
+        stage: nextStage(merged), said: cur.qa.q, results: null,
+        note: T("Confirmed: ", "Confirmado: ") + cur.qa.noted + T(". I just need the rest.", ". Solo me falta lo demás.") }));
+      return;
+    }
     if (cur.qa && cur.qa.quoteAfterConfirmation) {
       go(Object.assign({}, confirmed, { journey: "quote", qa: null, askMore: false, stage: fromStart ? "start" : cur.stage,
         reviewOpen: true, quoteReviewed: false, results: null,
+        advisorTurns: (cur.advisorTurns || []).concat(cur.qa && cur.qa.a ? [{ q: cur.qa.q, a: cur.qa.a }] : []).slice(-8),
         note: T("Check these details before we prepare your quote options.", "Revise estos datos antes de preparar su cotización.") }), true);
       return;
     }
@@ -1204,7 +1241,12 @@ export default function AIInsureGenie() {
       else beginQuote();
       return;
     }
-    if (cur.journey === "advisor") { ask(text); return; }
+    if (cur.journey === "advisor") {
+      // "Texas, 2019 Camry, DUI, need SR-22" is a profile, not a question: confirm it and move to quotes.
+      var typed = !/\?/.test(text) && !isQuestion(text, "qualifying", null) ? extract(text, cur).got : {};
+      if (Object.keys(typed).length >= 2) { ask(text, typed, true, true); return; }
+      ask(text); return;
+    }
     if (cur.stage === "start" && entryWelcome && entryWelcome.kind === "guide") { ask(text); return; }
     if (cur.stage === "make" && cur.otherMake && !isQuestion(text, "qualifying", "vmake")) { var mk = text.charAt(0).toUpperCase() + text.slice(1); answer(mk, { make: mk.slice(0, 30), model: "unsure" }); return; }
     if (isQuestion(text, "qualifying", null)) { ask(text); return; }
@@ -1306,7 +1348,8 @@ export default function AIInsureGenie() {
     extra = [ch(T("I'm not sure", "No estoy seguro"), function () { answer(T("I'm not sure", "No estoy seguro"), { year: "unsure" }); }, "soft")];
   } else if (stage === "cov") {
     Q = [T("What coverage do you need?", "¿Qué cobertura necesita?"), T("State minimum is the cheapest legal option. Full coverage also pays to fix your own car.", "El mínimo del estado es la opción legal más barata. La cobertura total también paga la reparación de su auto.")];
-    chips = [ch(COVS.min, function () { answer(COVS.min, { cov: "min" }); }), ch(COVS.full, function () { answer(COVS.full, { cov: "full" }); }), ch(T("I don't know", "No sé"), function () { answer(T("I don't know", "No sé"), { cov: "unsure" }); }, "soft"), ch(T("What's full coverage?", "¿Qué es cobertura total?"), function () { ask(T("What does full coverage include?", "¿Qué incluye la cobertura total?")); }, "act")];
+    if (s.vehicleStatus === "no_vehicle") Q = [T("What coverage do you need?", "¿Qué cobertura necesita?"), T("Non-owner policies cover liability only (damage or injuries you cause), so there's no full-coverage option.", "Las pólizas sin vehículo solo cubren responsabilidad civil, así que no hay opción de cobertura total.")];
+    chips = [ch(COVS.min, function () { answer(COVS.min, { cov: "min" }); })].concat(s.vehicleStatus === "no_vehicle" ? [] : [ch(COVS.full, function () { answer(COVS.full, { cov: "full" }); })]).concat([ ch(T("I don't know", "No sé"), function () { answer(T("I don't know", "No sé"), { cov: "unsure" }); }, "soft"), ch(T("What's full coverage?", "¿Qué es cobertura total?"), function () { ask(T("What does full coverage include?", "¿Qué incluye la cobertura total?")); }, "act")]);
   } else if (stage === "when") {
     Q = [T("When do you need it to start?", "¿Cuándo la necesita?"), T("This helps us sort your matches.", "Esto nos ayuda a ordenar sus opciones.")];
     chips = Object.keys(WHENS).map(function (k) { return ch(WHENS[k], function () { answer(WHENS[k], { when: k }); }); });
@@ -1358,7 +1401,7 @@ export default function AIInsureGenie() {
 
         <main className="log" ref={logRef} aria-live="polite">
           <div className="log-in">
-            {stage === "start" && !s.qa && !s.askMore ? (
+            {stage === "start" && !s.qa && !s.askMore && !s.reviewOpen && !(s.advisorTurns || []).length ? (
               <>
                 <div className="hello">
                   <img src={LOGO} alt="" />
@@ -1379,7 +1422,7 @@ export default function AIInsureGenie() {
                 <button type="button" className="st" onClick={beginQuote}><span className="st-l">{T("Explore insurance quotes", "Explorar cotizaciones")}</span></button>
               </div>
             ) : null}
-            {s.journey === "advisor" ? (s.advisorTurns || []).map(function (h, i) { return <Fragment key={"ad"+i}><div className="u">{h.q}</div><div className="g past"><img className="ga" src={LOGO} alt=""/><div className="gt"><Bold text={h.a}/></div></div></Fragment>; }) : null}
+            {(s.advisorTurns || []).length ? (s.advisorTurns || []).map(function (h, i) { return <Fragment key={"ad"+i}><div className="u">{h.q}</div><div className="g past"><img className="ga" src={LOGO} alt=""/><div className="gt"><Bold text={h.a}/></div></div></Fragment>; }) : null}
             {(s.hist || []).length ? s.hist.map(function (h, i) { return (
               <Fragment key={i}>
                 {h.q ? <div className="g past"><img className="ga" src={LOGO} alt="" /><div className="gt">{h.q}</div></div> : null}
@@ -1457,8 +1500,8 @@ export default function AIInsureGenie() {
                 </>
               ) : (
                 <>
-                  <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{s.vehicleStatus === "no_vehicle" ? T("I cannot verify a suitable non-owner insurance quoting partner in ", "No puedo verificar un socio de seguro sin vehículo en ") + stName(s.st) + T(" right now. A licensed insurance professional may be able to explain your options.", " ahora. Un agente autorizado podría ayudarle.") : T("I don't have a quoting partner for ", "Todavía no tengo un socio de cotización para ") + stName(s.st) + T(" yet. I can email you as soon as one covers your state, or a licensed agent can call you.", ". Puedo avisarle por correo en cuanto uno cubra su estado, o un agente con licencia puede llamarle.")}</div></div>
-                  {s.vehicleStatus === "no_vehicle" ? null : <EmailCard profile={toProfile(s)} source="no_match" />}
+                  <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{s.vehicleStatus === "no_vehicle" ? T("Our quoting partners don't offer non-owner policies online yet. A licensed agent can quote a non-owner policy (and file your SR-22 if you need one), or I can email you when an online option is available in ", "Nuestros socios aún no ofrecen pólizas sin vehículo en línea. Un agente con licencia puede cotizarle una (y presentar su SR-22 si lo necesita), o puedo avisarle por correo cuando haya una opción en línea en ") + stName(s.st) + "." : T("I don't have a quoting partner for ", "Todavía no tengo un socio de cotización para ") + stName(s.st) + T(" yet. I can email you as soon as one covers your state, or a licensed agent can call you.", ". Puedo avisarle por correo en cuanto uno cubra su estado, o un agente con licencia puede llamarle.")}</div></div>
+                  <EmailCard profile={toProfile(s)} source={s.vehicleStatus === "no_vehicle" ? "no_match_nonowner" : "no_match"} />
                   <button type="button" className="p2" style={{ marginLeft: 36 }} onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} size={17} />{T("Talk to a licensed agent", "Hablar con un agente con licencia")}</button>
                 </>
               )
