@@ -80,6 +80,9 @@ jobs:
         working-directory: chatbot
 
   publish-staging-assets:
+    concurrency:
+      group: genie-staging-assets
+      cancel-in-progress: true
     # Only our trusted feature branch may publish compiled assets for isolated preview.
     if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feature/genie-2-intelligence' }}
     needs: [backend-tests, dashboard-build, chatbot-build, browser-smoke]
