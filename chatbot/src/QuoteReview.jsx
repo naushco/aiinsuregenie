@@ -1,10 +1,11 @@
-import {reviewProfile,profileReady} from "./genie-journeys.js";
+import {reviewProfile,qualificationSummary} from "./genie-journeys.js";
 
 const helperStyle={color:"#52627d",fontSize:13,lineHeight:1.5};
 export default function QuoteReview({profile,stateName,hasModels,onEdit,onContinue,onAdvice}) {
   const fields=reviewProfile(profile,stateName);
-  const complete=profileReady(profile,hasModels);
-  const missing=fields.filter(x=>!x.ready && !(x.key==="car" && profile.vehicleStatus==="no_vehicle") && x.key!=="pri").length;
+  const readiness=qualificationSummary(profile,hasModels);
+  const complete=readiness.ready;
+  const missing=readiness.required_count-readiness.confirmed_count;
   const issues=(profile.sits||[]).filter(k=>["sr22","dui","lapse","ride","record"].includes(k));
   return (
     <section aria-label="Review your insurance profile" style={{margin:"14px 0 20px 36px",border:"1px solid #dce5f0",borderRadius:16,padding:18,background:"#fff",boxShadow:"0 6px 24px rgba(11,42,91,.06)"}}>
@@ -18,7 +19,7 @@ export default function QuoteReview({profile,stateName,hasModels,onEdit,onContin
       {issues.length ? <p style={{...helperStyle,margin:"10px 0",padding:"10px 12px",background:"#f5f8fd",borderRadius:10}}>
         Your situation may affect which coverage and insurers are available. Comparing options with accurate details can help you make an informed choice. We have not verified your eligibility or pricing.
       </p>:null}
-      <p style={{...helperStyle,margin:"12px 0"}}>Review or correct your answers. Missing details will be asked only when needed. This is <strong>not a price quote</strong>.</p>
+      <p style={{...helperStyle,margin:"12px 0"}}>Review or correct your answers. <strong>{readiness.confirmed_count} of {readiness.required_count} required details confirmed.</strong> Missing details will be asked only when needed. This is <strong>not a price quote</strong>.</p>
       <dl style={{margin:"0 0 16px"}}>
         {fields.filter(x=>x.key!=="pri" || x.value).filter(x=>x.key!=="car" || profile.vehicleStatus!=="no_vehicle").map(field=>(
           <div key={field.key} style={{display:"flex",gap:8,alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #edf0f5"}}>
