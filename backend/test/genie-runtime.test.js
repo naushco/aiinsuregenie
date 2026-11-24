@@ -41,6 +41,6 @@ test("production UI deploys the exact original legacy implementation", () => {
   const expected = "889a8ea2103fdcfa81339956c11d23992c242127";
   // Original deployment's Git blob hash (Git SHA-1 includes a 'blob <length>\\0' prefix).
   const crypto = require("node:crypto");
-  const blob = crypto.createHash("sha1").update("blob " + Buffer.byteLength(original) + "\\0" + original).digest("hex");
+  const blob = crypto.createHash("sha1").update("blob " + Buffer.byteLength(original) + "\0" + original).digest("hex");
   assert.equal(blob, expected);
 });
