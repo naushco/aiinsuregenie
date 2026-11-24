@@ -174,7 +174,7 @@ test("advisor confirms inferred details then reviews before quote questions",asy
   await page.getByRole("button",{name:"Continue with quote questions"}).click();
   await expect(page.getByText("Anything special about your situation?")).toBeVisible();
 });
-test("immediate get quote waits for review before displaying partner options",async({page})=>{
+test("immediate get quote goes straight to the result without a review screen (Genie 2.3)",async({page})=>{
   await page.goto("/");
   await page.getByRole("button",{name:"Get quote now"}).click();
   // Fast quote entry should skip an empty profile review for paid visitors.
@@ -184,14 +184,13 @@ test("immediate get quote waits for review before displaying partner options",as
   await page.getByRole("button",{name:"Need an SR-22"}).click();
   await page.getByRole("button",{name:"Continue",exact:true}).click();
   await page.getByRole("button",{name:"I need non-owner coverage"}).click();
+  await expect(page.getByRole("button",{name:"Full coverage",exact:true})).toHaveCount(0);
   await page.getByRole("button",{name:"I don't know"}).click();
   await page.getByRole("button",{name:"Just comparing"}).click();
-  await expect(page.getByRole("region",{name:"Review your insurance profile"})).toBeVisible();
-  await expect(page.getByRole("region",{name:"Review your insurance profile"}).getByText("Non-owner coverage",{exact:true})).toBeVisible();
-  await expect(page.getByRole("button",{name:"Confirm and view quoting options"})).toBeVisible();
-  await expect(page.locator(".mcard")).toHaveCount(0);
-  await page.getByRole("button",{name:"Confirm and view quoting options"}).click();
+  // Tap-only answers need no extra review; non-owner never shows a vehicle-policy partner.
+  await expect(page.getByText(/don't offer non-owner policies online yet/)).toBeVisible();
   await expect(page.getByRole("region",{name:"Review your insurance profile"})).toHaveCount(0);
+  await expect(page.locator(".mcard")).toHaveCount(0);
   expect((await page.evaluate(()=>JSON.parse(localStorage.getItem("aig-chat-v2")))).s.vehicleStatus).toBe("no_vehicle");
 });
 test("first-party campaign metadata survives quote -> advisor switch, without contact fields",async({page})=>{

@@ -1243,7 +1243,9 @@ export default function AIInsureGenie() {
     }
     if (cur.journey === "advisor") {
       // "Texas, 2019 Camry, DUI, need SR-22" is a profile, not a question: confirm it and move to quotes.
-      var typed = !/\?/.test(text) && !isQuestion(text, "qualifying", null) ? extract(text, cur).got : {};
+      // Only a comma-separated list of details counts; sentences ("I'm in Texas and...") stay conversational.
+      var listLike = /,/.test(text) && !/\b(i|i'm|im|my|me|we|our)\b/i.test(text.replace(/\bneed\b/ig, ""));
+      var typed = listLike && !/\?/.test(text) && !isQuestion(text, "qualifying", null) ? extract(text, cur).got : {};
       if (Object.keys(typed).length >= 2) { ask(text, typed, true, true); return; }
       ask(text); return;
     }
