@@ -15,8 +15,9 @@ const ALLOWED = {
   coverage_goal: ["minimum", "full", "unsure"]
 };
 function isPresent(field, value, facts) {
-  if (value === null || value === undefined || value === "") return false;
+  // An explicit "none" confirmation is valid even when situation is [].
   if (field === "situation") return (facts && facts.situation_confirmed === true) || (Array.isArray(value) && value.length > 0);
+  if (value === null || value === undefined || value === "") return false;
   if (field === "state") return typeof value === "string" && /^[A-Z]{2}$/.test(value);
   if (field === "coverage_goal") return (facts && facts.coverage_goal_confirmed === true) || value === "minimum" || value === "full";
   if (ALLOWED[field]) return ALLOWED[field].includes(value) && value !== "unknown";
