@@ -9,7 +9,7 @@ const COVERAGE_LABELS = {min:"State minimum",full:"Broader coverage",unsure:"Not
 export function quoteIntent(message) {
   const text = String(message || "").trim().toLowerCase();
   if (!text || /^(what|why|how|if|suppose|hypothetically|can someone|does|is there)\b/.test(text)) return false;
-  return /\b(get (a |my |an )?(insurance )?quote|show (me )?(my |some )?quotes|find (me )?(insurance )?quotes|quote me|compare (insurance )?quotes|start (my |a )?quote|ready (to|for) (buy|purchase|quote)|i (want|need|would like) (a |an |my )?(insurance |auto insurance |car insurance )?(quote|quotes)|i need (car|auto) insurance (now|today|asap)|i want to (buy|shop for) (car |auto )?insurance)\b/.test(text);
+  return /\b(get (a |my |an )?(insurance )?quote|show (me )?(my |some )?quotes|find (me )?(insurance )?quotes|quote me|compare (insurance )?quotes|start (my |a )?quote|ready (to|for) (buy|purchase|quote)|i (want|need|would like) (a |an |my )?(insurance |auto insurance |car insurance )?(quote|quotes)|i need (car|auto) insurance (now|today|asap|immediately|right away|as soon as possible)|i want to (buy|shop for) (car |auto )?insurance)\b/.test(text);
 }
 
 export function hasConfirmedDetails(s) {
