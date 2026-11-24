@@ -69,3 +69,20 @@ test("privacy opt-out clears stored quote progress", async ({ page }) => {
   await page.reload();
   await expect.poll(() => page.evaluate(() => localStorage.getItem("aig-chat-v2"))).toBeNull();
 });
+
+test("staging brain receives only confirmed facts, never unapproved candidates", async ({ page }) => {
+  const messages = [];
+  page.on("request", request => {
+    if (new URL(request.url()).pathname === "/api/chat") messages.push(request.postDataJSON());
+  });
+  await page.goto("/#start=guide&topic=coverage");
+  await page.getByPlaceholder("Ask anything about car insurance").fill("I'm in Texas and need insurance this week.");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByRole("button", { name: "Confirm details and continue" })).toBeVisible();
+  expect(messages[0]?.confirmed?.state || null).toBeNull();
+  await page.getByRole("button", { name: "Confirm details and continue" }).click();
+  await page.getByPlaceholder("Ask anything about car insurance").fill("What is a deductible?");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect.poll(() => messages.length).toBe(2);
+  expect(messages[1].confirmed.state).toBe("TX");
+});
