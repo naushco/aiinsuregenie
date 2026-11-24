@@ -82,7 +82,7 @@ Some coverages, such as PIP or UM, can be waived or adjusted in certain states. 
 
 ## Is the state minimum enough?
 
-The minimum keeps you legal, but it often won't cover a serious crash. Medical bills and newer cars can easily cost more than $25,000, and you're personally responsible for the rest. Many drivers choose higher limits, such as 100/300/100. Minimums also don't cover damage to your own car. That needs collision and comprehensive coverage, which lenders require on financed cars.
+The minimum keeps you legal, but it often won't cover a serious crash. Medical bills and newer cars can easily cost more than $25,000, and you're personally responsible for the rest. Many drivers choose higher limits, such as 100/300/100. Minimums also don't cover damage to your own car. That needs collision and comprehensive coverage, which lenders require on financed cars. If you drive for Uber, Lyft or a delivery app, a personal policy may not cover you while the app is on; see [rideshare insurance](/rideshare-insurance/).
 
 ## What happens if you drive without the minimum?
 
