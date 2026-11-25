@@ -27,6 +27,10 @@ export function localStage(s, hasModels=()=>false) {
   if (!s.st) return "state";
   if (!s.sitDone) return "sit";
   if (!s.vehicleStatus) return "vehicle";
+  // AI InsureGenie 3.0: these three answers decide the partner. Car, coverage and
+  // timing don't change the match today, so they are asked only if the visitor
+  // chooses "Improve my match" (s.refine).
+  if (!s.refine) return "done";
   const car=carDetails(s,hasModels);
   if (car) return car;
   if (!s.cov) return "cov";

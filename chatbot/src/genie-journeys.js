@@ -32,7 +32,10 @@ export function reviewProfile(s, nameState=x=>x) {
 }
 export function profileReady(s, hasModels=()=>false) {
   const v=s||{};
-  if (!v.st||!v.sitDone||!STATUS_LABELS[v.vehicleStatus]||!COVERAGE_LABELS[v.cov]||!WHEN_LABELS[v.when]) return false;
+  // Required to show a match: state, situation and vehicle status (3.0 short path).
+  if (!v.st||!v.sitDone||!STATUS_LABELS[v.vehicleStatus]) return false;
+  if (!v.refine) return true;
+  if (!COVERAGE_LABELS[v.cov]||!WHEN_LABELS[v.when]) return false;
   if(v.vehicleStatus==="no_vehicle")return true;
   return !!((v.make||v.carAge)&&v.year&&(!hasModels(v.make)||v.model));
 }
@@ -41,8 +44,8 @@ export function profileReady(s, hasModels=()=>false) {
 // price, underwriting eligibility or consumer value. No PII or raw text.
 export function qualificationSummary(s,hasModels=()=>false) {
   const v=s||{};
-  const required=["st","sits","vehicleStatus","cov","when"];
-  if(v.vehicleStatus && v.vehicleStatus!=="no_vehicle") required.push("car");
+  const required=["st","sits","vehicleStatus"];
+  if(v.refine){ required.push("cov","when"); if(v.vehicleStatus && v.vehicleStatus!=="no_vehicle") required.push("car"); }
   const rows=reviewProfile(v);
   const completeFields=required.filter(key=>rows.some(row=>row.key===key && row.ready && (key!=="car" || (!!v.year && (!hasModels(v.make)||!!v.model)))));
   const unconfirmed=required.filter(key=>!completeFields.includes(key));

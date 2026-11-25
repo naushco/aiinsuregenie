@@ -7,7 +7,11 @@ test("Genie 2.1 asks only missing verified fields and respects non-owner coverag
   assert.equal(localStage({},models),"state");
   assert.equal(localStage({st:"TX"},models),"sit");
   assert.equal(localStage({st:"TX",sitDone:true,sits:["none"]},models),"vehicle");
-  const noCar={st:"TX",sitDone:true,sits:["none"],vehicleStatus:"no_vehicle"};
+  // 3.0 short path: three answers are enough for a match.
+  assert.equal(localStage({st:"TX",sitDone:true,sits:["none"],vehicleStatus:"no_vehicle"},models),"done");
+  assert.equal(localStage({st:"TX",sitDone:true,sits:["sr22"],vehicleStatus:"owned"},models),"done");
+  // Optional "Improve my match" asks the extra details.
+  const noCar={st:"TX",sitDone:true,sits:["none"],vehicleStatus:"no_vehicle",refine:true};
   assert.equal(localStage(noCar,models),"cov");
   assert.equal(localStage({...noCar,cov:"unsure"},models),"when");
   assert.equal(localStage({...noCar,cov:"unsure",when:"compare"},models),"done");
@@ -19,7 +23,7 @@ test("Genie 2.1 asks only missing verified fields and respects non-owner coverag
   assert.equal(facts.urgency,"later");
 });
 test("vehicle-owner asks relevant car details and not a duplicate state question",()=>{
-  const s={st:"TX",sits:["sr22"],sitDone:true,vehicleStatus:"owned"};
+  const s={st:"TX",sits:["sr22"],sitDone:true,vehicleStatus:"owned",refine:true};
   assert.equal(localStage(s,models),"make");
   assert.equal(localStage({...s,make:"Toyota"},models),"model");
   assert.equal(localStage({...s,make:"Toyota",model:"Corolla"},models),"year");
