@@ -47,7 +47,10 @@ test("hypothetical advisor question is not saved as personal driver history", as
 
 test("quote progression is saved with structured facts only", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "I need an SR-22" }).click();
+  await page.getByRole("button",{name:"Get quote now"}).click();
+  await page.getByRole("button",{name:"Texas",exact:true}).click();
+  await page.getByRole("button",{name:"Need an SR-22",exact:true}).click();
+  await page.getByRole("button",{name:"Continue",exact:true}).click();
   await expect.poll(() => page.evaluate(() => localStorage.getItem("aig-chat-v2"))).not.toBeNull();
   const stored = JSON.parse(await page.evaluate(() => localStorage.getItem("aig-chat-v2")));
   expect(stored.s.sits).toContain("sr22");
@@ -70,7 +73,10 @@ test("guide statements require confirmation and can be corrected", async ({ page
 
 test("privacy opt-out clears stored quote progress", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "I need an SR-22" }).click();
+  await page.getByRole("button",{name:"Get quote now"}).click();
+  await page.getByRole("button",{name:"Texas",exact:true}).click();
+  await page.getByRole("button",{name:"Need an SR-22",exact:true}).click();
+  await page.getByRole("button",{name:"Continue",exact:true}).click();
   await expect.poll(() => page.evaluate(() => localStorage.getItem("aig-chat-v2"))).not.toBeNull();
   await page.evaluate(() => localStorage.setItem("aig-dns", "1"));
   await page.reload();
@@ -115,14 +121,19 @@ test("without operator flag, actual legacy chatbot loads instead of Genie 2.0", 
 
 test("Genie 2.1 skips irrelevant car questions for a confirmed non-owner", async ({page}) => {
   await page.goto("/");
-  await page.getByRole("button",{name:"I need an SR-22"}).click();
-  await page.getByRole("button",{name:/Texas/}).first().click();
-  await expect(page.getByText(/Do you own, finance, or lease a vehicle/)).toBeVisible();
+  await page.getByRole("button",{name:"Get quote now"}).click();
+  await page.getByRole("button",{name:"Texas",exact:true}).click();
+  await page.getByRole("button",{name:"Need an SR-22",exact:true}).click();
+  await page.getByRole("button",{name:"Continue",exact:true}).click();
+  await expect(page.getByText("What is your vehicle situation?")).toBeVisible();
   await page.getByRole("button",{name:"I need non-owner coverage"}).click();
   await expect(page.getByText("What coverage do you need?")).toBeVisible();
   await page.getByRole("button",{name:"I don't know"}).click();
   await expect(page.getByText("When do you need it to start?")).toBeVisible();
   await page.getByRole("button",{name:"Just comparing"}).click();
+  await expect(page.getByRole("region",{name:"Review your insurance profile"})).toBeVisible();
+  await expect(page.locator(".mcard")).toHaveCount(0);
+  await page.getByRole("button",{name:"Confirm and view quoting options"}).click();
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem("aig-chat-v2")||"null")?.s?.stage)).toBe("done");
   const saved=JSON.parse(await page.evaluate(()=>localStorage.getItem("aig-chat-v2")));
   expect(saved.s.st).toBe("TX");
@@ -135,14 +146,16 @@ test("Genie 2.1 skips irrelevant car questions for a confirmed non-owner", async
 });
 test("Genie 2.1 permits interruption without forgetting qualification state", async ({page}) => {
   await page.goto("/");
-  await page.getByRole("button",{name:"I need an SR-22"}).click();
-  await page.getByRole("button",{name:/Texas/}).first().click();
-  await expect(page.getByText(/Do you own, finance, or lease a vehicle/)).toBeVisible();
+  await page.getByRole("button",{name:"Get quote now"}).click();
+  await page.getByRole("button",{name:"Texas",exact:true}).click();
+  await page.getByRole("button",{name:"Need an SR-22",exact:true}).click();
+  await page.getByRole("button",{name:"Continue",exact:true}).click();
+  await expect(page.getByText("What is your vehicle situation?")).toBeVisible();
   await page.getByPlaceholder("Ask anything about car insurance").fill("What is non-owner insurance?");
   await page.getByRole("button",{name:"Send"}).click();
   await expect(page.getByText("Insurance rules vary by state. Ask about available options.")).toBeVisible();
   await page.getByRole("button",{name:"Continue my match"}).click();
-  await expect(page.getByText(/Do you own, finance, or lease a vehicle/)).toBeVisible();
+  await expect(page.getByText("What is your vehicle situation?")).toBeVisible();
   expect((await page.evaluate(()=>JSON.parse(localStorage.getItem("aig-chat-v2")))).s.sits).toContain("sr22");
 });
 
@@ -204,7 +217,7 @@ test("first-party campaign metadata survives quote -> advisor switch, without co
   expect(initial.fbclid).toBe("valid123");
   expect(initial).not.toHaveProperty("email");
   await page.getByRole("button",{name:"Get quote now"}).click();
-  await page.getByRole("button",{name:"Ask Genie"}).click();
+  await page.getByRole("button",{name:"Ask AI InsureGenie"}).click();
   await expect(page.getByPlaceholder("Ask anything about car insurance")).toBeVisible();
   await page.reload();
   const later=await page.evaluate(()=>JSON.parse(sessionStorage.getItem("aig-attribution-v1")));
@@ -215,7 +228,65 @@ test("existing Genie 2.1 saved quote progress migrates into fast quote, not advi
   await page.goto("/");
   await page.evaluate(()=>localStorage.setItem("aig-chat-v2",JSON.stringify({t:Date.now(),s:{stage:"vehicle",st:"TX",sits:["sr22"],sitDone:true,vehicleStatus:"",make:"",model:"",year:"",cov:"",when:"",pri:""}})));
   await page.reload();
-  await expect(page.getByRole("button",{name:"Ask Genie"})).toBeVisible();
-  await expect(page.getByText(/Do you own, finance, or lease a vehicle/)).toBeVisible();
+  await expect(page.getByRole("button",{name:"Ask AI InsureGenie"})).toBeVisible();
+  await expect(page.getByText("What is your vehicle situation?")).toBeVisible();
   await expect(page.getByRole("region",{name:"Review your insurance profile"})).toHaveCount(0);
 });
+
+test("SR-22 starter offers advice and requires explicit confirmation",async({page})=>{
+  await page.goto("/");
+  await page.getByRole("button",{name:"I need an SR-22",exact:true}).click();
+  await expect(page.getByRole("region",{name:"Filing checklist"})).toBeVisible();
+  await expect(page.getByRole("button",{name:"Confirm details and keep talking"})).toBeVisible();
+  const before=await page.evaluate(()=>JSON.parse(localStorage.getItem("aig-chat-v2")||"null"));
+  expect(before?.s?.sits||[]).not.toContain("sr22");
+  await page.getByRole("button",{name:"Confirm details and keep talking"}).click();
+  await page.getByRole("button",{name:"Explore quotes whenever you're ready"}).click();
+  const review=page.getByRole("region",{name:"Review your insurance profile"});
+  await expect(review).toBeVisible();
+  await expect(review.getByText("SR-22 filing",{exact:true})).toBeVisible();
+});
+test("insight follow-up stays in advisor mode without starting a quote",async({page})=>{
+  await page.goto("/");
+  await page.getByPlaceholder("Ask anything about car insurance").fill("What is an SR-22?");
+  await page.getByRole("button",{name:"Send"}).click();
+  const card=page.getByRole("region",{name:"Filing checklist"});
+  await expect(card).toBeVisible();
+  await card.getByRole("button",{name:"What should I ask an insurer about an SR-22?"}).click();
+  await expect(page.locator(".u").last()).toHaveText("What should I ask an insurer about an SR-22?");
+  await expect(page.locator(".aig3-advisor")).toBeVisible();
+  await expect(page.getByRole("region",{name:"Review your insurance profile"})).toHaveCount(0);
+});
+for(const [label,width,height] of [["small-mobile",360,800],["mobile",390,844],["large-mobile",430,932],["tablet",768,1024],["desktop",1440,900]]){
+test("visual QA "+label,async({page},testInfo)=>{
+  await page.setViewportSize({width,height});
+  await page.goto("/");
+  await expect(page.getByRole("button",{name:"Get quote now",exact:true})).toBeVisible();
+  await page.evaluate(()=>document.fonts.ready);
+  const shot=async(name)=>{await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await page.screenshot({path:testInfo.outputPath(label+"-"+name+".png"),fullPage:true,animations:"disabled"});};
+  await shot("welcome");
+  await page.getByRole("button",{name:"More options",exact:true}).click();
+  await expect(page.getByRole("button",{name:"Return to website"})).toBeVisible();
+  await page.getByRole("button",{name:"More options",exact:true}).click();
+  await page.getByPlaceholder("Ask anything about car insurance").fill("What is an SR-22?");
+  await page.getByRole("button",{name:"Send"}).click();
+  await expect(page.getByRole("region",{name:"Filing checklist"})).toBeVisible();
+  await shot("advice");
+  await page.getByRole("button",{name:"Explore quotes",exact:true}).click();
+  await expect(page.getByText("Which state do you live in?")).toBeVisible();
+  await shot("quote-state");
+  await page.getByRole("button",{name:"Texas",exact:true}).click();
+  await page.getByRole("button",{name:"Need an SR-22",exact:true}).click();
+  await page.getByRole("button",{name:"Continue",exact:true}).click();
+  await page.getByRole("button",{name:"I need non-owner coverage"}).click();
+  await page.getByRole("button",{name:"I don't know"}).click();
+  await page.getByRole("button",{name:"Just comparing"}).click();
+  await expect(page.getByRole("region",{name:"Review your insurance profile"})).toBeVisible();
+  await shot("review");
+  await page.getByRole("button",{name:"Confirm and view quoting options"}).click();
+  await expect(page.getByText(/I cannot verify a suitable non-owner insurance quoting partner in Texas right now/)).toBeVisible();
+  await expect(page.getByText(/Checking partners in/)).toHaveCount(0);
+  await expect(page.locator(".mcard")).toHaveCount(0);
+  await shot("results");
+});
+}

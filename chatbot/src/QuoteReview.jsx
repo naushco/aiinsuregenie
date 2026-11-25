@@ -1,44 +1,23 @@
 import {reviewProfile,qualificationSummary} from "./genie-journeys.js";
 
-const helperStyle={color:"#52627d",fontSize:13,lineHeight:1.5};
 export default function QuoteReview({profile,stateName,hasModels,onEdit,onContinue,onAdvice}) {
-  const fields=reviewProfile(profile,stateName);
+  const es=typeof document!=="undefined" && document.documentElement.lang==="es";
+  const t=(en,sp)=>es?sp:en;
   const readiness=qualificationSummary(profile,hasModels);
   const complete=readiness.ready;
-  const missing=readiness.required_count-readiness.confirmed_count;
-  const issues=(profile.sits||[]).filter(k=>["sr22","dui","lapse","ride","record"].includes(k));
-  return (
-    <section aria-label="Review your insurance profile" style={{margin:"14px 0 20px 36px",border:"1px solid #dce5f0",borderRadius:16,padding:18,background:"#fff",boxShadow:"0 6px 24px rgba(11,42,91,.06)"}}>
-      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
-        <span aria-hidden="true" style={{display:"grid",placeItems:"center",width:36,height:36,borderRadius:10,background:"#eef3fb",fontSize:21}}>🛡️</span>
-        <div>
-          <h2 style={{fontSize:17,color:"#0b2a5b",margin:0}}>Your insurance profile</h2>
-          <p style={{...helperStyle,margin:"3px 0 0"}}>Based on what you have confirmed with Genie</p>
-        </div>
-      </div>
-      {issues.length ? <p style={{...helperStyle,margin:"10px 0",padding:"10px 12px",background:"#f5f8fd",borderRadius:10}}>
-        Your situation may affect which coverage and insurers are available. Comparing options with accurate details can help you make an informed choice. We have not verified your eligibility or pricing.
-      </p>:null}
-      <p style={{...helperStyle,margin:"12px 0"}}>Review or correct your answers. <strong>{readiness.confirmed_count} of {readiness.required_count} required details confirmed.</strong> Missing details will be asked only when needed. This is <strong>not a price quote</strong>.</p>
-      <dl style={{margin:"0 0 16px"}}>
-        {fields.filter(x=>x.key!=="pri" || x.value).filter(x=>x.key!=="car" || profile.vehicleStatus!=="no_vehicle").map(field=>(
-          <div key={field.key} style={{display:"flex",gap:8,alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #edf0f5"}}>
-            <div style={{minWidth:0}}>
-              <dt style={{color:"#64738d",fontSize:12}}>{field.label}</dt>
-              <dd style={{color:field.value?"#192a45":"#64738d",fontSize:14,fontWeight:field.value?600:400,margin:"4px 0 0",overflowWrap:"anywhere"}}>{field.value||"Not yet discussed"}</dd>
-            </div>
-            <button type="button" aria-label={"Change "+field.label} onClick={()=>onEdit(field.key)} style={{background:"#f1f4f8",border:"1px solid #e2e8f0",color:"#0b2a5b",fontSize:12,fontWeight:700,padding:"8px 10px",borderRadius:9,flexShrink:0}}>Edit</button>
-          </div>
-        ))}
-      </dl>
-      <p style={{...helperStyle,margin:"0 0 12px"}}>
-        {complete?"Your confirmed information is ready for a quoting-partner search.":"You can continue with "+missing+" missing detail"+(missing===1?"":"s")+"."}
-      </p>
-      <button type="button" onClick={onContinue} style={{display:"block",width:"100%",background:"#0b2a5b",color:"#fff",border:0,borderRadius:10,padding:"13px 10px",fontSize:14,fontWeight:750,cursor:"pointer"}}>
-        {complete?"Confirm and view quoting options":"Continue with quote questions"}
-      </button>
-      <button type="button" onClick={onAdvice} style={{display:"block",width:"100%",background:"none",color:"#0b2a5b",border:0,padding:"12px 8px",fontSize:13,fontWeight:650,cursor:"pointer"}}>Keep talking with Genie</button>
-      <p style={{...helperStyle,margin:"8px 0 0",fontSize:11}}>Nothing is sent to an insurance buyer from this review. If you choose a quoting partner, you may be taken to their website. Providing contact details or requesting calls requires a separate, clear consent step.</p>
-    </section>
-  );
+  const fields=reviewProfile(profile,stateName).filter(f=>(f.key!=="pri"||f.value)&&(f.key!=="car"||profile.vehicleStatus!=="no_vehicle"));
+  const labels={st:"Estado",sits:"Situación de seguro",vehicleStatus:"Situación del vehículo",car:"Vehículo",cov:"Cobertura",when:"Cuándo necesita cobertura",pri:"Prioridad"};
+  const values={"SR-22 filing":"Presentación SR-22","DUI / DWI":"DUI / DWI","Coverage lapse":"Interrupción de cobertura","Rideshare / delivery":"Transporte / reparto","Tickets or accidents":"Multas o accidentes","New driver":"Conductor nuevo","No special driving issue":"Sin situación especial","Own a vehicle":"Tengo un vehículo","Financing a vehicle":"Financio un vehículo","Leasing a vehicle":"Alquilo un vehículo","Non-owner coverage":"Cobertura sin vehículo","State minimum":"Mínimo estatal","Broader coverage":"Cobertura más amplia","Not sure yet":"No estoy seguro","Today":"Hoy","Within a week":"En una semana","Comparing options":"Comparando opciones","Lower cost":"Menor costo","Coverage":"Cobertura","Service":"Servicio"};
+  const value=f=>!f.value?t("Not yet discussed","Sin confirmar"):es?f.value.split(", ").map(v=>values[v]||v).join(", "):f.value;
+  return <section className="aig3-review" aria-label={t("Review your insurance profile","Revise su perfil de seguro")}>
+    <h2 className="pj">{t("Your insurance profile","Su perfil de seguro")}</h2>
+    <p>{t("Review or correct your confirmed details before we explore quoting options.","Revise o corrija sus datos confirmados antes de explorar cotizaciones.")}</p>
+    <div className="aig3-profile-meter" role="progressbar" aria-label={t("Confirmed details","Datos confirmados")} aria-valuenow={readiness.confirmed_count} aria-valuemax={readiness.required_count} aria-valuemin={0}><i style={{width:(100*readiness.confirmed_count/Math.max(1,readiness.required_count))+"%"}}/></div>
+    <p><strong>{readiness.confirmed_count} / {readiness.required_count}</strong> {t("required details confirmed","datos requeridos confirmados")}</p>
+    <dl>{fields.map(f=><div key={f.key} className="aig3-profile-row"><div><dt>{es?labels[f.key]||f.label:f.label}</dt><dd>{value(f)}</dd></div><button type="button" className="lk" aria-label={t("Change "+f.label,"Cambiar "+(labels[f.key]||f.label))} onClick={()=>onEdit(f.key)}>{t("Edit","Editar")}</button></div>)}</dl>
+    <p>{complete?t("Your confirmed information is ready for a quoting-partner search.","Sus datos confirmados están listos para buscar socios."):t("We will ask only for the missing details.","Solo preguntaremos por los datos faltantes.")} {t("This is not a price quote.","Esto no es una cotización de precio.")}</p>
+    <button type="button" className="p1" onClick={onContinue}>{complete?t("Confirm and view quoting options","Confirmar y ver opciones"):t("Continue with quote questions","Continuar con preguntas")}</button>
+    <button type="button" className="p2" style={{marginTop:10}} onClick={onAdvice}>{t("Keep talking with AI InsureGenie","Seguir hablando con AI InsureGenie")}</button>
+    <p className="fine">{t("Nothing is sent to an insurance buyer from this review. Contact requests require separate consent. Actual prices and eligibility are determined by the provider.","No enviamos datos a compradores de seguros en esta revisión. Las solicitudes de contacto requieren consentimiento separado. El proveedor determina los precios y la elegibilidad.")}</p>
+  </section>;
 }
