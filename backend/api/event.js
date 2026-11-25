@@ -6,6 +6,7 @@
 // Conversions API (skipped for visitors who opted out of sale/sharing or send Global Privacy Control).
 const { kv, kvConfigured } = require("../lib/kv");
 const { cors, ip } = require("../lib/http");
+const insights = require("../lib/insights.js");
 
 var TYPES = ["chat_started", "chat_resumed", "step_answered", "question_asked", "chat_left", "match_shown", "no_match", "partner_click", "call_request", "email_signup",
   // Genie 2.x journey events
@@ -62,6 +63,11 @@ module.exports = async function handler(req, res) {
       if (Math.random() < 0.02) await kv(["LTRIM", "events", "0", "49999"]);
     }
   } catch (e) { console.error("event store failed:", e && e.message); }
+  // Anonymous structured insights (no contact details, no free text). Skipped for Do Not Sell.
+  if (!ev.dns) {
+    try { await insights.recordSession(ev.session_id, b.insight, { type: ev.type, lang: ev.lang, source: ev.utm_source || ev.pub || null, journey: ev.journey, partner_id: ev.partner_id }); }
+    catch (e) { console.error("insight store failed:", e && e.message); }
+  }
   await toMeta(ev, req);
   return res.status(200).json({ ok: true });
 };

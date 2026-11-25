@@ -17,6 +17,8 @@ AI InsureGenie ("we", "us") runs aiinsuregenie.com and the chat assistant at cha
 
 **Usage events.** When you use the chat, we record simple events such as "chat started", "match shown", "question asked", "partner link opened", and "call requested", with a random ID for that chat visit, your state, and the ad campaign that brought you. These events do not include your name, phone number, or email, and we don't use cookies for them. We use them to count visits and improve the service.
 
+**Anonymous insights.** We also keep a de-identified record of each chat visit: the structured answers you chose (such as state, situation, vehicle status, and when you need coverage), your language, the traffic source, and whether a partner was shown or opened. For questions you type, we keep only a topic label (for example, "SR-22 cost") and whether we could answer it, not your words. These records contain no name, phone number, email, or IP address. We use them to improve our answers and guides, and we may publish or share them with partners only as aggregated statistics, never for groups smaller than 50 visits. If you have used "Do Not Sell or Share", we do not record them.
+
 **When you ask us to connect you or call you.** If you choose to share them, we collect your first name, phone number, email address, and preferred call time. We also record the exact consent wording you agreed to and when you agreed.
 
 We do not ask for your Social Security number, driver's license number, or payment details.

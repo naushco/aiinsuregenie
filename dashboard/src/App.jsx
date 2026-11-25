@@ -540,6 +540,44 @@ function GenieIntelligenceTab({ token }) {
   </div>;
 }
 
+var SIT_NAMES = { sr22: "SR-22", dui: "DUI/DWI", record: "Tickets/accident", lapse: "Coverage lapse", new: "New/young driver", ride: "Rideshare/delivery", none: "Standard" };
+var TOPIC_NAMES = { sr22_duration: "How long SR-22 lasts", sr22_cost: "SR-22 cost", sr22_basics: "SR-22 basics", fr44: "FR-44", non_owner: "Non-owner insurance", lapse: "Coverage lapse", dui: "DUI insurance", rideshare: "Rideshare/delivery", rental: "Rental car cover", household_vehicle: "Household/borrowed car", financed_leased: "Financed/leased car", full_coverage: "Full coverage", state_minimums: "State minimums", deductible: "Deductibles", ticket_accident: "Tickets/accidents", new_driver: "New/young driver", rate_increase: "Rate went up", save_money: "Saving money", compare_quotes: "Comparing quotes", claims: "Claims", spanish: "Spanish questions", other: "Other" };
+function pct(a, b) { return b ? Math.round(100 * (a || 0) / b) + "%" : "–"; }
+function Rows({ title, rows, empty }) {
+  return <div style={card}><div style={h3}>{title}</div>{rows.length ? rows.map(function (r, i) { return <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:"1px solid #f1f5f9",fontSize:12,gap:10}}><span style={{overflowWrap:"anywhere"}}>{r[0]}</span><span style={{whiteSpace:"nowrap"}}>{r[1]}</span></div>; }) : <div style={{fontSize:12,color:"#64748b"}}>{empty || "No data yet for this period."}</div>}</div>;
+}
+function InsightsTab({ token }) {
+  var [days, setDays] = useState(30);
+  var [partnerView, setPartnerView] = useState(false);
+  var [d, err] = useAdmin(token, "insights&min=" + (partnerView ? 50 : 0), days);
+  if (PREVIEW_MODE) return <div style={card}>Insights show live data only on the real dashboard.</div>;
+  if (err) return <div role="alert" style={card}>{err}</div>;
+  if (!d) return <div style={card}>Loading insights…</div>;
+  var t = d.totals || {}, n = function (v) { return Number(v || 0).toLocaleString(); };
+  var exportJson = function () {
+    var blob = new Blob([JSON.stringify(Object.assign({ generated_at: new Date().toISOString(), note: "Anonymous, aggregated AI InsureGenie conversation data." + (partnerView ? " Groups under 50 sessions hidden." : "") }, d), null, 2)], { type: "application/json" });
+    var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "aiinsuregenie-insights-" + d.since + "-" + days + "d.json"; a.click();
+  };
+  return <div style={{display:"flex",flexDirection:"column",gap:12}}>
+    <div style={card}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+      <div><div style={{fontWeight:800,fontSize:17,color:"#0f1b2d"}}>Insights</div><div style={{fontSize:12,color:"#64748b",marginTop:4}}>Anonymous answers and question topics. No names, contacts or chat text. Do-Not-Sell visitors excluded.</div></div>
+      <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+        <label style={{fontSize:12}}><input type="checkbox" checked={partnerView} onChange={function(e){setPartnerView(e.target.checked);}} /> Partner/SEO view (50+ only)</label>
+        <select aria-label="Period" value={days} onChange={function(e){setDays(Number(e.target.value));}} style={{padding:8,borderRadius:8,border:"1px solid #cbd5e1"}}><option value={7}>7 days</option><option value={30}>30 days</option><option value={90}>90 days</option><option value={365}>12 months</option></select>
+        <button onClick={exportJson} style={{padding:"8px 12px",borderRadius:8,border:"1px solid #0b2a5b",background:"#0b2a5b",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>Export report</button>
+      </div></div></div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:10}}>{[["Sessions",t.sessions],["Matched",t.matched],["Clicked",t.clicked],["Click rate",null,pct(t.clicked,t.sessions)],["Questions",t.questions]].map(function(m){return <div key={m[0]} style={card}><div style={{fontSize:12,color:"#64748b"}}>{m[0]}</div><div style={{fontSize:24,fontWeight:800,color:"#0b2a5b",marginTop:4}}>{m[2] || n(m[1])}</div></div>;})}</div>
+    <Rows title="Situations (click rate)" rows={(d.situations||[]).map(function(r){return [SIT_NAMES[r.situation]||r.situation, n(r.sessions)+" · "+pct(r.clicked,r.sessions)];})} />
+    <Rows title="Top states" rows={(d.by_state||[]).map(function(r){return [r.state, n(r.sessions)+" · "+pct(r.clicked,r.sessions)+" click"];})} />
+    <Rows title="Top situations by state" rows={(d.state_situation||[]).map(function(r){return [r.state+" · "+(SIT_NAMES[r.situation]||r.situation), n(r.sessions)];})} />
+    <Rows title="Question topics (answered)" rows={(d.question_topics||[]).map(function(r){return [TOPIC_NAMES[r.topic]||r.topic, n(r.asked)+" asked · "+pct(r.answered,r.asked)];})} />
+    {!partnerView && <Rows title="Content to-do: questions Genie couldn't fully answer" rows={(d.content_gaps||[]).map(function(r){return [TOPIC_NAMES[r.topic]||r.topic, n(r.unanswered)+" of "+n(r.asked)];})} empty="No gaps found yet." />}
+    <Rows title="Vehicle status" rows={Object.entries(d.vehicle_status||{}).sort(function(a,b){return b[1]-a[1];}).map(function(x){return [x[0].replace("_"," "), n(x[1])];})} />
+    <Rows title="Start timing" rows={Object.entries(d.timing||{}).sort(function(a,b){return b[1]-a[1];}).map(function(x){return [x[0], n(x[1])];})} />
+    <Rows title="Traffic source (click rate)" rows={(d.by_source||[]).map(function(r){return [r.source, n(r.sessions)+" · "+pct(r.clicked,r.sessions)];})} />
+  </div>;
+}
+
 function FunnelTab({ token, partners }) {
   var [days, setDays] = useState(30);
   var [d, err] = useAdmin(token, "funnel", days);
@@ -763,7 +801,7 @@ export default function Dashboard() {
         <div style={{flex:1,display:"flex",flexDirection:"column",borderRight:"1px solid #e3e6ec",overflow:"hidden"}}>
           {/* Tabs */}
           <div style={{padding:"12px 16px",display:"flex",gap:6,borderBottom:"1px solid #e3e6ec",background:"#FFF",flexShrink:0}}>
-            {["partners","stats","funnel","intelligence","emails","privacy"].map(function(t) {
+            {["partners","stats","funnel","intelligence","insights","emails","privacy"].map(function(t) {
               return <button key={t} onClick={function(){setTab(t);}} className={tab===t?"tab-active":""} style={{padding:"7px 16px",borderRadius:8,border:"none",background:tab===t?undefined:"transparent",color:tab===t?"#FFF":"#4a5a70",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",textTransform:"capitalize",transition:"all .2s"}}>{t}</button>;
             })}
             <div style={{flex:1}} />
@@ -837,6 +875,7 @@ export default function Dashboard() {
 
             {tab === "funnel" && <FunnelTab token={token} partners={partners} />}
             {tab === "intelligence" && <GenieIntelligenceTab token={token} />}
+            {tab === "insights" && <InsightsTab token={token} />}
             {tab === "emails" && <EmailsTab token={token} />}
             {tab === "privacy" && <PrivacyTab token={token} />}
             {tab === "stats" && (

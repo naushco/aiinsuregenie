@@ -247,7 +247,9 @@ async function aiAnswer(msg, profile, results, confirmed, journey) {
     profile: safeProfile(profile),
     results: (results || []).map(function (r) { return { n: r.n }; }),
     lang: LANG,
-    journey: journey === "advisor" ? "advisor" : "quote"
+    journey: journey === "advisor" ? "advisor" : "quote",
+    session_id: SESSION_ID,
+    dns: DO_NOT_SELL
   };
   // The production brain is always opt-in twice: a deployment-only frontend flag,
   // plus a separate server-side Cloudflare Worker flag. Staging sends its own
@@ -452,10 +454,16 @@ var UTM = (function () {
   return attribution;
 })();
 var sentOnce = {};
+// Structured, confirmed answers only (no contact details, no free text) for anonymous insights.
+var CURRENT_INSIGHT = {};
+function setInsight(s) {
+  CURRENT_INSIGHT = DO_NOT_SELL ? {} : { st: s.st || undefined, sits: s.sitDone ? (s.sits || []) : undefined,
+    vs: s.vehicleStatus || undefined, when: s.when || undefined, cov: s.cov || undefined };
+}
 function track(type, extra, once) {
   if (once) { if (sentOnce[type]) return; sentOnce[type] = 1; }
   try {
-    var body = JSON.stringify(Object.assign({ type: type, session_id: SESSION_ID, lang: LANG, dns: DO_NOT_SELL }, UTM, extra || {}, { frontend_version: "3.0" }));
+    var body = JSON.stringify(Object.assign({ type: type, session_id: SESSION_ID, lang: LANG, dns: DO_NOT_SELL }, UTM, extra || {}, { frontend_version: "3.2", insight: DO_NOT_SELL ? undefined : CURRENT_INSIGHT }));
     var url = API_BASE + "/api/event";
     if (navigator.sendBeacon && navigator.sendBeacon(url, new Blob([body], { type: "text/plain" }))) return;
     fetch(url, { method: "POST", headers: { "Content-Type": "text/plain" }, body: body, keepalive: true }).catch(function () {});
@@ -985,6 +993,7 @@ export default function AIInsureGenie() {
   var [menuOpen, setMenuOpen] = useState(false);
   var [list, setList] = useState(IS_PREVIEW ? DEFAULT_INSURERS : []);
   var logRef = useRef(null), inRef = useRef(null), tRef = useRef(null), sRef = useRef(s), planRef = useRef(0);
+  setInsight(s);
   sRef.current = s;
 
   // Partners from the dashboard (refreshed every 30 seconds).
