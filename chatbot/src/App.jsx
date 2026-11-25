@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, Fragment } from "react";
+import "./premium.css";
+import InsuranceInsights from "./InsuranceInsights.jsx";
 import MINIMUMS from "./minimums.js";
-import { quoteIntent, hasConfirmedDetails, profileReady, safeAttribution } from "./genie-journeys.js";
+import { quoteIntent, hasConfirmedDetails, profileReady, safeAttribution, qualificationSummary, reviewProfile } from "./genie-journeys.js";
 import QuoteReview from "./QuoteReview.jsx";
 import { statedPart } from "./genie-journeys.js";
 import { confirmedFacts, localStage, stageFromPlan, candidateToWizard, candidateDescription } from "./genie-flow.js";
@@ -453,7 +455,7 @@ var sentOnce = {};
 function track(type, extra, once) {
   if (once) { if (sentOnce[type]) return; sentOnce[type] = 1; }
   try {
-    var body = JSON.stringify(Object.assign({ type: type, session_id: SESSION_ID, lang: LANG, dns: DO_NOT_SELL }, UTM, extra || {}));
+    var body = JSON.stringify(Object.assign({ type: type, session_id: SESSION_ID, lang: LANG, dns: DO_NOT_SELL }, UTM, extra || {}, { frontend_version: "3.0" }));
     var url = API_BASE + "/api/event";
     if (navigator.sendBeacon && navigator.sendBeacon(url, new Blob([body], { type: "text/plain" }))) return;
     fetch(url, { method: "POST", headers: { "Content-Type": "text/plain" }, body: body, keepalive: true }).catch(function () {});
@@ -854,7 +856,7 @@ function describePending(p, cur) {
   return out.filter(Boolean).join(" · ");
 }
 function carName(s) { if (s.carAge && !s.make) return s.carAge; return [s.year && s.year !== "unsure" ? (s.year === "old" ? T("2015 or older", "2015 o antes") : s.year) : "", s.make, s.model && s.model !== "unsure" ? s.model : ""].filter(Boolean).join(" "); }
-var QH = { state: T("Which state do you live in?", "¿En qué estado vive?"), sit: T("Anything special about your situation?", "¿Algo especial en su situación?"), vehicle: T("Do you own, finance or lease a vehicle, or need non-owner coverage?", "¿Tiene, financia o alquila un vehículo, o necesita cobertura sin auto?"), make: T("What car do you drive?", "¿Qué auto maneja?"), model: T("Which model?", "¿Qué modelo?"), year: T("And the year?", "¿Y el año?"), cov: T("What coverage do you need?", "¿Qué cobertura necesita?"), when: T("When do you need it to start?", "¿Cuándo la necesita?") };
+var QH = { state: T("Which state do you live in?", "¿En qué estado vive?"), sit: T("What should we know about your insurance situation?", "¿Qué debemos saber sobre su situación de seguro?"), vehicle: T("Do you own, finance or lease a vehicle, or need non-owner coverage?", "¿Tiene, financia o alquila un vehículo, o necesita cobertura sin auto?"), make: T("What car do you drive?", "¿Qué auto maneja?"), model: T("Which model?", "¿Qué modelo?"), year: T("And the year?", "¿Y el año?"), cov: T("What coverage do you need?", "¿Qué cobertura necesita?"), when: T("When do you need it to start?", "¿Cuándo la necesita?") };
 function questionsLeft(s) {
   var FILL = { state: { st: "X" }, sit: { sitDone: true }, vehicle: { vehicleStatus: "owned" }, make: { make: "X" }, model: { model: "X" }, year: { year: "X" }, cov: { cov: "X" }, when: { when: "X" } };
   var x = Object.assign({}, s), n = 0, st;
@@ -930,20 +932,21 @@ function MatchCard({ ins, s, top, onCall }) {
   var [broken, setBroken] = useState(false);
   var logo = ins.logoUrl && !broken;
   var sponsored = !!(ins.pinned || ins.featured);
+  var validLink = typeof ins.rUrl === "string" && /^https:\/\//i.test(ins.rUrl);
   return (
     <article className="mcard" aria-label={ins.n}>
-      <div className="m-top"><span className={"tag" + (top ? "" : " g")}>{top ? T("Matches your answers", "Coincide con sus respuestas") : T("Also fits", "También encaja")}</span><span className="m-lbl">{sponsored ? T("Sponsored partner", "Socio patrocinado") : T("Partner", "Socio")}</span></div>
+      <div className="m-top"><span className={"tag" + (top ? "" : " g")}>{top ? T("Suggested option", "Opción sugerida") : T("Other option", "Otra opción")}</span><span className="m-lbl">{sponsored ? T("Sponsored partner", "Socio patrocinado") : T("Partner", "Socio")}</span></div>
       <div className="m-id">
         <span className={"m-logo pj" + (logo ? " img" : "")} style={logo ? undefined : { background: ins.bc || "#0f766e" }} aria-hidden="true">{logo ? <img src={ins.logoUrl} alt="" onError={function () { setBroken(true); }} /> : (ins.n || "?").charAt(0)}</span>
         <span className="m-name pj">{ins.n}</span>
       </div>
       <p className="m-why">{whyLine(s)}</p>
-      <div className="m-facts">{[T("Free to compare", "Comparar es gratis"), T("No obligation", "Sin compromiso"), T("Their short form", "Su formulario corto")].map(function (f) { return <span key={f}><Svg d={I_CHECK} size={14} sw={2.4} />{f}</span>; })}</div>
+      <div className="m-facts">{[T("External provider", "Proveedor externo"), T("Price not yet quoted", "Precio aún no cotizado")].map(function (f) { return <span key={f}><Svg d={I_CHECK} size={14} sw={2.4} />{f}</span>; })}</div>
       <div className="m-btns">
-        <a className="p1" href={ins.rUrl || "#"} target="_blank" rel="noopener noreferrer sponsored" onClick={function () { track("partner_click", { partner_id: ins.id, placement: top ? "top" : "other", state: s.st || null }); }}>{T("Get my quote", "Obtener mi cotización")}</a>
+        {validLink ? <a className="p1" href={ins.rUrl} target="_blank" rel="noopener noreferrer sponsored" onClick={function () { track("partner_click", { partner_id: ins.id, placement: top ? "top" : "other", state: s.st || null }); }}>{T("Continue to partner", "Continuar al socio")}<Svg d={I_CHEV}/></a>:<p role="status">{T("Partner link is currently unavailable.","El enlace del socio no está disponible.")}</p>}
         {top ? <button type="button" className="p2" onClick={onCall}><Svg d={I_PHONE} size={17} />{T("Talk to a licensed agent", "Hablar con un agente con licencia")}</button> : null}
       </div>
-      <p className="m-note">{T("Opens " + ins.n + "'s site in a new tab. Fill in their short form to see your quotes.", "Abre el sitio de " + ins.n + " en otra pestaña. Llene su formulario corto para ver sus cotizaciones.")}</p>
+      <p className="m-note">{T("Opens " + ins.n + " in a new tab. The provider determines actual prices, coverage and eligibility.", "Abre " + ins.n + " en otra pestaña. El proveedor determina precios, cobertura y elegibilidad.")}</p>
     </article>
   );
 }
@@ -973,6 +976,8 @@ export default function AIInsureGenie() {
   var [geo, setGeo] = useState("");
   var [showCall, setShowCall] = useState(false);
   var [leave, setLeave] = useState(false);
+  var [profileOpen, setProfileOpen] = useState(false);
+  var [menuOpen, setMenuOpen] = useState(false);
   var [list, setList] = useState(IS_PREVIEW ? DEFAULT_INSURERS : []);
   var logRef = useRef(null), inRef = useRef(null), tRef = useRef(null), sRef = useRef(s), planRef = useRef(0);
   sRef.current = s;
@@ -1017,6 +1022,7 @@ export default function AIInsureGenie() {
   // Nothing from this endpoint is stored in D1, and it makes no model/buyer call.
   var syncPlan = function (proposed) {
     if (!window.AIG_CONFIG?.genieV2Enabled || proposed.qa || proposed.stage === "start" || proposed.reviewOpen) return;
+    if (nextStage(proposed) === "done") return; // short path complete; optional details are never forced
     var stamp = JSON.stringify(genieConfirmed(proposed));
     var requestId = ++planRef.current;
     fetch(API_BASE + "/api/plan", {
@@ -1043,7 +1049,7 @@ export default function AIInsureGenie() {
     if (!quiet) { setTyping(true); clearTimeout(tRef.current); tRef.current = setTimeout(function () { setTyping(false); }, 500); }
     var cur0 = sRef.current;
     if (next.stage !== cur0.stage) track("step_answered", { step: cur0.stage, state: next.st || null });
-    if (next.stage === "done" && cur0.stage !== "done") track("qualification_complete", { version: "2.2", journey: next.journey, vehicle_confirmed: !!next.vehicleStatus, coverage_confirmed: !!next.cov }, true);
+    if (next.stage === "done" && cur0.stage !== "done") track("qualification_complete", { version: "3.0", journey: next.journey, vehicle_confirmed: !!next.vehicleStatus, coverage_confirmed: !!next.cov }, true);
     if (next.stage !== cur0.stage && o.said) next.hist = (cur0.hist || []).concat([{ q: QH[cur0.stage] || null, a: o.said }]).slice(-12);
     // No partner handoff until the visitor reviews the insurance profile.
     // Details confirmed from chat get one review; tap-only quote visitors go straight to their match
@@ -1052,7 +1058,7 @@ export default function AIInsureGenie() {
     if (next.stage === "done" && !next.quoteReviewed) next = Object.assign(next, { reviewOpen: true, results: null });
     if (next.stage === "done" && next.quoteReviewed && !next.results) next = Object.assign(next, { results: "loading" });
     setS(next);
-    if (next.results === "loading") showMatch(next);
+    if (next.results === "loading" && cur0.results !== "loading") showMatch(next);
     if (next.journey === "quote") syncPlan(next);
   };
   var answer = function (said, o) { var n = Object.assign({}, sRef.current, o); go(Object.assign({ said: said, note: "", otherMake: false }, o, { stage: nextStage(n), journey: "quote" })); };
@@ -1111,16 +1117,18 @@ export default function AIInsureGenie() {
     // No connected buyer is verified to offer non-owner policies. Do not
     // present an ordinary vehicle-policy partner as eligible for this case.
     if (n.vehicleStatus === "no_vehicle") {
-      setTimeout(function () { setS(function (cur) { return Object.assign({}, cur, { results: [] }); }); }, 400);
+      setTimeout(function () { setS(function (cur) { return cur.journey === "quote" && cur.quoteReviewed && cur.results === "loading" ? Object.assign({}, cur, { results: [] }) : cur; }); }, 400);
       track("no_match", { vehicle_type: "non_owner" });
       return;
     }
-    if (!INSURERS.length) { var l = await loadInsurers(); if (l) { INSURERS = l; setList(l); } }
+    var l = await loadInsurers();
+    if (l === null) { setS(function(cur){return cur.journey === "quote" && cur.quoteReviewed && cur.results === "loading" ? Object.assign({},cur,{results:"error"}) : cur;}); return; }
+    INSURERS=l; setList(l);
     var p = toProfile(n);
     var r = pickPartners(p).map(function (ins) { return Object.assign({}, ins, { rUrl: buildUrl(ins, p) }); });
     if (r.length) track("match_shown", { partner_id: r[0].id, state: p.state || null, goal: p.priority || null, options: r.length });
     else track("no_match", { state: p.state || null, goal: p.priority || null });
-    setTimeout(function () { setS(function (cur) { return Object.assign({}, cur, { results: r }); }); }, 700);
+    setTimeout(function () { setS(function (cur) { return cur.journey === "quote" && cur.quoteReviewed && cur.results === "loading" ? Object.assign({}, cur, { results: r }) : cur; }); }, 700);
   };
 
   // Pull answers out of a sentence: "cheapest insurance for my 2019 hyundai sonata in Texas".
@@ -1337,7 +1345,7 @@ export default function AIInsureGenie() {
     chips = SIT.map(function (x) { var on = s.sits.indexOf(x.k) >= 0; return ch(x.l, function () { var n = s.sits.slice(); if (x.k === "none") n = on ? [] : ["none"]; else { n = n.filter(function (y) { return y !== "none"; }); n = on ? n.filter(function (y) { return y !== x.k; }) : n.concat([x.k]); } go({ sits: n }, true); }, "", on); });
     if (s.sits.some(function (k) { return k === "sr22" || k === "dui"; })) chips.push(ch(T("How fast can an SR-22 be filed?", "¿Qué tan rápido se presenta una SR-22?"), function () { ask(T("How fast can an SR-22 be filed?", "¿Qué tan rápido se presenta una SR-22?")); }, "act"));
   } else if (stage === "vehicle") {
-    Q = [T("Do you own, finance, or lease a vehicle, or need non-owner insurance?", "¿Tiene un vehículo, lo financia, lo alquila, o necesita un seguro sin auto?"), T("This helps us avoid asking vehicle questions that do not apply.", "Así evitamos preguntas sobre un vehículo que no tiene.")];
+    Q = [T("What is your vehicle situation?", "¿Cuál es la situación de su vehículo?"), T("This helps us avoid asking vehicle questions that do not apply.", "Así evitamos preguntas sobre un vehículo que no tiene.")];
     chips = [
       ch(T("I own a vehicle", "Tengo un vehículo"), function () { answer(T("I own a vehicle", "Tengo un vehículo"), { vehicleStatus: "owned" }); }),
       ch(T("I finance a vehicle", "Financio un vehículo"), function () { answer(T("I finance a vehicle", "Financio un vehículo"), { vehicleStatus: "financed" }); }),
@@ -1366,12 +1374,14 @@ export default function AIInsureGenie() {
     Q = [T("When do you need it to start?", "¿Cuándo la necesita?"), T("This helps us sort your matches.", "Esto nos ayuda a ordenar sus opciones.")];
     chips = Object.keys(WHENS).map(function (k) { return ch(WHENS[k], function () { answer(WHENS[k], { when: k }); }); });
   }
-  var showFlow = s.journey === "quote" && !s.qa && !typing && !s.reviewOpen;
+  var showFlow = s.journey === "quote" && !s.qa && !typing && !s.reviewOpen && !s.askMore;
   var partnersHere = list.filter(function (ins) { return fits(ins, { state: s.st || null }); }).length;
   var sub = s.journey === "advisor" ? T("Personal insurance guidance", "Asesoría de seguro de auto") : stage === "done" && Array.isArray(s.results) ? (s.results.length ? s.results.length + T(s.results.length === 1 ? " partner fits you" : " partners fit you", s.results.length === 1 ? " socio encaja" : " socios encajan") : T("AI insurance assistant", "Asistente de seguros con IA"))
     : (s.st && partnersHere ? partnersHere + T(partnersHere === 1 ? " partner quotes in " : " partners quote in ", partnersHere === 1 ? " socio cotiza en " : " socios cotizan en ") + stName(s.st) : T("AI insurance assistant", "Asistente de seguros con IA"));
   var details = [s.st ? stName(s.st) : "", s.vehicleStatus === "no_vehicle" ? T("Non-owner coverage", "Seguro sin auto") : "", s.sitDone ? SIT.filter(function (x) { return s.sits.indexOf(x.k) >= 0; }).map(function (x) { return x.s; }).join(" + ") : "", at > ORDER.indexOf("year") ? carName(s) : "", s.cov ? COVS[s.cov] : (s.pri === "price" ? T("Lowest price", "Precio más bajo") : "")].filter(Boolean);
-  var pct = [0, 0, 25, 38, 50, 50, 50, 75, 90, 100][at] + "%";
+  var progress = qualificationSummary(s, function(make){return !!MODEL_LIST[make];});
+  var pct = (100 * progress.confirmed_count / Math.max(1,progress.required_count)) + "%";
+  var focusedQuote = showFlow && !!Q && !s.askMore;
   var prev = { sit: { stage: "state", st: "", changing: false }, vehicle: { stage: "sit", sitDone: false }, make: { stage: "vehicle", vehicleStatus: "" }, model: { stage: "make", make: "" }, year: { stage: MODEL_LIST[s.make] ? "model" : "make", model: "", make: MODEL_LIST[s.make] ? s.make : "" }, cov: { stage: "year", year: "" }, when: { stage: "cov", cov: "" } };
   var canBack = at > 1 && stage !== "done" && showFlow;
   if (s.vehicleStatus === "no_vehicle" && stage === "cov") prev.cov = { stage: "vehicle", vehicleStatus: "" };
@@ -1381,47 +1391,55 @@ export default function AIInsureGenie() {
   var rejectCandidate = function () { go({ qa: null, askMore: false, note: T("No details were saved. You can correct them below.", "No se guardaron datos. Puede corregirlos abajo."), stage: sRef.current.stage === "start" ? "state" : sRef.current.stage }, true); };
 
   var results = Array.isArray(s.results) ? s.results : null;
+  var readiness = qualificationSummary(s, function(make){return !!MODEL_LIST[make];});
+  var profileRows = reviewProfile(s, stName).filter(function(f){return (f.key !== "pri" || f.value) && (f.key !== "car" || s.vehicleStatus !== "no_vehicle");});
   var starters = [
-    { ic: "doc", l: T("I need an SR-22", "Necesito una SR-22"), fn: function () { track("chat_started", { mode: "starter_sr22" }, true); answer(T("I need an SR-22", "Necesito una SR-22"), { sits: ["sr22"], sitDone: true }); } },
-    { ic: "tag", l: T("Cheapest price for my car", "El precio más bajo para mi auto"), fn: function () { track("chat_started", { mode: "starter_price" }, true); answer(T("Cheapest price for my car", "El precio más bajo para mi auto"), { pri: "price" }); } },
-    { ic: "car", l: T("I'm a rideshare driver", "Manejo para Uber o Lyft"), fn: function () { track("chat_started", { mode: "starter_rideshare" }, true); answer(T("I'm a rideshare driver", "Manejo para Uber o Lyft"), { sits: ["ride"], sitDone: true }); } },
+    { ic: "doc", l: T("I need an SR-22", "Necesito una SR-22"), fn: function () { track("chat_started", { mode: "starter_sr22" }, true); track("quote_requested", { origin: "starter_sr22" }, false);
+      var c0 = sRef.current; var pre = Object.assign({}, c0, { sits: ["sr22"], sitDone: true });
+      go({ journey: "quote", qa: null, askMore: false, reviewOpen: false, quoteReviewed: false, sits: ["sr22"], sitDone: true,
+        said: T("I need an SR-22", "Necesito una SR-22"), stage: nextStage(pre), results: null, note: "" }); } },
+    { ic: "tag", l: T("Lower my insurance costs", "Reducir mi costo de seguro"), fn: function () { track("chat_started", { mode: "starter_price" }, true); ask(T("How can I lower my insurance costs?", "¿Cómo puedo reducir mi costo de seguro?")); } },
+    { ic: "car", l: T("I'm a rideshare driver", "Manejo para Uber o Lyft"), fn: function () { track("chat_started", { mode: "starter_rideshare" }, true); ask(T("I drive for rideshare. What coverage should I consider?", "Manejo para Uber o Lyft. ¿Qué cobertura debo considerar?")); } },
     { ic: "clock", l: T("I need coverage today", "Necesito seguro hoy"), fn: function () { track("chat_started", { mode: "starter_today" }, true); answer(T("I need coverage today", "Necesito seguro hoy"), { when: "today" }); } }
   ];
 
   return (
-    <div className="ig">
+    <div className={"ig aig3 " + (s.journey === "quote" ? "aig3-quote" : "aig3-advisor") + (stage === "start" && !s.qa && !s.askMore ? " aig3-welcome" : "") + (focusedQuote ? " aig3-focused" : "")}>
       <style>{CSS_TEXT}</style>
       <div className="ig-card">
         <header className="hd">
           <div className="hd-in">
             <img className="hd-logo" src={LOGO} alt="" />
-            <div className="hd-txt"><span className="hd-name pj">Genie</span><span className="hd-sub">{sub}</span></div>
-            {step >= 1 ? <span className="hd-step">{stage === "done" ? T("Done", "Listo") : step + " / 4"}</span> : null}
-            {s.journey === "quote" && !s.reviewOpen ? <button type="button" className="ib" aria-label={T("Ask Genie", "Preguntar a Genie")} title={T("Ask Genie about insurance", "Preguntar a Genie")} onClick={resumeAdvice}><Svg d={I_INFO} /></button> : null}
-            {s.journey === "advisor" && hasConfirmedDetails(s) && !s.qa ? <button type="button" className="ib" aria-label={T("Get quote", "Obtener cotización")} title={T("Review my quote profile", "Revisar datos de cotización")} onClick={beginQuote}><Svg d={I_CHECK}/></button> : null}
-            <button type="button" className="ib call" aria-label={T("Talk to a licensed agent", "Hablar con un agente con licencia")} onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} /></button>
-            <button type="button" className="ib" aria-label={T("Minimise chat", "Minimizar el chat")} onClick={goHome}><Svg d={<path d="M6 9l6 6 6-6" />} size={22} sw={2} /></button>
-            <button type="button" className="ib" aria-label={T("Close chat", "Cerrar el chat")} onClick={askClose}><Svg d={<path d="M6 6l12 12M18 6L6 18" />} size={20} sw={2} /></button>
+            <div className="hd-txt"><span className="hd-name pj">AI Insure<span className="aig3-gold">Genie</span></span><span className="hd-sub">{sub}</span></div>
+            {s.journey === "quote" && !s.reviewOpen ? <span className="hd-step">{s.quoteReviewed ? T("Reviewed","Revisado") : progress.confirmed_count + " / " + progress.required_count}</span> : null}
+            {s.journey === "quote" && !s.reviewOpen ? <button type="button" className="ib" aria-label={T("Ask AI InsureGenie", "Preguntar a AI InsureGenie")} title={T("Ask AI InsureGenie about insurance", "Preguntar a AI InsureGenie")} onClick={resumeAdvice}><Svg d={I_INFO} /></button> : null}
+            {s.journey === "advisor" && !typing && !s.qa && !(stage === "start" && !s.askMore) ? <button type="button" className="aig3-quote-cta" aria-label={T("Get Quote", "Obtener cotización")} onClick={beginQuote}>{T("Get Quote", "Cotizar")}</button> : null}
+            <button type="button" className="ib call" aria-label={T("Talk to a licensed agent", "Hablar con un agente con licencia")} title={T("Talk to a licensed agent", "Hablar con un agente con licencia")} onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} /></button>
+            <button type="button" className="ib aig3-menu-toggle" aria-label={T("More options","Más opciones")} aria-expanded={menuOpen} onClick={function(){setMenuOpen(!menuOpen);}}><Svg d={<><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></>}/></button>
+            <button type="button" className="ib aig3-profile-toggle" aria-label={T("My insurance profile", "Mi perfil de seguro")} aria-expanded={profileOpen} onClick={function(){setProfileOpen(!profileOpen);}}><Svg d={<><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></>}/></button>
+            {menuOpen ? <div className="aig3-menu"><button type="button" onClick={function(){setMenuOpen(false);setShowCall(true);}}>{T("Talk to a licensed agent","Hablar con un agente con licencia")}</button><a href={SITE+"privacy/"} target="_blank" rel="noopener noreferrer">{T("Privacy","Privacidad")}</a><button type="button" onClick={function(){setMenuOpen(false);askClose();}}>{T("Return to website","Volver al sitio web")}</button></div>:null}
           </div>
-          {step >= 1 ? <div className="prog" aria-hidden="true"><i style={{ width: pct }} /></div> : null}
+          {s.journey === "quote" ? <div className="prog" role="progressbar" aria-label={T("Required details confirmed","Datos requeridos confirmados")} aria-valuemin={0} aria-valuemax={progress.required_count} aria-valuenow={progress.confirmed_count}><i style={{ width: pct }} /></div> : null}
         </header>
         {details.length ? (
-          <button type="button" className="det" onClick={startOver} aria-label={T("Edit your details", "Editar sus datos")}>
+          <button type="button" className="det" onClick={function(){setProfileOpen(true);}} aria-label={T("Review your details", "Revisar sus datos")}>
             <span className="det-in"><span><b>{T("Your details", "Sus datos")}</b> · {details.join(" · ")}</span><Svg d={I_EDIT} size={14} /></span>
           </button>
         ) : null}
 
+        <div className={"aig3-workspace" + (profileOpen?" profile-open":"")}>
         <main className="log" ref={logRef} aria-live="polite">
           <div className="log-in">
             {stage === "start" && !s.qa && !s.askMore && !s.reviewOpen && !(s.advisorTurns || []).length ? (
               <>
                 <div className="hello">
-                  <img src={LOGO} alt="" />
-                  <h1 className="pj">{entryWelcome ? entryWelcome.title : s.journey === "advisor" ? T("Tell me what's going on with your insurance.", "Cuénteme sobre su seguro de auto.") : T("What can I help you with today?", "¿En qué le puedo ayudar hoy?")}</h1>
-                  <p>{entryWelcome ? entryWelcome.description : s.journey === "advisor" ? T("Ask naturally. I'll explain your options and help prepare for quotes whenever you want.", "Pregunte con naturalidad. Le ayudaré a entender sus opciones.") : T("I can help you understand auto insurance and find a suitable quoting partner in a few quick steps.", "Puedo ayudarle a entender el seguro de auto y encontrar un socio de cotización adecuado en unos pasos rápidos.")}</p>
+                  <span className="aig3-welcome-label"><img src={LOGO} alt="" />{T("Your auto insurance assistant","Su asistente de seguro de auto")}</span>
+                  <h1 className="pj">{entryWelcome ? entryWelcome.title : s.journey === "advisor" ? T("Car insurance, made clearer.", "Seguro de auto, más claro.") : T("What can I help you with today?", "¿En qué le puedo ayudar hoy?")}</h1>
+                  <p>{entryWelcome ? entryWelcome.description : s.journey === "advisor" ? T("Get answers, understand your coverage and explore insurance options when you are ready.", "Obtenga respuestas, entienda su cobertura y explore opciones cuando esté listo.") : T("I can help you understand auto insurance and find a suitable quoting partner in a few quick steps.", "Puedo ayudarle a entender el seguro de auto y encontrar un socio de cotización adecuado en unos pasos rápidos.")}</p>
                 </div>
-                <div className="starts">
-                  {s.journey === "advisor" ? <button type="button" className="st" onClick={beginQuote}><span className="st-ic"><Svg d={START_ICONS.tag}/></span><span className="st-l">{T("Get quote now", "Obtener cotización ahora")}</span><span className="chev"><Svg d={I_CHEV} size={16}/></span></button> : null}
+                {s.journey === "advisor" ? <div className="aig3-entry"><button type="button" className="p1" onClick={beginQuote}>{T("Get quote now","Obtener cotización ahora")}<Svg d={I_CHEV}/></button><button type="button" className="p2" onClick={function(){inRef.current && inRef.current.focus();}}>{T("Ask an insurance question","Hacer una pregunta")}</button><p>{T("No phone number required to see available partner options.","No necesita teléfono para ver opciones disponibles.")}</p></div>:null}
+                {!(entryWelcome && entryWelcome.kind === "guide") ? <h2 className="aig3-topic-heading">{T("Popular questions","Preguntas populares")}</h2>:null}
+                <div className="starts aig3-topics">
                   {(entryWelcome && entryWelcome.kind === "guide" ? [] : starters).map(function (x) { return <button type="button" key={x.ic} className="st" onClick={x.fn}><span className="st-ic"><Svg d={START_ICONS[x.ic]} /></span><span className="st-l">{x.l}</span><span className="chev"><Svg d={I_CHEV} size={16} /></span></button>; })}
                 </div>
               </>
@@ -1434,14 +1452,14 @@ export default function AIInsureGenie() {
                 <button type="button" className="st" onClick={beginQuote}><span className="st-l">{T("Explore insurance quotes", "Explorar cotizaciones")}</span></button>
               </div>
             ) : null}
-            {(s.advisorTurns || []).length ? (s.advisorTurns || []).map(function (h, i) { return <Fragment key={"ad"+i}><div className="u">{h.q}</div><div className="g past"><img className="ga" src={LOGO} alt=""/><div className="gt"><Bold text={h.a}/></div></div></Fragment>; }) : null}
-            {(s.hist || []).length ? s.hist.map(function (h, i) { return (
+            {!focusedQuote && (s.advisorTurns || []).length ? (s.advisorTurns || []).map(function (h, i) { return <Fragment key={"ad"+i}><div className="u">{h.q}</div><div className="g past"><img className="ga" src={LOGO} alt=""/><div className="gt"><Bold text={h.a}/></div></div></Fragment>; }) : null}
+            {!focusedQuote && (s.hist || []).length ? s.hist.map(function (h, i) { return (
               <Fragment key={i}>
                 {h.q ? <div className="g past"><img className="ga" src={LOGO} alt="" /><div className="gt">{h.q}</div></div> : null}
                 <div className="u">{h.a}</div>
               </Fragment>
-            ); }) : (stage !== "start" && s.said ? <div className="u">{s.said}</div> : null)}
-            {s.note ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{s.note}</div></div> : null}
+            ); }) : (!focusedQuote && stage !== "start" && s.said ? <div className="u">{s.said}</div> : null)}
+            {s.note && !focusedQuote ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{s.note}</div></div> : null}
 
             {at >= ORDER.indexOf("cov") && s.make ? (
               <div className="car">
@@ -1451,20 +1469,21 @@ export default function AIInsureGenie() {
               </div>
             ) : null}
 
-            {Q && !typing && !s.reviewOpen && s.journey === "quote" ? <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{Q[0]}{Q[1] ? <span className="gh"><Svg d={I_INFO} size={14} /><span>{Q[1]}</span></span> : null}</div></div> : null}
+            {Q && !typing && !s.reviewOpen && s.journey === "quote" ? <div className="g aig3-question" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt"><span className="aig3-kicker">{s.refine ? T("Improve your match","Mejorar su opción") : T("Step ","Paso ") + Math.min(progress.confirmed_count + 1, progress.required_count) + T(" of "," de ") + progress.required_count}</span>{Q[0]}{Q[1] ? <span className="gh"><Svg d={I_INFO} size={14} /><span>{Q[1]}</span></span> : null}</div></div> : null}
 
             {s.qa ? (
               <>
                 <div className="u">{s.qa.q}</div>
-                {s.qa.a == null ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="dots" aria-label={T("Genie is typing", "Genie está escribiendo")}><i /><i /><i /></div></div> : (
+                {s.qa.a == null ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="dots" aria-label={T("AI InsureGenie is typing", "AI InsureGenie está escribiendo")}><i /><i /><i /></div></div> : (
                   <>
                     <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt"><Bold text={s.qa.a} />
                       {s.qa.agent ? <div style={{ marginTop: 10 }}><button type="button" className="c" style={{ whiteSpace: "normal", textAlign: "left", maxWidth: "100%" }} onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} size={15} />{T("Ask a licensed agent, free", "Pregunte a un agente con licencia, gratis")}</button></div> : null}
                     </div></div>
+                    {s.journey === "advisor" ? <InsuranceInsights question={s.qa.q} es={ES} onAsk={function(q){ask(q);}} />:null}
                     {stage !== "done" ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt" style={{ color: "#33415c" }}>{s.journey === "advisor" ? T("We can keep talking, or explore quoting options when you're ready.", "Podemos seguir hablando o explorar cotizaciones cuando quiera.") : (s.sits.indexOf("dui") >= 0 || s.sits.indexOf("sr22") >= 0) ? T("Want me to find a partner for drivers like you", "¿Quiere que le busque un socio para conductores como usted") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?" : T("Want me to find the partner that fits you", "¿Quiere que le busque el socio que le conviene") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?"}
                       {s.qa.noted ? <span className="gh"><Svg d={I_CHECK} size={14} sw={2.2} /><span>{T("Please confirm: ", "Confirme: ") + s.qa.noted + T(". These details will be used only if you continue to quotes.", ". Estos datos solo se usarán si continúa a cotizaciones.")}</span></span> : null}
                     </div></div> : null}
-                    <div className="ans"><button type="button" className="c on" onClick={keepGoing}>{s.qa.profileOnly ? T("Confirm and continue", "Confirmar y continuar") : s.qa.quoteAfterConfirmation ? T("Confirm details and review quotes", "Confirmar detalles y revisar cotizaciones") : s.qa.noted ? (s.journey === "advisor" ? T("Confirm details and keep talking", "Confirmar datos y seguir hablando") : T("Confirm details and continue", "Confirmar datos y continuar")) : s.journey === "advisor" ? T("Keep talking with Genie", "Seguir hablando con Genie") : stage === "done" ? T("Back to my match", "Volver a mi opción") : T("Continue my match", "Seguir con mi búsqueda")}</button>{s.qa.noted ? <button type="button" className="c" onClick={rejectCandidate}>{T("Correct these details", "Corregir estos datos")}</button> : null}<button type="button" className="c" onClick={function () { var c0 = sRef.current; go({ qa: null, askMore: true, advisorTurns: (c0.advisorTurns || []).concat(c0.qa && c0.qa.a ? [{ q: c0.qa.q, a: c0.qa.a }] : []).slice(-8) }, true); setTimeout(function () { inRef.current && inRef.current.focus(); }, 100); }}>{T("Ask another question", "Hacer otra pregunta")}</button>{s.journey === "advisor" ? <button type="button" className="c" onClick={beginQuote}>{T("Explore quotes", "Explorar cotizaciones")}</button> : null}</div>
+                    <div className="ans"><button type="button" className="c on" onClick={keepGoing}>{s.qa.profileOnly ? T("Confirm and continue", "Confirmar y continuar") : s.qa.quoteAfterConfirmation ? T("Confirm details and review quotes", "Confirmar detalles y revisar cotizaciones") : s.qa.noted ? (s.journey === "advisor" ? T("Confirm details and keep talking", "Confirmar datos y seguir hablando") : T("Confirm details and continue", "Confirmar datos y continuar")) : s.journey === "advisor" ? T("Keep talking with AI InsureGenie", "Seguir hablando con AI InsureGenie") : stage === "done" ? T("Back to my match", "Volver a mi opción") : T("Continue my match", "Seguir con mi búsqueda")}</button>{s.qa.noted ? <button type="button" className="c" onClick={rejectCandidate}>{T("Correct these details", "Corregir estos datos")}</button> : null}<button type="button" className="c" onClick={function () { var c0 = sRef.current; go({ qa: null, askMore: true, advisorTurns: (c0.advisorTurns || []).concat(c0.qa && c0.qa.a ? [{ q: c0.qa.q, a: c0.qa.a }] : []).slice(-8) }, true); setTimeout(function () { inRef.current && inRef.current.focus(); }, 100); }}>{T("Ask another question", "Hacer otra pregunta")}</button>{s.journey === "advisor" ? <button type="button" className="c" onClick={beginQuote}>{T("Explore quotes", "Explorar cotizaciones")}</button> : null}</div>
                   </>
                 )}
               </>
@@ -1477,10 +1496,10 @@ export default function AIInsureGenie() {
             ) : null}
 
             {s.reviewOpen && !s.qa && !typing ? <QuoteReview profile={s} es={ES} stateName={stName} hasModels={function (make) { return !!MODEL_LIST[make]; }} onEdit={editReviewField} onContinue={continueReviewed} onAdvice={resumeAdvice}/> : null}
-            {typing ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="dots" aria-label={T("Genie is typing", "Genie está escribiendo")}><i /><i /><i /></div></div> : null}
+            {typing ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="dots" aria-label={T("AI InsureGenie is typing", "AI InsureGenie está escribiendo")}><i /><i /><i /></div></div> : null}
 
             {showFlow && chips.length ? (
-              <div className={"ans" + (rowMode ? " row" : "")} role={multi ? "group" : undefined}>
+              <div className={"ans aig3-answers" + (rowMode ? " row" : "") + (multi ? " aig3-multi" : "")} role={multi ? "group" : undefined}>
                 {chips.map(function (c) { return <button type="button" key={c.label} className={c.cls} aria-pressed={multi ? c.on : undefined} onClick={c.fn}>{c.label}</button>; })}
               </div>
             ) : null}
@@ -1497,17 +1516,18 @@ export default function AIInsureGenie() {
             {canBack ? <button type="button" className="lk back" onClick={function () { go(Object.assign({ said: "", note: "", hist: (s.hist || []).slice(0, -1) }, prev[stage] || {}), true); }}>{T("Change my last answer", "Cambiar mi última respuesta")}</button> : null}
 
             {stage === "done" && !typing && !s.qa && !s.reviewOpen && s.quoteReviewed ? (
-              !results ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Checking partners in ", "Buscando socios en ") + stName(s.st) + "…"}<div className="dots"><i /><i /><i /></div></div></div>
+              s.results === "error" ? <div className="aig3-review" role="alert"><h2>{T("We couldn’t load partner options","No pudimos cargar las opciones")}</h2><p>{T("Your confirmed answers are still here. Please try again.","Sus respuestas siguen aquí. Intente de nuevo.")}</p><button type="button" className="p1" onClick={function(){go({results:null},true);}}>{T("Retry","Reintentar")}</button></div> : !results ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Checking partners in ", "Buscando socios en ") + stName(s.st) + "…"}<div className="dots"><i /><i /><i /></div></div></div>
               : results.length ? (
                 <>
-                  <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Done! Here's the partner that matches your answers.", "¡Listo! Este es el socio que coincide con sus respuestas.")}</div></div>
+                  <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Your insurance options", "Sus opciones de seguro")}</div></div>
                   <MatchCard ins={results[0]} s={s} top onCall={function () { setShowCall(true); }} />
                   <div className="m-links">
-                    {results.length > 1 ? <button type="button" className="lk" onClick={function () { go({ showAll: !s.showAll }, true); }}>{s.showAll ? T("Hide other matches", "Ocultar otras opciones") : T("See all " + results.length + " matches", "Ver las " + results.length + " opciones")}</button> : <span />}
+                    {results.length > 1 ? <button type="button" className="lk" onClick={function () { go({ showAll: !s.showAll }, true); }}>{s.showAll ? T("Hide other matches", "Ocultar otras opciones") : T("See all " + results.length + " options", "Ver las " + results.length + " opciones")}</button> : <span />}
                     <button type="button" className="lk" style={{ color: "#6b7588", fontWeight: 500 }} onClick={function () { go({ showEmail: s.showEmail ? "" : "after_match" }, true); }}>{T("Email me my match", "Enviarme mi opción por correo")}</button>
+                    {!s.refine ? <button type="button" className="lk" onClick={function () { track("step_answered", { step: "refine_start" }, false); var nx = Object.assign({}, sRef.current, { refine: true }); go({ refine: true, results: null, showAll: false, stage: nextStage(nx) }, true); }}>{T("Improve my match (optional)", "Mejorar mi opción (opcional)")}</button> : null}
                   </div>
                   {s.showEmail ? <EmailCard profile={toProfile(s)} source={s.showEmail} /> : null}
-                  {s.showAll ? results.slice(1, 3).map(function (ins) { return <MatchCard key={ins.id} ins={ins} s={s} onCall={function () { setShowCall(true); }} />; }) : null}
+                  {s.showAll ? results.slice(1).map(function (ins) { return <MatchCard key={ins.id} ins={ins} s={s} onCall={function () { setShowCall(true); }} />; }) : null}
                   <p className="fine">{T("We connect you with licensed quoting partners; quotes and policies come from the insurers they work with. Confirm coverage and price before you buy. Partners may pay us when you connect; it doesn't change your price. ", "Le conectamos con socios de cotización con licencia; las cotizaciones y pólizas vienen de las aseguradoras con las que trabajan. Confirme la cobertura y el precio antes de comprar. Los socios pueden pagarnos cuando usted se conecta; eso no cambia su precio. ")}<a href={SITE + "how-we-make-money/"} target="_blank" rel="noopener noreferrer">{T("How we make money", "Cómo ganamos dinero")}</a></p>
                 </>
               ) : (
@@ -1521,15 +1541,17 @@ export default function AIInsureGenie() {
             {s.showEmail === "exit" && stage !== "done" ? <EmailCard profile={toProfile(s)} source="exit" /> : null}
           </div>
         </main>
+        {profileOpen ? <aside className="aig3-profile" aria-label={T("Your insurance profile","Su perfil de seguro")}><div className="aig3-profile-head"><h2 className="pj">{T("Your insurance profile","Su perfil de seguro")}</h2><button className="ib" type="button" aria-label={T("Close profile","Cerrar perfil")} onClick={function(){setProfileOpen(false);}}>×</button></div><p>{T("Confirmed details only. Review before sharing.","Solo datos confirmados. Revise antes de compartir.")}</p><div className="aig3-profile-meter"><i style={{width: (readiness.confirmed_count/Math.max(1,readiness.required_count)*100)+"%"}}/></div><p>{readiness.confirmed_count} / {readiness.required_count} {T("required details confirmed","datos requeridos confirmados")}</p><dl>{profileRows.map(function(f){return <div className="aig3-profile-row" key={f.key}><div><dt>{f.label}</dt><dd>{f.ready&&f.value?f.value:T("Not confirmed","Sin confirmar")}</dd></div><button type="button" className="lk" onClick={function(){setProfileOpen(false);editReviewField(f.key);}}>{T("Edit","Editar")}</button></div>;})}</dl><button type="button" className="p1" onClick={function(){setProfileOpen(false);beginQuote();}}>{T("Review and explore options","Revisar y explorar opciones")}</button></aside>:null}
+        </div>
 
         <footer className="foot">
           <div className="foot-in">
             <div className="comp">
-              <label htmlFor="msg" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>{T("Message Genie", "Mensaje para Genie")}</label>
+              <label htmlFor="msg" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>{T("Message AI InsureGenie", "Mensaje para AI InsureGenie")}</label>
               <input id="msg" ref={inRef} value={draft} maxLength={300} autoComplete="off" onChange={function (e) { setDraft(e.target.value); }} onKeyDown={function (e) { if (e.key === "Enter") { e.preventDefault(); send(); } }} placeholder={stage === "make" && s.otherMake ? T("e.g. Subaru", "p. ej. Subaru") : T("Ask anything about car insurance", "Pregunte lo que quiera sobre seguro de auto")} />
               <button type="button" className="send" aria-label={T("Send", "Enviar")} disabled={!draft.trim()} onClick={send}><Svg d={<path d="M12 19V5M5 12l7-7 7 7" />} sw={2.2} /></button>
             </div>
-            <p className="disc">{T("AI assistant, not a licensed agent · We only call when you ask · ", "Asistente con IA, no es agente con licencia · Solo llamamos si usted lo pide · ")}<a href={SITE + "privacy/"} target="_blank" rel="noopener noreferrer">{T("Privacy", "Privacidad")}</a></p>
+            <p className="disc">{T("AI assistant, not a licensed agent · We only call when you ask · ", "Asistente con IA, no es agente con licencia · Solo llamamos si usted lo pide · ")}<a href={SITE + "how-we-make-money/"} target="_blank" rel="noopener noreferrer">{T("How we make money", "Cómo ganamos dinero")}</a>{" · "}<a href={SITE + "privacy/"} target="_blank" rel="noopener noreferrer">{T("Privacy", "Privacidad")}</a></p>
           </div>
         </footer>
 

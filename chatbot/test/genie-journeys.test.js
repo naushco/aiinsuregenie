@@ -9,11 +9,13 @@ test("quote intent requires deliberate purchase/quoting language, not education"
 test("inferred facts never count as confirmed quote-ready details",()=>{
  assert.equal(hasConfirmedDetails({}),false);
  assert.equal(hasConfirmedDetails({st:"TX"}),true);
- assert.equal(profileReady({st:"TX",sitDone:true,sits:["none"],vehicleStatus:"no_vehicle",cov:"unsure"}),false);
+ assert.equal(profileReady({st:"TX",sitDone:true,sits:["none"]}),false);
+ assert.equal(profileReady({st:"TX",sitDone:true,sits:["none"],vehicleStatus:"no_vehicle"}),true); // 3.0 short path
+ assert.equal(profileReady({st:"TX",sitDone:true,sits:["none"],vehicleStatus:"no_vehicle",cov:"unsure",refine:true}),false);
  assert.equal(profileReady(base),true);
- assert.equal(profileReady({...base,vehicleStatus:"owned"}),false);
- assert.equal(profileReady({...base,vehicleStatus:"owned",make:"Toyota",year:"2022"}),true);
- assert.equal(profileReady({...base,vehicleStatus:"owned",make:"Toyota",year:"2022"},x=>x==="Toyota"),false);
+ assert.equal(profileReady({...base,vehicleStatus:"owned",refine:true}),false);
+ assert.equal(profileReady({...base,vehicleStatus:"owned",make:"Toyota",year:"2022",refine:true}),true);
+ assert.equal(profileReady({...base,vehicleStatus:"owned",make:"Toyota",year:"2022",refine:true},x=>x==="Toyota"),false);
 });
 test("review shows only confirmed structured information and distinguishes missing",()=>{
  const rows=reviewProfile(base,code=>code==="TX"?"Texas":code);
@@ -39,7 +41,8 @@ test("first-party attribution is allowlisted, trimmed, and retains safe values a
 });
 
 test("qualification completeness is not a price or eligibility score",()=>{
- const ready=qualificationSummary(base);
+ assert.equal(qualificationSummary(base).required_count,3); // short path
+ const ready=qualificationSummary({...base,refine:true});
  assert.equal(ready.ready,true);
  assert.equal(ready.confirmed_count,5);
  assert.equal(ready.required_count,5);
@@ -48,7 +51,7 @@ test("qualification completeness is not a price or eligibility score",()=>{
  assert.equal(ready.buyer_routing,"not_configured");
  assert.equal(Object.hasOwn(ready,"premium"),false);
  assert.equal(Object.hasOwn(ready,"lead_value"),false);
- const partial=qualificationSummary({st:"TX",sitDone:false,sits:[],vehicleStatus:"owned",cov:"min"});
+ const partial=qualificationSummary({st:"TX",sitDone:false,sits:[],vehicleStatus:"owned",cov:"min",refine:true});
  assert.equal(partial.ready,false);
  assert.ok(partial.missing_fields.includes("sits"));
  assert.ok(partial.missing_fields.includes("when"));
