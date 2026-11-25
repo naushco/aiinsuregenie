@@ -284,6 +284,8 @@ test("visual QA "+label,async({page},testInfo)=>{
   await expect(page.getByRole("region",{name:"Review your insurance profile"})).toBeVisible();
   await shot("review");
   await page.getByRole("button",{name:"Confirm and view quoting options"}).click();
+  await expect(page.getByText(/I cannot verify a suitable non-owner insurance quoting partner in Texas right now/)).toBeVisible();
+  await expect(page.getByText(/Checking partners in/)).toHaveCount(0);
   await expect(page.locator(".mcard")).toHaveCount(0);
   await shot("results");
 });
