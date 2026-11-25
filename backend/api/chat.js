@@ -5,6 +5,7 @@
 const { cors } = require("../lib/http");
 const MINIMUMS = require("../lib/minimums.js");
 const { factsBlock } = require("../lib/facts.js");
+const insights = require("../lib/insights.js");
 const { buildIntelligence } = require("../lib/genie-runtime");
 
 // Legal minimums come only from the checked table, never from the model's memory.
@@ -152,6 +153,12 @@ module.exports = async function handler(req, res) {
     var text = "";
     (data.content || []).forEach(function (b) { if (b.type === "text" && b.text) text += b.text; });
     if (!text) return res.status(502).json({ error: "No answer generated." });
+
+    // Anonymous insights: topic label + answered flag only. Never the question text. Skipped for Do Not Sell.
+    if (body.dns !== true) {
+      try { await insights.recordQuestion(body.session_id, message, text, { state: body.profile && body.profile.state, lang: body.lang }); }
+      catch (e) { console.error("insight question failed:", e && e.message); }
+    }
 
     // Explicit opt-in AND server-side feature flag; existing chat response is unchanged otherwise.
     if (req.genieV2Enabled === true && body.genie_v2 === true) {

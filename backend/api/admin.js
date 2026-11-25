@@ -4,6 +4,7 @@
 //   GET /api/admin?action=funnel&days=30      (chat events per session)
 //   GET /api/admin?action=subscribers         (email sign-ups)
 //   GET /api/admin?action=optouts             (Do Not Sell requests)
+//   GET /api/admin?action=insights&days=30&min=0  (anonymous conversation insights; min hides small groups)
 const { kv, kvConfigured } = require("../lib/kv");
 const { cors } = require("../lib/http");
 const { adminGate } = require("../lib/auth");
@@ -44,6 +45,12 @@ module.exports = async function handler(req, res) {
       Object.keys(byPartner).forEach(function (k) { byPartner[k] = Object.keys(byPartner[k]).length; });
       var stepTotals = {}; Object.keys(bySteps).forEach(function (k) { stepTotals[k] = Object.keys(bySteps[k]).length; });
       return res.status(200).json({ period_days: days, sessions: totals, by_day: byDay, by_campaign: byCampaign, clicks_by_partner: byPartner, no_match_by_state: byState, steps_passed: stepTotals });
+    }
+    if (action === "insights") {
+      // min=50 hides small groups for partner/SEO reports; default shows everything to the owner.
+      var min = Math.max(0, Math.min(parseInt(req.query && req.query.min) || 0, 1000));
+      var rep = await require("../lib/insights.js").report(days, min);
+      return res.status(200).json(rep || { error: "Storage not connected" });
     }
     if (action === "subscribers") {
       var emails = (await kv(["LRANGE", "subscribers", "0", "9999"])) || [];

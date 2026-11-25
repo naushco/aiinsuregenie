@@ -316,3 +316,21 @@ test("3.1 'Buying a vehicle today' is offered in the vehicle step",async({page})
   const saved=(await page.evaluate(()=>JSON.parse(localStorage.getItem("aig-chat-v2")))).s;
   expect(saved.vehicleStatus).toBe("buying"); expect(saved.when).toBe("today");
 });
+
+test("match event carries anonymous structured insight only (3.2)",async({page})=>{
+  const events=[];
+  await page.route(/\/api\/event/, route => { events.push(route.request().postData()||""); return route.fulfill({ json:{ok:true} }); });
+  await page.route(/\/api\/partners/, route => route.fulfill({ json: { partners: [
+    { id:"p1", name:"Test Partner", enabled:true, link:"https://example.com/quote", badge:"Partner", states:"ALL", goals:"price,coverage,agent", features:"Free to compare" } ] } }));
+  await page.goto("/?utm_source=meta&email=someone%40example.com");
+  await page.getByRole("button",{name:"See matching partners"}).click();
+  await page.getByRole("button",{name:"Texas",exact:true}).click();
+  await page.getByRole("button",{name:"Need an SR-22",exact:true}).click();
+  await page.getByRole("button",{name:"Continue",exact:true}).click();
+  await page.getByRole("button",{name:"I own a vehicle"}).click();
+  await expect(page.locator(".mcard").first()).toBeVisible();
+  await expect.poll(()=>events.some(e=>e.includes('"match_shown"'))).toBe(true);
+  const ev=JSON.parse(events.find(e=>e.includes('"match_shown"')));
+  expect(ev.insight).toEqual({ st:"TX", sits:["sr22"], vs:"owned" });
+  expect(JSON.stringify(ev)).not.toContain("example.com");
+});
