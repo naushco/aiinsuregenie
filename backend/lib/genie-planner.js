@@ -11,7 +11,7 @@ const QUESTIONS = {
 };
 const ALLOWED = {
   urgency: ["today", "within_week", "later", "unknown"],
-  vehicle_status: ["owned", "financed", "leased", "no_vehicle", "unknown"],
+  vehicle_status: ["owned", "financed", "leased", "buying", "no_vehicle", "unknown"],
   coverage_goal: ["minimum", "full", "unsure"]
 };
 function isPresent(field, value, facts) {

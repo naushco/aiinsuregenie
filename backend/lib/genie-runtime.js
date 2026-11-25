@@ -5,7 +5,7 @@ const { processTurn } = require("./genie-conversation.js");
 const { nextQuestion } = require("./genie-planner.js");
 const SITUATIONS = new Set(["coverage_lapse","sr22","fr44","dui","ticket","accident","non_owner","rideshare","new_driver"]);
 const GOALS = new Set(["lower_price","immediate_coverage","reinstatement","filing_help","comparison"]);
-const VEHICLES = new Set(["owned","financed","leased","no_vehicle"]);
+const VEHICLES = new Set(["owned","financed","leased","buying","no_vehicle"]);
 const COVERAGE = new Set(["minimum","full"]);
 const URGENCY = new Set(["today","within_week","later"]);
 function validatedConfirmed(input) {

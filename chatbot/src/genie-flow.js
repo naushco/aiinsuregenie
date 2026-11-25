@@ -8,8 +8,8 @@ export function confirmedFacts(s) {
     situation,
     situation_confirmed: s.sitDone===true,
     goal: s.pri==="price" ? ["lower_price"] : [],
-    urgency: {today:"today",week:"within_week",compare:"later"}[s.when] || "unknown",
-    vehicle_status: ["owned","financed","leased","no_vehicle"].includes(s.vehicleStatus) ? s.vehicleStatus : "unknown",
+    urgency: {today:"today",tomorrow:"within_week",week:"within_week",compare:"later"}[s.when] || "unknown",
+    vehicle_status: ["owned","financed","leased","buying","no_vehicle"].includes(s.vehicleStatus) ? s.vehicleStatus : "unknown",
     coverage_goal: {min:"minimum",full:"full"}[s.cov] || "unsure",
     coverage_goal_confirmed: ["min","full","unsure"].includes(s.cov)
   };
