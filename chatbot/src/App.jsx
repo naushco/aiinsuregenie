@@ -234,7 +234,7 @@ var convoHistory = [];
 
 // Only non-personal fields ever leave the browser for the AI. Never name/phone/email.
 function safeProfile(p) {
-  var keys = ["state", "age", "vehicleYear", "vehicleMake", "driving", "coverage", "insured", "homeowner", "military", "multiCar", "priority"];
+  var keys = ["state", "age", "vehicleYear", "vehicleMake", "vehicleModel", "vehicleStatus", "startDate", "driving", "requiresSR22", "coverage", "insured", "homeowner", "military", "multiCar", "priority"];
   var out = {};
   keys.forEach(function (k) { if (p && p[k] !== undefined && p[k] !== null) out[k] = p[k]; });
   return out;
@@ -832,7 +832,8 @@ var SIT = [
   { k: "none", l: T("None of these", "Nada de esto"), s: T("Standard", "Estándar") }
 ];
 var COVS = { min: T("State minimum", "Mínimo del estado"), full: T("Full coverage", "Cobertura total"), unsure: T("Not sure yet", "Todavía no sé") };
-var WHENS = { today: T("Today", "Hoy"), week: T("This week", "Esta semana"), compare: T("Just comparing", "Solo comparando") };
+var VSTATUS = { owned: T("own the vehicle", "vehículo propio"), financed: T("financed", "financiado"), leased: T("leased", "arrendado"), no_vehicle: T("no vehicle (non-owner)", "sin vehículo"), buying: T("buying a vehicle today", "compra un vehículo hoy") };
+var WHENS = { today: T("Today", "Hoy"), tomorrow: T("Tomorrow", "Mañana"), week: T("This week", "Esta semana"), compare: T("Just comparing", "Solo comparando") };
 var ORDER = ["start", "state", "sit", "vehicle", "make", "model", "year", "cov", "when", "done"];
 var SAVE_KEY = "aig-chat-v2";
 
@@ -850,6 +851,7 @@ function describePending(p, cur) {
     if (added.length) out.push(SIT.filter(function (k) { return added.indexOf(k.k) >= 0; }).map(function (k) { return k.s; }).join(" + "));
   }
   if (p.make || p.year) out.push(carName(Object.assign({}, cur || {}, p)));
+  if (p.vehicleStatus && VSTATUS[p.vehicleStatus]) out.push(VSTATUS[p.vehicleStatus]);
   if (p.cov && COVS[p.cov]) out.push(COVS[p.cov]);
   if (p.when && WHENS[p.when]) out.push(WHENS[p.when]);
   if (p.pri === "price") out.push(T("lowest price", "precio más bajo"));
@@ -883,6 +885,9 @@ function toProfile(s) {
   // A new driver does not necessarily have a specific age.
   if (s.make && s.make !== "Other") p.vehicleMake = s.make;
   if (s.year && /^\d{4}$/.test(s.year)) p.vehicleYear = s.year;
+  if (s.model && s.model !== "unsure") p.vehicleModel = s.model;
+  if (s.vehicleStatus) p.vehicleStatus = s.vehicleStatus;
+  if (s.when) p.startDate = s.when;
   p.coverage = s.cov === "min" ? "minimum" : (s.cov === "full" ? "full" : "standard");
   p.priority = s.pri || (s.cov === "full" ? "coverage" : "price");
   return p;
@@ -995,6 +1000,9 @@ export default function AIInsureGenie() {
   useEffect(function () {
     var el = logRef.current; if (!el) return;
     setTimeout(function () {
+      var cur = sRef.current;
+      // Welcome screen opens at the top (hero + main actions), never scrolled to the bottom.
+      if (cur.stage === "start" && !cur.qa && !cur.askMore && !(cur.advisorTurns || []).length) { el.scrollTo({ top: 0 }); return; }
       var a = el.querySelector("[data-anchor]");
       var top = a ? Math.min(a.offsetTop - 12, el.scrollHeight) : el.scrollHeight;
       el.scrollTo({ top: top, behavior: "smooth" });
@@ -1145,22 +1153,31 @@ export default function AIInsureGenie() {
     if (!general && /(accident|ticket|crash)/.test(lower)) sits.push("record");
     sits = sits.filter(function (k, i, a) { return k !== "none" && a.indexOf(k) === i; });
     if (sits.length > (cur.sits || []).filter(function (k) { return k !== "none"; }).length) { got.sits = sits; got.sitDone = true; said.push(SIT.filter(function (k) { return sits.indexOf(k.k) >= 0; }).map(function (k) { return k.s; }).join(" + ")); }
-    if (!cur.make) {
-      if (o.vehicleMake) got.make = o.vehicleMake;
-      Object.keys(MODEL_LIST).forEach(function (mk) { MODEL_LIST[mk].forEach(function (md) { if (lower.indexOf(" " + md[0].toLowerCase() + " ") >= 0) { got.make = mk; got.model = md[0]; } }); });
-      if (got.make && !got.model && !MODEL_LIST[got.make]) got.model = "unsure";
+    // Corrections win: a newly stated value replaces the old one (AI InsureGenie 3.1).
+    var mk2 = "", md2 = "";
+    if (o.vehicleMake) mk2 = o.vehicleMake;
+    Object.keys(MODEL_LIST).forEach(function (mk) { MODEL_LIST[mk].forEach(function (md) { if (lower.indexOf(" " + md[0].toLowerCase() + " ") >= 0) { mk2 = mk; md2 = md[0]; } }); });
+    if (mk2 && (mk2 !== cur.make || (md2 && md2 !== cur.model))) {
+      got.make = mk2; got.model = md2 || (MODEL_LIST[mk2] ? "" : "unsure");
     }
-    if (o.vehicleYear && !cur.year) got.year = parseInt(o.vehicleYear, 10) <= 2015 ? "old" : o.vehicleYear;
+    if (o.vehicleYear) { var y2 = parseInt(o.vehicleYear, 10) <= 2015 ? "old" : o.vehicleYear; if (y2 !== cur.year) got.year = y2; }
+    var vs = /\b(don'?t (own|have) a (car|vehicle)|no car|non-?owner|without a car|sin auto|no tengo (auto|carro|coche))\b/.test(lower) ? "no_vehicle"
+      : /\b(buying|purchasing|picking up) (a |my |the )?(new |used )?(car|vehicle|truck)\b|\b(bought|buy) (a |my )?(car|vehicle) (today|tomorrow)\b/.test(lower) ? "buying"
+      : /\b(financ(ed|ing|e)|car loan|auto loan|loan on)\b/.test(lower) ? "financed"
+      : /\b(leas(ed|ing|e))\b/.test(lower) ? "leased"
+      : /\b(i own|paid off|own (my|the|a) (car|vehicle))\b/.test(lower) ? "owned" : "";
+    if (vs && vs !== cur.vehicleStatus) { got.vehicleStatus = vs; if (vs === "no_vehicle") { got.make = ""; got.model = ""; got.year = ""; got.carAge = ""; } }
     if (got.make || got.year) said.push(carName(Object.assign({}, cur, got)));
     // Timing is a tentative fact during an advisor conversation, never confirmed silently.
-    if (!cur.when) {
-      var requestedWhen = /\b(today|right now|immediately|asap|tonight)\b/.test(lower) ? "today"
-        : /\b(this week|next few days|within (?:a )?week)\b/.test(lower) ? "week"
-        : /\b(just comparing|no rush|next month|just researching)\b/.test(lower) ? "compare" : "";
-      if (requestedWhen) { got.when = requestedWhen; said.push(WHENS[requestedWhen]); }
-    }
+    var requestedWhen = /\b(today|right now|immediately|asap|tonight|hoy)\b/.test(lower) ? "today"
+      : /\b(tomorrow|mañana|manana)\b/.test(lower) ? "tomorrow"
+      : /\b(this week|next few days|within (?:a )?week)\b/.test(lower) ? "week"
+      : /\b(just comparing|no rush|next month|just researching)\b/.test(lower) ? "compare" : "";
+    if (got.vehicleStatus === "buying" && !requestedWhen) requestedWhen = "today";
+    if (requestedWhen && requestedWhen !== cur.when) { got.when = requestedWhen; said.push(WHENS[requestedWhen]); }
     if ((o.priority === "price" || /\b(cheap|cheapest|lowest|low cost|affordable|save money|barato)/.test(lower)) && !cur.pri) { got.pri = "price"; said.push(T("lowest price", "precio más bajo")); }
-    if (/\bfull coverage\b/.test(lower) && !cur.cov) { got.cov = "full"; said.push(COVS.full); }
+    var cov2 = /\bfull coverage\b/.test(lower) ? "full" : /\b(state minimum|minimum coverage|liability only)\b/.test(lower) ? "min" : "";
+    if (cov2 && cov2 !== cur.cov) { got.cov = cov2; said.push(COVS[cov2]); }
     return { got: got, said: said };
   };
 
@@ -1189,7 +1206,8 @@ export default function AIInsureGenie() {
       return;
     }
     track("question_asked", { stage: cur.stage }, false);
-    getAnswer(text, toProfile(cur), Array.isArray(cur.results) ? cur.results : [], genieConfirmed(cur), cur.journey).then(function (response) {
+    var answerProfile = Object.assign({}, cur, merge); // the visitor's newest statement wins for this answer
+    getAnswer(text, toProfile(answerProfile), Array.isArray(cur.results) ? cur.results : [], genieConfirmed(cur), cur.journey).then(function (response) {
       setS(function (c) {
         if (!c.qa || c.qa.q !== text) return c;
         var brain = response.intelligence;
@@ -1216,7 +1234,7 @@ export default function AIInsureGenie() {
     var cur = sRef.current;
     var fromStart = cur.stage === "start";
     var confirmed = cur.qa && cur.qa.candidate ? Object.assign({}, cur.qa.candidate) : {};
-    if (Object.keys(confirmed).length) confirmed.chatFacts = true;
+    if (Object.keys(confirmed).length) { confirmed.chatFacts = true; if (cur.results) confirmed.results = null; }
     var merged = Object.assign({}, cur, confirmed);
     if (cur.qa && cur.qa.profileOnly) {
       // The visitor just confirmed exactly what they typed: no second review, ask only what's missing.
@@ -1350,6 +1368,7 @@ export default function AIInsureGenie() {
       ch(T("I own a vehicle", "Tengo un vehículo"), function () { answer(T("I own a vehicle", "Tengo un vehículo"), { vehicleStatus: "owned" }); }),
       ch(T("I finance a vehicle", "Financio un vehículo"), function () { answer(T("I finance a vehicle", "Financio un vehículo"), { vehicleStatus: "financed" }); }),
       ch(T("I lease a vehicle", "Alquilo un vehículo"), function () { answer(T("I lease a vehicle", "Alquilo un vehículo"), { vehicleStatus: "leased" }); }),
+      ch(T("Buying a vehicle today", "Compro un vehículo hoy"), function () { answer(T("Buying a vehicle today", "Compro un vehículo hoy"), { vehicleStatus: "buying", when: s.when || "today" }); }),
       ch(T("I need non-owner coverage", "Necesito cobertura sin auto"), function () { answer(T("I need non-owner coverage", "Necesito cobertura sin auto"), { vehicleStatus: "no_vehicle", make: "", model: "", year: "", carAge: "" }); })
     ];
   } else if (stage === "make") {
@@ -1411,9 +1430,9 @@ export default function AIInsureGenie() {
           <div className="hd-in">
             <img className="hd-logo" src={LOGO} alt="" />
             <div className="hd-txt"><span className="hd-name pj">AI Insure<span className="aig3-gold">Genie</span></span><span className="hd-sub">{sub}</span></div>
-            {s.journey === "quote" && !s.reviewOpen ? <span className="hd-step">{s.quoteReviewed ? T("Reviewed","Revisado") : progress.confirmed_count + " / " + progress.required_count}</span> : null}
+            {false ? <span className="hd-step"></span> : null}
             {s.journey === "quote" && !s.reviewOpen ? <button type="button" className="ib" aria-label={T("Ask AI InsureGenie", "Preguntar a AI InsureGenie")} title={T("Ask AI InsureGenie about insurance", "Preguntar a AI InsureGenie")} onClick={resumeAdvice}><Svg d={I_INFO} /></button> : null}
-            {s.journey === "advisor" && !typing && !s.qa && !(stage === "start" && !s.askMore) ? <button type="button" className="aig3-quote-cta" aria-label={T("Get Quote", "Obtener cotización")} onClick={beginQuote}>{T("Get Quote", "Cotizar")}</button> : null}
+            {s.journey === "advisor" && !typing && !s.qa && !(stage === "start" && !s.askMore) ? <button type="button" className="aig3-quote-cta" aria-label={T("See matching partners", "Ver socios recomendados")} onClick={beginQuote}>{T("See partners", "Ver socios")}</button> : null}
             <button type="button" className="ib call" aria-label={T("Talk to a licensed agent", "Hablar con un agente con licencia")} title={T("Talk to a licensed agent", "Hablar con un agente con licencia")} onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} /></button>
             <button type="button" className="ib aig3-menu-toggle" aria-label={T("More options","Más opciones")} aria-expanded={menuOpen} onClick={function(){setMenuOpen(!menuOpen);}}><Svg d={<><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></>}/></button>
             <button type="button" className="ib aig3-profile-toggle" aria-label={T("My insurance profile", "Mi perfil de seguro")} aria-expanded={profileOpen} onClick={function(){setProfileOpen(!profileOpen);}}><Svg d={<><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></>}/></button>
@@ -1437,7 +1456,7 @@ export default function AIInsureGenie() {
                   <h1 className="pj">{entryWelcome ? entryWelcome.title : s.journey === "advisor" ? T("Car insurance, made clearer.", "Seguro de auto, más claro.") : T("What can I help you with today?", "¿En qué le puedo ayudar hoy?")}</h1>
                   <p>{entryWelcome ? entryWelcome.description : s.journey === "advisor" ? T("Get answers, understand your coverage and explore insurance options when you are ready.", "Obtenga respuestas, entienda su cobertura y explore opciones cuando esté listo.") : T("I can help you understand auto insurance and find a suitable quoting partner in a few quick steps.", "Puedo ayudarle a entender el seguro de auto y encontrar un socio de cotización adecuado en unos pasos rápidos.")}</p>
                 </div>
-                {s.journey === "advisor" ? <div className="aig3-entry"><button type="button" className="p1" onClick={beginQuote}>{T("Get quote now","Obtener cotización ahora")}<Svg d={I_CHEV}/></button><button type="button" className="p2" onClick={function(){inRef.current && inRef.current.focus();}}>{T("Ask an insurance question","Hacer una pregunta")}</button><p>{T("No phone number required to see available partner options.","No necesita teléfono para ver opciones disponibles.")}</p></div>:null}
+                {s.journey === "advisor" ? <div className="aig3-entry"><button type="button" className="p1" onClick={beginQuote}>{T("See matching partners","Ver socios recomendados")}<Svg d={I_CHEV}/></button><button type="button" className="p2" onClick={function(){inRef.current && inRef.current.focus();}}>{T("Ask an insurance question","Hacer una pregunta")}</button><p>{T("3 quick questions, no phone number. You'll see matching partners here, then finish on the partner's site, where prices come from and you may re-enter some details.","3 preguntas rápidas, sin teléfono. Verá socios recomendados aquí y terminará en el sitio del socio, donde se dan los precios y quizá deba volver a escribir algunos datos.")}</p></div>:null}
                 {!(entryWelcome && entryWelcome.kind === "guide") ? <h2 className="aig3-topic-heading">{T("Popular questions","Preguntas populares")}</h2>:null}
                 <div className="starts aig3-topics">
                   {(entryWelcome && entryWelcome.kind === "guide" ? [] : starters).map(function (x) { return <button type="button" key={x.ic} className="st" onClick={x.fn}><span className="st-ic"><Svg d={START_ICONS[x.ic]} /></span><span className="st-l">{x.l}</span><span className="chev"><Svg d={I_CHEV} size={16} /></span></button>; })}
@@ -1480,10 +1499,10 @@ export default function AIInsureGenie() {
                       {s.qa.agent ? <div style={{ marginTop: 10 }}><button type="button" className="c" style={{ whiteSpace: "normal", textAlign: "left", maxWidth: "100%" }} onClick={function () { setShowCall(true); }}><Svg d={I_PHONE} size={15} />{T("Ask a licensed agent, free", "Pregunte a un agente con licencia, gratis")}</button></div> : null}
                     </div></div>
                     {s.journey === "advisor" ? <InsuranceInsights question={s.qa.q} es={ES} onAsk={function(q){ask(q);}} />:null}
-                    {stage !== "done" ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt" style={{ color: "#33415c" }}>{s.journey === "advisor" ? T("We can keep talking, or explore quoting options when you're ready.", "Podemos seguir hablando o explorar cotizaciones cuando quiera.") : (s.sits.indexOf("dui") >= 0 || s.sits.indexOf("sr22") >= 0) ? T("Want me to find a partner for drivers like you", "¿Quiere que le busque un socio para conductores como usted") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?" : T("Want me to find the partner that fits you", "¿Quiere que le busque el socio que le conviene") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?"}
-                      {s.qa.noted ? <span className="gh"><Svg d={I_CHECK} size={14} sw={2.2} /><span>{T("Please confirm: ", "Confirme: ") + s.qa.noted + T(". These details will be used only if you continue to quotes.", ". Estos datos solo se usarán si continúa a cotizaciones.")}</span></span> : null}
+                    {stage !== "done" ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt" style={{ color: "#33415c" }}>{s.journey === "advisor" ? T("We can keep talking, or see matching partners when you're ready.", "Podemos seguir hablando o ver socios recomendados cuando quiera.") : (s.sits.indexOf("dui") >= 0 || s.sits.indexOf("sr22") >= 0) ? T("Want me to find a partner for drivers like you", "¿Quiere que le busque un socio para conductores como usted") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?" : T("Want me to find the partner that fits you", "¿Quiere que le busque el socio que le conviene") + (s.st ? T(" in ", " en ") + stName(s.st) : "") + "?"}
+                      {s.qa.noted ? <span className="gh"><Svg d={I_CHECK} size={14} sw={2.2} /><span>{T("Please confirm: ", "Confirme: ") + s.qa.noted + T(". These details will be used only if you continue to matching partners.", ". Estos datos solo se usarán si continúa a socios recomendados.")}</span></span> : null}
                     </div></div> : null}
-                    <div className="ans"><button type="button" className="c on" onClick={keepGoing}>{s.qa.profileOnly ? T("Confirm and continue", "Confirmar y continuar") : s.qa.quoteAfterConfirmation ? T("Confirm details and review quotes", "Confirmar detalles y revisar cotizaciones") : s.qa.noted ? (s.journey === "advisor" ? T("Confirm details and keep talking", "Confirmar datos y seguir hablando") : T("Confirm details and continue", "Confirmar datos y continuar")) : s.journey === "advisor" ? T("Keep talking with AI InsureGenie", "Seguir hablando con AI InsureGenie") : stage === "done" ? T("Back to my match", "Volver a mi opción") : T("Continue my match", "Seguir con mi búsqueda")}</button>{s.qa.noted ? <button type="button" className="c" onClick={rejectCandidate}>{T("Correct these details", "Corregir estos datos")}</button> : null}<button type="button" className="c" onClick={function () { var c0 = sRef.current; go({ qa: null, askMore: true, advisorTurns: (c0.advisorTurns || []).concat(c0.qa && c0.qa.a ? [{ q: c0.qa.q, a: c0.qa.a }] : []).slice(-8) }, true); setTimeout(function () { inRef.current && inRef.current.focus(); }, 100); }}>{T("Ask another question", "Hacer otra pregunta")}</button>{s.journey === "advisor" ? <button type="button" className="c" onClick={beginQuote}>{T("Explore quotes", "Explorar cotizaciones")}</button> : null}</div>
+                    <div className="ans"><button type="button" className="c on" onClick={keepGoing}>{s.qa.profileOnly ? T("Confirm and continue", "Confirmar y continuar") : s.qa.quoteAfterConfirmation ? T("Confirm and see matching partners", "Confirmar y ver socios") : s.qa.noted ? (s.journey === "advisor" ? T("Confirm details and keep talking", "Confirmar datos y seguir hablando") : T("Confirm details and continue", "Confirmar datos y continuar")) : s.journey === "advisor" ? T("Keep talking with AI InsureGenie", "Seguir hablando con AI InsureGenie") : stage === "done" ? T("Back to my match", "Volver a mi opción") : T("Continue my match", "Seguir con mi búsqueda")}</button>{s.qa.noted ? <button type="button" className="c" onClick={rejectCandidate}>{T("Correct these details", "Corregir estos datos")}</button> : null}<button type="button" className="c" onClick={function () { var c0 = sRef.current; go({ qa: null, askMore: true, advisorTurns: (c0.advisorTurns || []).concat(c0.qa && c0.qa.a ? [{ q: c0.qa.q, a: c0.qa.a }] : []).slice(-8) }, true); setTimeout(function () { inRef.current && inRef.current.focus(); }, 100); }}>{T("Ask another question", "Hacer otra pregunta")}</button>{s.journey === "advisor" ? <button type="button" className="c" onClick={beginQuote}>{T("See matching partners", "Ver socios recomendados")}</button> : null}</div>
                   </>
                 )}
               </>
@@ -1491,7 +1510,7 @@ export default function AIInsureGenie() {
             {s.askMore && !s.qa ? (
               <>
                 <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Sure, ask me anything about car insurance below. I'll keep your match where you left it.", "Claro, pregúnteme lo que quiera sobre seguro de auto abajo. Guardo su búsqueda donde la dejó.")}</div></div>
-                <div className="ans"><button type="button" className="c" onClick={s.journey === "advisor" ? beginQuote : keepGoing}>{s.journey === "advisor" ? T("Explore quotes whenever you're ready", "Explorar cotizaciones") : stage === "start" ? T("Find my match instead", "Mejor buscar mi opción") : T("Back to my match", "Volver a mi opción")}</button></div>
+                <div className="ans"><button type="button" className="c" onClick={s.journey === "advisor" ? beginQuote : keepGoing}>{s.journey === "advisor" ? T("See matching partners when you're ready", "Ver socios cuando quiera") : stage === "start" ? T("Find my match instead", "Mejor buscar mi opción") : T("Back to my match", "Volver a mi opción")}</button></div>
               </>
             ) : null}
 
@@ -1519,7 +1538,7 @@ export default function AIInsureGenie() {
               s.results === "error" ? <div className="aig3-review" role="alert"><h2>{T("We couldn’t load partner options","No pudimos cargar las opciones")}</h2><p>{T("Your confirmed answers are still here. Please try again.","Sus respuestas siguen aquí. Intente de nuevo.")}</p><button type="button" className="p1" onClick={function(){go({results:null},true);}}>{T("Retry","Reintentar")}</button></div> : !results ? <div className="g"><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Checking partners in ", "Buscando socios en ") + stName(s.st) + "…"}<div className="dots"><i /><i /><i /></div></div></div>
               : results.length ? (
                 <>
-                  <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Your insurance options", "Sus opciones de seguro")}</div></div>
+                  <div className="g" data-anchor=""><img className="ga" src={LOGO} alt="" /><div className="gt">{T("Partners that match your answers", "Socios que coinciden con sus respuestas")}</div></div>
                   <MatchCard ins={results[0]} s={s} top onCall={function () { setShowCall(true); }} />
                   <div className="m-links">
                     {results.length > 1 ? <button type="button" className="lk" onClick={function () { go({ showAll: !s.showAll }, true); }}>{s.showAll ? T("Hide other matches", "Ocultar otras opciones") : T("See all " + results.length + " options", "Ver las " + results.length + " opciones")}</button> : <span />}

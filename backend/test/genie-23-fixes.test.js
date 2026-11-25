@@ -27,3 +27,12 @@ test("checked facts carry the corrected SR-22 rules", () => {
   assert.match(all, /NOT free/);
   assert.match(factsBlock(), /Never contradict/);
 });
+
+test("3.1 high-impact rules and new vocabulary", () => {
+  const { RULES } = require("../lib/facts.js");
+  const all = RULES.join(" ");
+  assert.match(all, /OHIO SR-22/); assert.match(all, /HOUSEHOLD/); assert.match(all, /RENTAL CARS/);
+  assert.match(all, /insurance\.ky\.gov/); assert.match(all, /LATEST DETAILS/);
+  const r = buildIntelligence({ vehicle_status: "buying", urgency: "within_week" }, "");
+  assert.ok(r);
+});

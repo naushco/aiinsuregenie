@@ -33,7 +33,7 @@ function rateLimited(ip) {
 }
 
 // Only these profile fields are ever sent to the model. NO name, phone, or email.
-var SAFE_FIELDS = ["state", "age", "vehicleYear", "vehicleMake", "driving", "coverage", "insured", "homeowner", "military", "multiCar", "priority"];
+var SAFE_FIELDS = ["state", "age", "vehicleYear", "vehicleMake", "vehicleModel", "vehicleStatus", "startDate", "driving", "requiresSR22", "coverage", "insured", "homeowner", "military", "multiCar", "priority"];
 function cleanProfile(p) {
   var out = [];
   if (!p || typeof p !== "object") return "";
@@ -114,7 +114,7 @@ module.exports = async function handler(req, res) {
     }
 
     var system = SYSTEM_PROMPT + cleanProfile(body.profile) + cleanResults(body.results) + minimumsBlock() + factsBlock();
-    system += "\n\nSTYLE: Answer in under 120 words. No greetings like \"Great question\". If you use a number example, check the arithmetic (e.g. $3,000 damage with a $500 deductible: you pay $500, insurer pays $2,500).";
+    system += "\n\nSTYLE: Answer in under 90 words: the direct answer first, then one short next step. No more than 2 short paragraphs. No greetings like \"Great question\". If you use a number example, check the arithmetic (e.g. $3,000 damage with a $500 deductible: you pay $500, insurer pays $2,500).";
     // Genie 2.2: advisors give practical guidance first; quote journeys can
     // prioritize fast qualification. This never authorizes contact collection.
     if (req.genieV2Enabled === true && body.genie_v2 === true && body.journey === "advisor") {

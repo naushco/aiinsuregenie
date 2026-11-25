@@ -2,8 +2,8 @@
 // review summaries. No raw messages, contact fields, model prompts or buyer calls.
 export const QUOTE_FIELDS = ["st","sitDone","vehicleStatus","make","model","year","cov","when"];
 const RISK_LABELS = {sr22:"SR-22 filing",dui:"DUI / DWI",lapse:"Coverage lapse",ride:"Rideshare / delivery",record:"Tickets or accidents",new:"New driver",none:"No special driving issue"};
-const STATUS_LABELS = {owned:"Own a vehicle",financed:"Financing a vehicle",leased:"Leasing a vehicle",no_vehicle:"Non-owner coverage"};
-const WHEN_LABELS = {today:"Today",week:"Within a week",compare:"Comparing options"};
+const STATUS_LABELS = {owned:"Own a vehicle",financed:"Financing a vehicle",leased:"Leasing a vehicle",buying:"Buying a vehicle today",no_vehicle:"Non-owner coverage"};
+const WHEN_LABELS = {today:"Today",tomorrow:"Tomorrow",week:"Within a week",compare:"Comparing options"};
 const COVERAGE_LABELS = {min:"State minimum",full:"Full coverage",unsure:"Not sure yet"};
 
 export function quoteIntent(message) {

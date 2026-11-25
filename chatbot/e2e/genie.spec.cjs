@@ -47,7 +47,7 @@ test("hypothetical advisor question is not saved as personal driver history", as
 
 test("quote progression is saved with structured facts only", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button",{name:"Get quote now"}).click();
+  await page.getByRole("button",{name:"See matching partners"}).click();
   await page.getByRole("button",{name:"Texas",exact:true}).click();
   await page.getByRole("button",{name:"Need an SR-22",exact:true}).click();
   await page.getByRole("button",{name:"Continue",exact:true}).click();
@@ -73,7 +73,7 @@ test("guide statements require confirmation and can be corrected", async ({ page
 
 test("privacy opt-out clears stored quote progress", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button",{name:"Get quote now"}).click();
+  await page.getByRole("button",{name:"See matching partners"}).click();
   await page.getByRole("button",{name:"Texas",exact:true}).click();
   await page.getByRole("button",{name:"Need an SR-22",exact:true}).click();
   await page.getByRole("button",{name:"Continue",exact:true}).click();
@@ -121,7 +121,7 @@ test("without operator flag, actual legacy chatbot loads instead of Genie 2.0", 
 
 test("3.0 short path: state, situation and vehicle status go straight to the result", async ({page}) => {
   await page.goto("/");
-  await page.getByRole("button",{name:"Get quote now"}).click();
+  await page.getByRole("button",{name:"See matching partners"}).click();
   await expect(page.getByText("Step 1 of 3")).toBeVisible();
   await page.getByRole("button",{name:"Texas",exact:true}).click();
   await page.getByRole("button",{name:"Need an SR-22",exact:true}).click();
@@ -142,7 +142,7 @@ test("3.0 short path: state, situation and vehicle status go straight to the res
 });
 test("Genie 2.1 permits interruption without forgetting qualification state", async ({page}) => {
   await page.goto("/");
-  await page.getByRole("button",{name:"Get quote now"}).click();
+  await page.getByRole("button",{name:"See matching partners"}).click();
   await page.getByRole("button",{name:"Texas",exact:true}).click();
   await page.getByRole("button",{name:"Need an SR-22",exact:true}).click();
   await page.getByRole("button",{name:"Continue",exact:true}).click();
@@ -157,7 +157,7 @@ test("Genie 2.1 permits interruption without forgetting qualification state", as
 
 test("advisor-first conversation preserves multiple answers and never forces quote form",async({page})=>{
   await page.goto("/");
-  await expect(page.getByRole("button",{name:"Get quote now"})).toBeVisible();
+  await expect(page.getByRole("button",{name:"See matching partners"})).toBeVisible();
   await page.getByPlaceholder("Ask anything about car insurance").fill("What is an SR-22?");
   await page.getByRole("button",{name:"Send"}).click();
   await expect(page.getByText("Insurance rules vary by state. Ask about available options.")).toBeVisible();
@@ -175,8 +175,8 @@ test("advisor confirms inferred details then reviews before quote questions",asy
   await page.getByRole("button",{name:"Send"}).click();
   await expect(page.getByRole("button",{name:"Confirm details and keep talking"})).toBeVisible();
   await page.getByRole("button",{name:"Confirm details and keep talking"}).click();
-  await expect(page.getByRole("button",{name:"Explore quotes whenever you're ready"})).toBeVisible();
-  await page.getByRole("button",{name:"Explore quotes whenever you're ready"}).click();
+  await expect(page.getByRole("button",{name:"See matching partners when you're ready"})).toBeVisible();
+  await page.getByRole("button",{name:"See matching partners when you're ready"}).click();
   await expect(page.getByRole("region",{name:"Review your insurance profile"})).toBeVisible();
   await expect(page.getByRole("region",{name:"Review your insurance profile"}).getByText("Texas",{exact:true})).toBeVisible();
   await expect(page.getByText("Within a week")).toBeVisible();
@@ -187,7 +187,7 @@ test("owner gets a match after 3 answers, then can optionally improve it",async(
   await page.route(/\/api\/partners/, route => route.fulfill({ json: { partners: [
     { id:"p1", name:"Test Partner", enabled:true, link:"https://example.com/quote", badge:"Partner", states:"ALL", goals:"price,coverage,agent", features:"Free to compare" } ] } }));
   await page.goto("/");
-  await page.getByRole("button",{name:"Get quote now"}).click();
+  await page.getByRole("button",{name:"See matching partners"}).click();
   await expect(page.getByRole("region",{name:"Review your insurance profile"})).toHaveCount(0);
   await page.getByRole("button",{name:"Texas",exact:true}).click();
   await page.getByRole("button",{name:"None of these",exact:true}).click();
@@ -208,7 +208,7 @@ test("first-party campaign metadata survives quote -> advisor switch, without co
   expect(initial.pub).toBe("aff12");
   expect(initial.fbclid).toBe("valid123");
   expect(initial).not.toHaveProperty("email");
-  await page.getByRole("button",{name:"Get quote now"}).click();
+  await page.getByRole("button",{name:"See matching partners"}).click();
   await page.getByRole("button",{name:"Ask AI InsureGenie"}).click();
   await expect(page.getByPlaceholder("Ask anything about car insurance")).toBeVisible();
   await page.reload();
@@ -256,7 +256,7 @@ for(const [label,width,height] of [["small-mobile",360,800],["mobile",390,844],[
 test("visual QA "+label,async({page},testInfo)=>{
   await page.setViewportSize({width,height});
   await page.goto("/");
-  await expect(page.getByRole("button",{name:"Get quote now",exact:true})).toBeVisible();
+  await expect(page.getByRole("button",{name:"See matching partners",exact:true})).toBeVisible();
   await page.evaluate(()=>document.fonts.ready);
   const shot=async(name)=>{await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await page.screenshot({path:testInfo.outputPath(label+"-"+name+".png"),fullPage:true,animations:"disabled"});};
   await shot("welcome");
@@ -267,7 +267,7 @@ test("visual QA "+label,async({page},testInfo)=>{
   await page.getByRole("button",{name:"Send"}).click();
   await expect(page.getByRole("region",{name:"Filing checklist"})).toBeVisible();
   await shot("advice");
-  await page.getByRole("button",{name:"Explore quotes",exact:true}).click();
+  await page.getByRole("button",{name:"See matching partners",exact:true}).click();
   await expect(page.getByText("Which state do you live in?")).toBeVisible();
   await shot("quote-state");
   await page.getByRole("button",{name:"Texas",exact:true}).click();
@@ -280,3 +280,39 @@ test("visual QA "+label,async({page},testInfo)=>{
   await shot("results");
 });
 }
+
+test("3.1 multi-field correction replaces old facts in the confirmation, the AI request and the quote intake",async({page})=>{
+  const chatBodies=[];
+  await page.route(/\/api\/chat/, async route => { chatBodies.push(JSON.parse(route.request().postData()||"{}")); return route.fulfill({ json: { answer: "Here is guidance for your situation." } }); });
+  await page.goto("/");
+  const box=page.getByPlaceholder("Ask anything about car insurance");
+  await box.fill("I live in Texas and I own a 2018 Toyota Camry.");
+  await page.getByRole("button",{name:"Send"}).click();
+  await page.getByRole("button",{name:"Confirm details and keep talking"}).click();
+  await box.fill("Actually I'm in Kentucky, my car is a 2019 Honda Civic, it's financed and I need coverage tomorrow. Do I need full coverage?");
+  await page.getByRole("button",{name:"Send"}).click();
+  const confirm=page.getByText(/Please confirm: Kentucky · 2019 Honda Civic · financed · Tomorrow/);
+  await expect(confirm).toBeVisible();
+  // The answer was requested with the corrected facts, not the superseded ones.
+  const prof=chatBodies[chatBodies.length-1].profile;
+  expect(prof.state).toBe("KY"); expect(prof.vehicleMake).toBe("Honda"); expect(prof.vehicleModel).toBe("Civic");
+  expect(prof.vehicleYear).toBe("2019"); expect(prof.vehicleStatus).toBe("financed"); expect(prof.startDate).toBe("tomorrow");
+  await page.getByRole("button",{name:"Confirm details and keep talking"}).click();
+  const saved=(await page.evaluate(()=>JSON.parse(localStorage.getItem("aig-chat-v2")))).s;
+  expect(saved.st).toBe("KY"); expect(saved.make).toBe("Honda"); expect(saved.model).toBe("Civic"); expect(saved.year).toBe("2019");
+  expect(saved.vehicleStatus).toBe("financed"); expect(saved.when).toBe("tomorrow");
+  // Quote intake reuses the corrected facts: no state or vehicle question.
+  await page.getByRole("button",{name:"See matching partners when you're ready"}).click();
+  await expect(page.getByText("Which state do you live in?")).toHaveCount(0);
+  await expect(page.getByText("What is your vehicle situation?")).toHaveCount(0);
+});
+test("3.1 'Buying a vehicle today' is offered in the vehicle step",async({page})=>{
+  await page.goto("/");
+  await page.getByRole("button",{name:"See matching partners"}).click();
+  await page.getByRole("button",{name:"Texas",exact:true}).click();
+  await page.getByRole("button",{name:"None of these",exact:true}).click();
+  await page.getByRole("button",{name:"Continue",exact:true}).click();
+  await page.getByRole("button",{name:"Buying a vehicle today"}).click();
+  const saved=(await page.evaluate(()=>JSON.parse(localStorage.getItem("aig-chat-v2")))).s;
+  expect(saved.vehicleStatus).toBe("buying"); expect(saved.when).toBe("today");
+});
